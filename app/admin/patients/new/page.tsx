@@ -30,7 +30,7 @@ export default function NewPatientPage() {
         identificationNumber: data.identificationNumber || undefined,
         healthInsuranceNumber: data.healthInsuranceNumber || undefined,
         bloodType: data.bloodType,
-        allergies: data.allergies || undefined,
+        allergies: data.allergies && data.allergies.length ? data.allergies.join(", ") : undefined,
         relativeFullName: data.relativeFullName || undefined,
         relativePhoneNumber: data.relativePhoneNumber || undefined,
         relativeRelationship: data.relativeRelationship,

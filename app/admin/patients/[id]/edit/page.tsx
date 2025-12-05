@@ -28,7 +28,10 @@ export default function EditPatientPage() {
         identificationNumber: data.identificationNumber || null,
         healthInsuranceNumber: data.healthInsuranceNumber || null,
         bloodType: data.bloodType || null,
-        allergies: data.allergies || null,
+        allergies:
+          data.allergies && data.allergies.length
+            ? data.allergies.join(", ")
+            : null,
         relativeFullName: data.relativeFullName || null,
         relativePhoneNumber: data.relativePhoneNumber || null,
         relativeRelationship: data.relativeRelationship || null,

@@ -13,7 +13,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { PatientAvatar } from "@/components/patients/PatientAvatar";
+import { GenderBadge } from "@/components/patients/GenderBadge";
+import { BloodTypeBadge } from "@/components/patients/BloodTypeBadge";
+import { AllergyTags } from "@/components/patients/AllergyTags";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -88,16 +91,6 @@ export default function PatientDetailPage() {
     });
   };
 
-  // Helper functions
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   const calculateAge = (dob: string | null) => {
     if (!dob) return null;
     const birthDate = new Date(dob);
@@ -111,18 +104,6 @@ export default function PatientDetailPage() {
       age--;
     }
     return age;
-  };
-
-  const getGenderLabel = (gender: string | null) => {
-    if (!gender) return "N/A";
-    switch (gender) {
-      case "MALE":
-        return "Nam";
-      case "FEMALE":
-        return "Nữ";
-      default:
-        return "Khác";
-    }
   };
 
   const formatDate = (date: string | null) => {
@@ -293,29 +274,23 @@ export default function PatientDetailPage() {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-start gap-6">
-            <Avatar className="h-20 w-20">
-              <AvatarFallback className="bg-primary/10 text-primary text-2xl">
-                {getInitials(patient.fullName)}
-              </AvatarFallback>
-            </Avatar>
+            <PatientAvatar name={patient.fullName} size="xl" />
             <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Họ và tên</p>
                 <p className="font-semibold text-lg">{patient.fullName}</p>
               </div>
-              <div>
+              <div className="flex flex-col gap-1">
                 <p className="text-sm text-muted-foreground">Giới tính</p>
-                <p className="font-medium">{getGenderLabel(patient.gender)}</p>
+                <GenderBadge gender={patient.gender as any} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Tuổi</p>
                 <p className="font-medium">{age ? `${age} tuổi` : "N/A"}</p>
               </div>
-              <div>
+              <div className="flex flex-col gap-1">
                 <p className="text-sm text-muted-foreground">Nhóm máu</p>
-                <p className="font-medium text-red-600">
-                  {patient.bloodType || "N/A"}
-                </p>
+                <BloodTypeBadge bloodType={patient.bloodType as any} />
               </div>
             </div>
           </div>
@@ -431,27 +406,14 @@ export default function PatientDetailPage() {
               <CardContent className="space-y-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Nhóm máu</p>
-                  <Badge
-                    variant="destructive"
-                    className="mt-1 bg-red-100 text-red-700"
-                  >
-                    {patient.bloodType || "Chưa xác định"}
-                  </Badge>
+                  <BloodTypeBadge bloodType={patient.bloodType as any} />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
                     <AlertTriangle className="h-3 w-3" />
                     Dị ứng
                   </p>
-                  <p
-                    className={
-                      patient.allergies
-                        ? "text-red-600 font-medium mt-1"
-                        : "text-muted-foreground mt-1"
-                    }
-                  >
-                    {patient.allergies || "Không có"}
-                  </p>
+                  <AllergyTags allergies={patient.allergies} />
                 </div>
               </CardContent>
             </Card>

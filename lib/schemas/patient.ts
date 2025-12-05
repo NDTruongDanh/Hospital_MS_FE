@@ -26,13 +26,8 @@ export const patientFormSchema = z.object({
     .string()
     .max(30, "Insurance number must be less than 30 characters")
     .optional(),
-  bloodType: z
-    .enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"])
-    .optional(),
-  allergies: z
-    .string()
-    .max(500, "Allergies must be less than 500 characters")
-    .optional(),
+  bloodType: z.enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]).optional(),
+  allergies: z.array(z.string()).optional(),
   relativeFullName: z
     .string()
     .max(100, "Contact name must be less than 100 characters")

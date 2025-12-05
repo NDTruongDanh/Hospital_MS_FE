@@ -36,6 +36,8 @@ import {
   RelationshipType,
 } from "@/interfaces/patient";
 import { patientFormSchema, PatientFormValues } from "@/lib/schemas/patient";
+import { TagInput } from "@/components/ui/tag-input";
+import { useEffect } from "react";
 
 // Re-export for convenience
 export { patientFormSchema, type PatientFormValues };
@@ -45,6 +47,7 @@ interface PatientFormProps {
   onSubmit: (data: PatientFormValues) => void;
   onCancel: () => void;
   isLoading?: boolean;
+  confirmOnCancel?: boolean;
 }
 
 const bloodTypes: BloodType[] = [
@@ -76,6 +79,7 @@ export function PatientForm({
   onSubmit,
   onCancel,
   isLoading = false,
+  confirmOnCancel = true,
 }: PatientFormProps) {
   const [healthInfoOpen, setHealthInfoOpen] = useState(true);
   const [emergencyOpen, setEmergencyOpen] = useState(true);
@@ -92,13 +96,34 @@ export function PatientForm({
       identificationNumber: initialData?.identificationNumber ?? "",
       healthInsuranceNumber: initialData?.healthInsuranceNumber ?? "",
       bloodType: (initialData?.bloodType as BloodType) ?? undefined,
-      allergies: initialData?.allergies ?? "",
+      allergies: initialData?.allergies
+        ? initialData.allergies.split(",").map((s) => s.trim()).filter(Boolean)
+        : [],
       relativeFullName: initialData?.relativeFullName ?? "",
       relativePhoneNumber: initialData?.relativePhoneNumber ?? "",
       relativeRelationship:
         (initialData?.relativeRelationship as RelationshipType) ?? undefined,
     },
   });
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (form.formState.isDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [form.formState.isDirty]);
+
+  const handleCancel = () => {
+    if (confirmOnCancel && form.formState.isDirty) {
+      const confirmed = confirm("Bạn có chắc chắn muốn hủy? Các thay đổi chưa lưu sẽ mất.");
+      if (!confirmed) return;
+    }
+    onCancel();
+  };
 
   return (
     <Form {...form}>
@@ -301,10 +326,11 @@ export function PatientForm({
                     <FormItem>
                       <FormLabel>Allergies</FormLabel>
                       <FormControl>
-                        <Textarea
-                          placeholder="Enter known allergies (comma-separated)"
-                          className="min-h-[80px]"
-                          {...field}
+                        <TagInput
+                          value={field.value || []}
+                          onChange={field.onChange}
+                          placeholder="Add allergy and press Enter"
+                          suggestions={["Penicillin", "Peanut", "Seafood", "Dust", "NSAIDs"]}
                         />
                       </FormControl>
                       <FormMessage />
@@ -397,7 +423,7 @@ export function PatientForm({
 
         {/* Action buttons */}
         <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
