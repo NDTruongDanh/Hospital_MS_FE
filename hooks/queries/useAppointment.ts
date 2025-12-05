@@ -6,6 +6,7 @@ import {
   AppointmentUpdateRequest,
   AppointmentCancelRequest,
   AppointmentListParams,
+  PaginatedResponse,
 } from "@/interfaces/appointment";
 
 // Query Keys
@@ -53,6 +54,36 @@ export const useAppointmentList = (params: AppointmentListParams) => {
   return useQuery({
     queryKey: appointmentKeys.list(params),
     queryFn: () => appointmentService.list(params),
+  });
+};
+
+export const usePatientAppointments = (patientId?: string) => {
+  return useQuery({
+    queryKey: appointmentKeys.list({ patientId } as AppointmentListParams),
+    queryFn: () =>
+      appointmentService.list({
+        patientId,
+        page: 1,
+        size: 20,
+        sort: "appointmentTime,desc",
+      }),
+    enabled: !!patientId,
+    select: (res: PaginatedResponse<any>) => res?.content ?? [],
+  });
+};
+
+export const useDoctorAppointments = (doctorId?: string) => {
+  return useQuery({
+    queryKey: appointmentKeys.list({ doctorId } as AppointmentListParams),
+    queryFn: () =>
+      appointmentService.list({
+        doctorId,
+        page: 1,
+        size: 20,
+        sort: "appointmentTime,asc",
+      }),
+    enabled: !!doctorId,
+    select: (res: PaginatedResponse<any>) => res?.content ?? [],
   });
 };
 

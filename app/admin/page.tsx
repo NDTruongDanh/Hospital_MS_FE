@@ -14,7 +14,7 @@ import {
   STATUS_ICONS,
   TREND_ICONS,
 } from "@/config/icons";
-import { LucideIcon, ArrowRight, Clock } from "lucide-react";
+import { LucideIcon, ArrowRight, Clock, Pill } from "lucide-react";
 import Link from "next/link";
 
 // Mock statistics data
