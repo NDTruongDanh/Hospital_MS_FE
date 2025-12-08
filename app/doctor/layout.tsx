@@ -28,7 +28,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useMemo } from "react";
-import { RoleGuard } from "@/components/auth/RoleGuard";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { CalendarDays, FileText, CalendarClock, LogOut } from "lucide-react";
 
@@ -75,7 +75,6 @@ export default function DoctorLayout({
   const { user, logout } = useAuth();
 
   return (
-    <RoleGuard allowedRoles={["DOCTOR"]}>
       <QueryClientProvider client={queryClient}>
         <SidebarProvider>
           <div className="bg-muted/40 text-foreground flex min-h-screen w-screen">
@@ -178,7 +177,5 @@ export default function DoctorLayout({
           </div>
           <Toaster />
         </SidebarProvider>
-      </QueryClientProvider>
-    </RoleGuard>
-  );
+      </QueryClientProvider>  );
 }

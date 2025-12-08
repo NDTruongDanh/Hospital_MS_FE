@@ -10,7 +10,7 @@ import { CalendarClock, FileText, Stethoscope, Wallet } from "lucide-react";
 import appointmentService from "@/services/appointment.service";
 import { getMedicalExams } from "@/services/medical-exam.service";
 import { getPatientInvoices } from "@/services/billing.service";
-import { RoleGuard } from "@/components/auth/RoleGuard";
+
 
 type TimelineEvent = {
   id: string;
@@ -117,87 +117,84 @@ export default function PatientHistoryPage() {
   };
 
   return (
-    <RoleGuard allowedRoles={["ADMIN", "DOCTOR", "NURSE"]}>
-    <div className="page-shell space-y-6">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Lịch sử bệnh nhân</h1>
-          <p className="text-muted-foreground">Dòng thời gian cuộc hẹn, khám và hóa đơn.</p>
-        </div>
-        <Button variant="outline" onClick={() => router.push(`/admin/patients/${patientId}`)}>
-          Quay lại hồ sơ
-        </Button>
-      </div>
-
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle>Bộ lọc</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-3">
-          <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as any)}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Loại sự kiện" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Tất cả</SelectItem>
-              <SelectItem value="APPOINTMENT">Cuộc hẹn</SelectItem>
-              <SelectItem value="EXAM">Khám bệnh</SelectItem>
-              <SelectItem value="INVOICE">Hóa đơn</SelectItem>
-            </SelectContent>
-          </Select>
-          <InputDate label="Từ ngày" value={startDate} onChange={setStartDate} />
-          <InputDate label="Đến ngày" value={endDate} onChange={setEndDate} />
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle>Dòng thời gian</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {loading ? (
-            <p className="text-muted-foreground text-sm">Đang tải...</p>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-10 text-muted-foreground">
-              Không có sự kiện trong khoảng thời gian này.
+        <div className="page-shell space-y-6">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-semibold">Lịch sử bệnh nhân</h1>
+              <p className="text-muted-foreground">Dòng thời gian cuộc hẹn, khám và hóa đơn.</p>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {filtered.map((e) => (
-                <div
-                  key={`${e.type}-${e.id}`}
-                  className="rounded-lg border p-4 flex flex-col gap-2 hover:bg-muted/40 transition"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      {iconFor(e.type)}
-                      <p className="text-sm font-medium">{e.title}</p>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(e.date).toLocaleString("vi-VN")}
-                    </p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{e.summary}</p>
-                  {e.status && (
-                    <p className="text-xs text-muted-foreground">
-                      Trạng thái: <span className="font-medium text-foreground">{e.status}</span>
-                    </p>
-                  )}
-                  <Separator />
-                  <div className="flex justify-end">
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={e.url}>Xem chi tiết</a>
-                    </Button>
-                  </div>
+            <Button variant="outline" onClick={() => router.push(`/admin/patients/${patientId}`)}>
+              Quay lại hồ sơ
+            </Button>
+          </div>
+    
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle>Bộ lọc</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-3">
+              <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as any)}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Loại sự kiện" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Tất cả</SelectItem>
+                  <SelectItem value="APPOINTMENT">Cuộc hẹn</SelectItem>
+                  <SelectItem value="EXAM">Khám bệnh</SelectItem>
+                  <SelectItem value="INVOICE">Hóa đơn</SelectItem>
+                </SelectContent>
+              </Select>
+              <InputDate label="Từ ngày" value={startDate} onChange={setStartDate} />
+              <InputDate label="Đến ngày" value={endDate} onChange={setEndDate} />
+            </CardContent>
+          </Card>
+    
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle>Dòng thời gian</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {loading ? (
+                <p className="text-muted-foreground text-sm">Đang tải...</p>
+              ) : filtered.length === 0 ? (
+                <div className="text-center py-10 text-muted-foreground">
+                  Không có sự kiện trong khoảng thời gian này.
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-    </RoleGuard>
-  );
+              ) : (
+                <div className="space-y-4">
+                  {filtered.map((e) => (
+                    <div
+                      key={`${e.type}-${e.id}`}
+                      className="border rounded-lg p-4 flex flex-col gap-2 hover:bg-muted/40 transition"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          {iconFor(e.type)}
+                          <p className="text-sm font-medium">{e.title}</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(e.date).toLocaleString("vi-VN")}
+                        </p>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{e.summary}</p>
+                      {e.status && (
+                        <p className="text-xs text-muted-foreground">
+                          Trạng thái: <span className="font-medium text-foreground">{e.status}</span>
+                        </p>
+                      )}
+                      <Separator />
+                      <div className="flex justify-end">
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={e.url}>Xem chi tiết</a>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>  );
 }
 
 function InputDate({
