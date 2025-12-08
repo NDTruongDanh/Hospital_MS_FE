@@ -14,7 +14,7 @@ import { MedicalExamForm } from "../_components/medical-exam-form";
 import { MedicalExamFormValues } from "@/lib/schemas/medical-exam";
 import { useCreateMedicalExam } from "@/hooks/queries/useMedicalExam";
 import { toast } from "sonner";
-import { RoleGuard } from "@/components/auth/RoleGuard";
+
 import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
 import { UserRole } from "@/hooks/use-auth"; // Import UserRole
 
@@ -47,7 +47,6 @@ export default function NewMedicalExamPage() {
   };
 
   return (
-    <RoleGuard allowedRoles={["ADMIN", "DOCTOR", "NURSE"]}>
       <div className="w-full space-y-6">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-4">
@@ -81,7 +80,5 @@ export default function NewMedicalExamPage() {
                         currentExamStatus="PENDING" // For new exams, status is pending initially
                       />          </CardContent>
         </Card>
-      </div>
-    </RoleGuard>
-  );
+      </div>  );
 }

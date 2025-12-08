@@ -15,7 +15,7 @@ import { MedicalExamFormValues } from "@/lib/schemas/medical-exam";
 import { useMedicalExam, useUpdateMedicalExam } from "@/hooks/queries/useMedicalExam";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
-import { RoleGuard } from "@/components/auth/RoleGuard"; // Import RoleGuard
+
 import Link from "next/link";
 import { UserRole } from "@/hooks/use-auth";
 
@@ -54,22 +54,7 @@ export default function EditMedicalExamPage() {
   // If not editable, display a warning and prevent form access
   if (!isExamEditable) {
     return (
-      <RoleGuard allowedRoles={["ADMIN", "DOCTOR"]}> {/* Protect the page with RoleGuard even if not editable */}
-        <div className="mx-auto max-w-3xl">
-          <Card className="p-8 text-center">
-            <AlertCircle className="mx-auto h-12 w-12 text-amber-500" />
-            <h2 className="mt-4 text-xl font-semibold">Cannot Edit Exam</h2>
-            <p className="mt-2 text-muted-foreground">
-              This exam cannot be edited because of its status (
-              <span className="font-medium">{exam.status}</span>) or your
-              permissions.
-            </p>
-            <Button className="mt-4" asChild>
-              <Link href={`/admin/exams/${exam.id}`}>View Exam</Link>
-            </Button>
-          </Card>
-        </div>
-      </RoleGuard>
+              <div className="mx-auto max-w-3xl">          <Card className="p-8 text-center">            <AlertCircle className="mx-auto h-12 w-12 text-amber-500" />            <h2 className="mt-4 text-xl font-semibold">Cannot Edit Exam</h2>            <p className="mt-2 text-muted-foreground">              This exam cannot be edited because of its status (              <span className="font-medium">{exam.status}</span>) or your              permissions.            </p>            <Button className="mt-4" asChild>              <Link href={`/admin/exams/${exam.id}`}>View Exam</Link>            </Button>          </Card>        </div>
     );
   }
 
@@ -117,7 +102,6 @@ export default function EditMedicalExamPage() {
   };
 
   return (
-    <RoleGuard allowedRoles={["ADMIN", "DOCTOR"]}> {/* RoleGuard for the entire page */}
       <div className="w-full space-y-6">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-4">
@@ -154,7 +138,5 @@ export default function EditMedicalExamPage() {
             />
           </CardContent>
         </Card>
-      </div>
-    </RoleGuard>
-  );
+      </div>  );
 }
