@@ -30,7 +30,7 @@ export function PatientSearchSelect({ value, onChange, placeholder = "Select pat
   useEffect(() => {
     const fetchPatients = async () => {
       const res = await getPatients({ search });
-      setPatients(res);
+      setPatients(res.content ?? []);
     };
     fetchPatients();
   }, [search]);
