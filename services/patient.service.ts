@@ -522,7 +522,7 @@ export const deletePatient = async (
 // Utility functions for form transformations
 export const apiToFormValues = (
   patient: Patient
-): import("@/interfaces/patient").PatientFormValues => {
+): PatientFormValues => {
   return {
     fullName: patient.fullName,
     email: patient.email || "",
@@ -542,7 +542,7 @@ export const apiToFormValues = (
 };
 
 export const formValuesToRequest = (
-  values: import("@/interfaces/patient").PatientFormValues
+  values: PatientFormValues
 ): CreatePatientRequest => {
   return {
     fullName: values.fullName.trim(),
