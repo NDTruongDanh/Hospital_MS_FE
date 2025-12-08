@@ -7,6 +7,7 @@ import {
   UpdatePatientRequest,
   UpdateMyProfileRequest,
   DeletePatientResponse,
+  PatientFormValues,
 } from "@/interfaces/patient";
 import { USE_MOCK } from "@/lib/mocks/toggle";
 
@@ -564,7 +565,8 @@ export const formValuesToRequest = (
 };
 
 // Calculate age from date of birth
-export const calculateAge = (dateOfBirth: string): number => {
+export const calculateAge = (dateOfBirth: string | null): number => {
+  if (!dateOfBirth) return 0; // Return 0 or handle as appropriate
   const dob = new Date(dateOfBirth);
   const today = new Date();
   let age = today.getFullYear() - dob.getFullYear();
