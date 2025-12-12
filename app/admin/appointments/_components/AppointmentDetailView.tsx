@@ -53,12 +53,14 @@ interface AppointmentDetailViewProps {
     department?: string;
   } | null;
   backHref: string;
+  editHref?: string;
 }
 
 export function AppointmentDetailView({
   appointment,
   user,
   backHref,
+  editHref,
 }: AppointmentDetailViewProps) {
   const router = useRouter();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -133,9 +135,9 @@ export function AppointmentDetailView({
           </div>
         </div>
         <div className="flex gap-2">
-          {canEdit && (
+          {canEdit && editHref && (
             <Button variant="outline" asChild>
-              <Link href={`/admin/appointments/${appointment.id}/edit`}>
+              <Link href={editHref}>
                 <Pencil className="mr-2 h-4 w-4" />
                 Reschedule
               </Link>

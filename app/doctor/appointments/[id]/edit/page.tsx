@@ -32,11 +32,15 @@ import { cn } from "@/lib/utils";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 
 import { useAppointment, useUpdateAppointment } from "@/hooks/queries/useAppointment";
+import { PatientSearchSelect } from "@/components/appointment/PatientSearchSelect";
+import { DoctorSearchSelect } from "@/components/appointment/DoctorSearchSelect";
+import { DepartmentSelect } from "@/components/hr/DepartmentSelect";
 import { TimeSlotPicker } from "@/components/appointment/TimeSlotPicker";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Schema is slightly different for admin/staff: they can't change patient/doctor
 const appointmentFormSchema = z.object({
+  patientId: z.string(),
+  doctorId: z.string(),
   appointmentDate: z.date({ message: "Please select a date" }),
   appointmentTime: z.string().min(1, "Please select a time slot"),
   type: z.enum(["CONSULTATION", "FOLLOW_UP", "EMERGENCY"], {
@@ -58,6 +62,8 @@ function EditAppointmentForm() {
 
   const { data: appointment, isLoading: isLoadingAppointment } = useAppointment(id);
   const updateMutation = useUpdateAppointment();
+  
+  const [departmentId, setDepartmentId] = useState<string | undefined>();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(appointmentFormSchema) as any,
@@ -67,6 +73,8 @@ function EditAppointmentForm() {
     if (appointment) {
       const appointmentDateTime = parseISO(appointment.appointmentTime);
       form.reset({
+        patientId: appointment.patient.id,
+        doctorId: appointment.doctor.id,
         appointmentDate: appointmentDateTime,
         appointmentTime: format(appointmentDateTime, "HH:mm"),
         type: appointment.type,
@@ -76,16 +84,14 @@ function EditAppointmentForm() {
     }
   }, [appointment, form]);
 
+  const watchedDoctorId = form.watch("doctorId");
   const watchedDate = form.watch("appointmentDate");
 
-  // Reset time slot when date changes
   useEffect(() => {
     form.setValue("appointmentTime", "");
-  }, [watchedDate, form]);
+  }, [watchedDoctorId, watchedDate, form]);
 
   const onSubmit = async (data: FormValues) => {
-    if (!appointment) return;
-
     const appointmentTime =
       format(data.appointmentDate, "yyyy-MM-dd") +
       "T" +
@@ -104,7 +110,7 @@ function EditAppointmentForm() {
       },
       {
         onSuccess: () => {
-          router.push(`/admin/appointments/${id}`);
+          router.push(`/doctor/appointments`);
         },
       },
     );
@@ -115,6 +121,7 @@ function EditAppointmentForm() {
       <div className="mx-auto max-w-3xl space-y-6">
         <Skeleton className="h-12 w-1/2" />
         <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-40 w-full" />
         <Skeleton className="h-60 w-full" />
       </div>
     );
@@ -124,16 +131,16 @@ function EditAppointmentForm() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <Link href={`/admin/appointments/${id}`}>
+          <Link href="/doctor/appointments">
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Reschedule Appointment
+            Edit Appointment
           </h1>
           <p className="text-muted-foreground">
-            Reschedule or update appointment details. Patient and Doctor are read-only.
+            Reschedule or update appointment details
           </p>
         </div>
       </div>
@@ -201,7 +208,7 @@ function EditAppointmentForm() {
                   <FormItem>
                     <FormLabel>Time Slot *</FormLabel>
                     <TimeSlotPicker
-                      doctorId={appointment?.doctor.id || ""}
+                      doctorId={watchedDoctorId}
                       date={watchedDate ? format(watchedDate, "yyyy-MM-dd") : ""}
                       selectedSlot={field.value}
                       onSelect={field.onChange}
@@ -266,7 +273,7 @@ function EditAppointmentForm() {
 
           <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" asChild>
-              <Link href={`/admin/appointments/${id}`}>Cancel</Link>
+              <Link href="/doctor/appointments">Cancel</Link>
             </Button>
             <Button type="submit" disabled={updateMutation.isPending}>
               {updateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -282,7 +289,7 @@ function EditAppointmentForm() {
 
 export default function EditAppointmentPage() {
     return (
-        <RoleGuard allowedRoles={["ADMIN", "NURSE", "RECEPTIONIST"]}>
+        <RoleGuard allowedRoles={["DOCTOR"]}>
             <EditAppointmentForm />
         </RoleGuard>
     );

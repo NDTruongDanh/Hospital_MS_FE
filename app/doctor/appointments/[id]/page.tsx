@@ -79,6 +79,7 @@ export default function DoctorAppointmentDetailPage() {
       appointment={appointment}
       user={user}
       backHref="/doctor/appointments"
+      editHref={`/doctor/appointments/${appointment.id}/edit`}
     />
   );
 }
