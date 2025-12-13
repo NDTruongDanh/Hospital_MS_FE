@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Hospital Management System (HMS) - Frontend
 
-## Getting Started
+A comprehensive web application for managing hospital operations, built with Next.js, React, and TypeScript.
 
-First, run the development server:
+## 📖 Documentation
+
+**👉 [Read the Complete Project Guide](./PROJECT_GUIDE.md)** - Comprehensive documentation covering setup, architecture, development workflow, and more.
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+ (recommended: 20+)
+- pnpm (or npm/yarn)
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Install dependencies
+pnpm install
+
+# Start development server
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Available Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm dev          # Start development server
+pnpm build        # Build for production
+pnpm start        # Start production server
+pnpm lint         # Run ESLint
+pnpm format       # Format code with Prettier
+```
 
-## Learn More
+## 🎯 Project Overview
 
-To learn more about Next.js, take a look at the following resources:
+**HMS (Hospital Management System)** is a role-based application for managing hospital operations:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Patient Management** - Registration, profiles, medical history
+- **Appointment Scheduling** - Booking, rescheduling, cancellation
+- **Medical Examinations** - Exam records, prescriptions
+- **Billing & Invoicing** - Payment processing
+- **Human Resources** - Employee, department, schedule management
+- **Medicine Inventory** - Stock management
+- **Reports & Analytics** - Statistical reports
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### User Roles
 
-## Deploy on Vercel
+- **ADMIN** - Full system access
+- **DOCTOR** - Medical operations (appointments, examinations, prescriptions)
+- **NURSE** - Clinical support (view records)
+- **RECEPTIONIST** - Front desk (patient registration, appointment booking)
+- **PATIENT** - Self-service portal
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🛠 Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **UI**: Tailwind CSS + shadcn/ui
+- **State Management**: TanStack Query (React Query)
+- **Forms**: React Hook Form + Zod
+- **HTTP Client**: Axios
+- **Testing**: Playwright
+
+## 📚 Additional Resources
+
+- **[PROJECT_GUIDE.md](./PROJECT_GUIDE.md)** - Complete project documentation
+- **[DOCS/](./DOCS/)** - Detailed documentation and specifications
+- **[DOCS/TEST_ACCOUNTS.md](./DOCS/TEST_ACCOUNTS.md)** - Test account credentials
+- **[DOCS/CONTRIBUTING.md](./DOCS/CONTRIBUTING.md)** - Contribution guidelines
+
+## 🔗 External Links
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [React Query Documentation](https://tanstack.com/query)
+- [shadcn/ui Documentation](https://ui.shadcn.com)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+
+---
+
+For detailed information, please refer to the [PROJECT_GUIDE.md](./PROJECT_GUIDE.md).
