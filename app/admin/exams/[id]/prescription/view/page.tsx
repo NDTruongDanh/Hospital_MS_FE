@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { PrescriptionDetailView } from "../../../_components/PrescriptionDetailView";
 import { useAuth } from "@/contexts/AuthContext";
 import { RoleGuard } from "@/components/auth/RoleGuard";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function PrescriptionDetailPage() {
   const { user } = useAuth();
@@ -15,12 +16,17 @@ export default function PrescriptionDetailPage() {
   const params = useParams();
   const examId = params.id as string;
 
-  const { data: prescription, isLoading, isError, error } = usePrescriptionByExam(examId);
+  const {
+    data: prescription,
+    isLoading,
+    isError,
+    error,
+  } = usePrescriptionByExam(examId);
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Spinner size="lg" className="text-primary" />
       </div>
     );
   }
@@ -31,7 +37,8 @@ export default function PrescriptionDetailPage() {
         <Alert variant="destructive">
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>
-            Failed to load prescription: {error?.message || "An unknown error occurred."}
+            Failed to load prescription:{" "}
+            {error?.message || "An unknown error occurred."}
             {error?.response?.status === 404 && (
               <p>No prescription found for this medical exam.</p>
             )}
@@ -53,7 +60,7 @@ export default function PrescriptionDetailPage() {
             No prescription was found for this medical exam.
           </AlertDescription>
         </Alert>
-         <div className="flex justify-center mt-4">
+        <div className="flex justify-center mt-4">
           <Button onClick={() => router.back()}>Go Back</Button>
         </div>
       </div>
@@ -61,8 +68,11 @@ export default function PrescriptionDetailPage() {
   }
 
   return (
-     <RoleGuard allowedRoles={["ADMIN", "DOCTOR", "NURSE", "PATIENT"]}>
-        <PrescriptionDetailView prescription={prescription} userRole={user?.role} />
+    <RoleGuard allowedRoles={["ADMIN", "DOCTOR", "NURSE", "PATIENT"]}>
+      <PrescriptionDetailView
+        prescription={prescription}
+        userRole={user?.role}
+      />
     </RoleGuard>
   );
 }

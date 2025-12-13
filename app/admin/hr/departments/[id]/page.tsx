@@ -10,9 +10,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 import { useDepartment } from "@/hooks/queries/useHr";
 import { DepartmentStatusBadge } from "../../_components/department-status-badge";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function DepartmentViewPage() {
   const params = useParams();
@@ -24,7 +24,7 @@ export default function DepartmentViewPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-10">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Spinner className="text-muted-foreground" />
       </div>
     );
   }

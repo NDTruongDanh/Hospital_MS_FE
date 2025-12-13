@@ -31,9 +31,13 @@ import {
 import { cn } from "@/lib/utils";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 
-import { useAppointment, useUpdateAppointment } from "@/hooks/queries/useAppointment";
+import {
+  useAppointment,
+  useUpdateAppointment,
+} from "@/hooks/queries/useAppointment";
 import { TimeSlotPicker } from "@/components/appointment/TimeSlotPicker";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 
 // Schema is slightly different for admin/staff: they can't change patient/doctor
 const appointmentFormSchema = z.object({
@@ -56,7 +60,8 @@ function EditAppointmentForm() {
   const params = useParams();
   const id = params.id as string;
 
-  const { data: appointment, isLoading: isLoadingAppointment } = useAppointment(id);
+  const { data: appointment, isLoading: isLoadingAppointment } =
+    useAppointment(id);
   const updateMutation = useUpdateAppointment();
 
   const form = useForm<FormValues>({
@@ -106,10 +111,10 @@ function EditAppointmentForm() {
         onSuccess: () => {
           router.push(`/admin/appointments/${id}`);
         },
-      },
+      }
     );
   };
-  
+
   if (isLoadingAppointment) {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
@@ -133,7 +138,8 @@ function EditAppointmentForm() {
             Reschedule Appointment
           </h1>
           <p className="text-muted-foreground">
-            Reschedule or update appointment details. Patient and Doctor are read-only.
+            Reschedule or update appointment details. Patient and Doctor are
+            read-only.
           </p>
         </div>
       </div>
@@ -141,25 +147,31 @@ function EditAppointmentForm() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <Card>
-            <CardHeader><CardTitle className="text-lg">Patient & Doctor Information</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-lg">
+                Patient & Doctor Information
+              </CardTitle>
+            </CardHeader>
             <CardContent className="space-y-4">
               <FormItem>
                 <FormLabel>Patient</FormLabel>
                 <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                    {appointment?.patient.fullName}
+                  {appointment?.patient.fullName}
                 </div>
               </FormItem>
               <FormItem>
                 <FormLabel>Doctor</FormLabel>
                 <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                    {appointment?.doctor.fullName}
+                  {appointment?.doctor.fullName}
                 </div>
               </FormItem>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="text-lg">Schedule Selection</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-lg">Schedule Selection</CardTitle>
+            </CardHeader>
             <CardContent className="space-y-6">
               <FormField
                 control={form.control}
@@ -172,10 +184,15 @@ function EditAppointmentForm() {
                         <FormControl>
                           <Button
                             variant="outline"
-                            className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
                           >
                             <CalendarDays className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "MMMM d, yyyy") : "Select a date"}
+                            {field.value
+                              ? format(field.value, "MMMM d, yyyy")
+                              : "Select a date"}
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
@@ -202,7 +219,9 @@ function EditAppointmentForm() {
                     <FormLabel>Time Slot *</FormLabel>
                     <TimeSlotPicker
                       doctorId={appointment?.doctor.id || ""}
-                      date={watchedDate ? format(watchedDate, "yyyy-MM-dd") : ""}
+                      date={
+                        watchedDate ? format(watchedDate, "yyyy-MM-dd") : ""
+                      }
                       selectedSlot={field.value}
                       onSelect={field.onChange}
                     />
@@ -214,7 +233,9 @@ function EditAppointmentForm() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="text-lg">Appointment Details</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-lg">Appointment Details</CardTitle>
+            </CardHeader>
             <CardContent className="space-y-6">
               <FormField
                 control={form.control}
@@ -223,10 +244,20 @@ function EditAppointmentForm() {
                   <FormItem>
                     <FormLabel>Type *</FormLabel>
                     <FormControl>
-                      <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-wrap gap-4">
-                        <RadioGroupItem value="CONSULTATION" id="consultation" /><Label htmlFor="consultation">Consultation</Label>
-                        <RadioGroupItem value="FOLLOW_UP" id="follow_up" /><Label htmlFor="follow_up">Follow-up</Label>
-                        <RadioGroupItem value="EMERGENCY" id="emergency" /><Label htmlFor="emergency">Emergency</Label>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        className="flex flex-wrap gap-4"
+                      >
+                        <RadioGroupItem
+                          value="CONSULTATION"
+                          id="consultation"
+                        />
+                        <Label htmlFor="consultation">Consultation</Label>
+                        <RadioGroupItem value="FOLLOW_UP" id="follow_up" />
+                        <Label htmlFor="follow_up">Follow-up</Label>
+                        <RadioGroupItem value="EMERGENCY" id="emergency" />
+                        <Label htmlFor="emergency">Emergency</Label>
                       </RadioGroup>
                     </FormControl>
                     <FormMessage />
@@ -241,7 +272,11 @@ function EditAppointmentForm() {
                   <FormItem>
                     <FormLabel>Reason for Visit *</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Describe symptoms..." className="min-h-[100px] resize-none" {...field} />
+                      <Textarea
+                        placeholder="Describe symptoms..."
+                        className="min-h-[100px] resize-none"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -255,7 +290,11 @@ function EditAppointmentForm() {
                   <FormItem>
                     <FormLabel>Notes (Staff only)</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Additional notes..." className="min-h-[100px] resize-none" {...field} />
+                      <Textarea
+                        placeholder="Additional notes..."
+                        className="min-h-[100px] resize-none"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -269,7 +308,9 @@ function EditAppointmentForm() {
               <Link href={`/admin/appointments/${id}`}>Cancel</Link>
             </Button>
             <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {updateMutation.isPending && (
+                <Spinner size="sm" className="mr-2" />
+              )}
               Save Changes
             </Button>
           </div>
@@ -279,11 +320,10 @@ function EditAppointmentForm() {
   );
 }
 
-
 export default function EditAppointmentPage() {
-    return (
-        <RoleGuard allowedRoles={["ADMIN", "NURSE", "RECEPTIONIST"]}>
-            <EditAppointmentForm />
-        </RoleGuard>
-    );
+  return (
+    <RoleGuard allowedRoles={["ADMIN", "NURSE", "RECEPTIONIST"]}>
+      <EditAppointmentForm />
+    </RoleGuard>
+  );
 }

@@ -35,7 +35,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { ScheduleRequest } from "@/interfaces/hr";
 import { useEmployees } from "@/hooks/queries/useHr";
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 const formSchema = z
   .object({
@@ -53,7 +54,7 @@ const formSchema = z
       const todayStart = new Date(
         today.getFullYear(),
         today.getMonth(),
-        today.getDate(),
+        today.getDate()
       );
       if (dateVal < todayStart) {
         ctx.addIssue({
@@ -269,7 +270,7 @@ export default function ScheduleForm({
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <Spinner size="sm" className="mr-2" />}
             Save
           </Button>
         </div>

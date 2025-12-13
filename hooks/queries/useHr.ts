@@ -163,14 +163,16 @@ export const useDoctorSchedules = ({
   status,
   page,
   size,
+  enabled = true,
 }: {
   departmentId?: string;
   doctorId?: string;
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
   status?: string;
   page?: number;
   size?: number;
+  enabled?: boolean;
 }) => {
   return useQuery({
     queryKey: [
@@ -187,6 +189,7 @@ export const useDoctorSchedules = ({
         page,
         size,
       }),
+    enabled,
   });
 };
 

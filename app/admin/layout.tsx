@@ -111,7 +111,7 @@ export default function AdminLayout({
 
   // Filter navigation items based on user role
   const navItems = allNavItems.filter(
-    (item) => user && item.roles.includes(user.role),
+    (item) => user && item.roles.includes(user.role)
   );
 
   return (

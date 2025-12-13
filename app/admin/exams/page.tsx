@@ -28,6 +28,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { MedicalExamListItem } from "@/interfaces/medical-exam";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { useEmployees } from "@/hooks/queries/useHr";
+import { Spinner } from "@/components/ui/spinner";
 
 const formatDate = (value: string) =>
   new Date(value).toLocaleString("en-US", {
@@ -53,7 +54,6 @@ export default function MedicalExamListPage() {
     size,
     startDate: startDate || undefined,
     endDate: endDate || undefined,
-    search: debouncedSearch || undefined,
     doctorId: doctorId !== "ALL" ? doctorId : undefined,
   });
 
@@ -153,8 +153,7 @@ export default function MedicalExamListPage() {
                     <TableRow>
                       <TableCell colSpan={6} className="py-10 text-center">
                         <span className="inline-flex items-center gap-2 text-muted-foreground">
-                          <Loader2 className="h-4 w-4 animate-spin" /> Loading
-                          exams...
+                          <Spinner size="sm" /> Loading exams...
                         </span>
                       </TableCell>
                     </TableRow>

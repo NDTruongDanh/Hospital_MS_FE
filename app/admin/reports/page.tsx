@@ -34,6 +34,7 @@ import {
   useDashboardReports,
   useClearReportCache,
 } from "@/hooks/queries/useReports";
+import { Spinner } from "@/components/ui/spinner";
 
 // Simple chart components (can be replaced with a proper charting library)
 function SimplePieChart({
@@ -206,7 +207,7 @@ export default function ReportsDashboardPage() {
           <AlertDialogTrigger asChild>
             <Button variant="outline" disabled={isRefreshing}>
               {isRefreshing ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Spinner size="sm" className="mr-2" />
               ) : (
                 <RefreshCw className="mr-2 h-4 w-4" />
               )}

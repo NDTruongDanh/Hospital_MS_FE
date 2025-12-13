@@ -4,6 +4,14 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 
+export type UserRole =
+  | "ADMIN"
+  | "DOCTOR"
+  | "PATIENT"
+  | "RECEPTIONIST"
+  | "NURSE"
+  | "UNKNOWN";
+
 type User = {
   email: string;
   role: string;
@@ -68,6 +76,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     Cookies.set("refreshToken", response.refreshToken, { expires: 30 });
     Cookies.set("userEmail", response.email, { expires: 7 });
     Cookies.set("userRole", response.role, { expires: 7 });
+
+    // Sync to localStorage for compatibility
+    localStorage.setItem("accessToken", response.accessToken);
+    localStorage.setItem("userEmail", response.email);
+    localStorage.setItem("userRole", response.role);
 
     // Store doctorId in localStorage for doctor-specific pages
     if (response.role === "DOCTOR" && userDetails?.employeeId) {
@@ -135,6 +148,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Clear relevant local storage
     localStorage.removeItem("userEmployeeId");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userRole");
 
     // Clear state
     setUser(null);

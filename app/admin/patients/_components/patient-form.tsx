@@ -26,7 +26,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import MyDatePicker from "@/app/admin/_components/MyDatePicker";
 import {
@@ -39,6 +39,7 @@ import { patientFormSchema, PatientFormValues } from "@/lib/schemas/patient";
 import { TagInput } from "@/components/ui/tag-input";
 import { useEffect } from "react";
 import { AccountSearchSelect } from "@/components/ui/account-search-select";
+import { Spinner } from "@/components/ui/spinner";
 
 // Re-export for convenience
 export { patientFormSchema, type PatientFormValues };
@@ -125,7 +126,7 @@ export function PatientForm({
   const handleCancel = () => {
     if (confirmOnCancel && form.formState.isDirty) {
       const confirmed = confirm(
-        "Bạn có chắc chắn muốn hủy? Các thay đổi chưa lưu sẽ mất.",
+        "Bạn có chắc chắn muốn hủy? Các thay đổi chưa lưu sẽ mất."
       );
       if (!confirmed) return;
     }
@@ -477,7 +478,7 @@ export function PatientForm({
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <Spinner size="sm" className="mr-2" />}
             {initialData ? "Update Patient" : "Create Patient"}
           </Button>
         </div>

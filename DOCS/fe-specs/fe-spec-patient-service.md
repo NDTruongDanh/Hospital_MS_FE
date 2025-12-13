@@ -47,7 +47,7 @@ The Patient Service manages patient demographic information, health profiles, an
 | Route                         | Screen Name      | Component            | Access                             | Priority |
 | ----------------------------- | ---------------- | -------------------- | ---------------------------------- | -------- |
 | `/admin/patients`             | Patient List     | `PatientListPage`    | ADMIN, DOCTOR, NURSE, RECEPTIONIST | P0       |
-| `/admin/patients/new`         | Register Patient | `PatientFormPage`    | ADMIN, DOCTOR, NURSE, RECEPTIONIST | P0       |
+| `/admin/patients/new`         | Register Patient | `PatientFormPage`    | ADMIN, RECEPTIONIST | P0       |
 | `/admin/patients/:id`         | Patient Detail   | `PatientDetailPage`  | ADMIN, DOCTOR, NURSE, RECEPTIONIST | P0       |
 | `/admin/patients/:id/edit`    | Edit Patient     | `PatientFormPage`    | ADMIN, DOCTOR, NURSE, RECEPTIONIST | P0       |
 | `/admin/patients/:id/history` | Patient History  | `PatientHistoryPage` | ADMIN, DOCTOR, NURSE               | P1       |

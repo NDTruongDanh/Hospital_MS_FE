@@ -17,10 +17,10 @@ import {
   useUpdateMedicalExam,
 } from "@/hooks/queries/useMedicalExam";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
+import { useAuth, UserRole } from "@/contexts/AuthContext"; // Import useAuth
 
 import Link from "next/link";
-import { UserRole } from "@/hooks/use-auth";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function EditMedicalExamPage() {
   const params = useParams<{ id: string }>();
@@ -39,7 +39,7 @@ export default function EditMedicalExamPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Spinner className="text-muted-foreground" />
         <span className="ml-2 text-muted-foreground">
           Loading exam details...
         </span>
@@ -84,7 +84,7 @@ export default function EditMedicalExamPage() {
 
   const handleSubmit = async (
     data: MedicalExamFormValues,
-    newStatus: "PENDING" | "FINALIZED",
+    newStatus: "PENDING" | "FINALIZED"
   ) => {
     try {
       // Admins can change status to FINALIZED regardless of exam.status,

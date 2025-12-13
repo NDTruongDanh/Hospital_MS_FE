@@ -6,7 +6,6 @@ import Link from "next/link";
 import { format } from "date-fns";
 import {
   ArrowLeft,
-  Loader2,
   Pencil,
   XCircle,
   CheckCircle2,
@@ -41,6 +40,7 @@ import {
   CancelAppointmentDialog,
 } from ".";
 import { Appointment } from "@/interfaces/appointment";
+import { Spinner } from "@/components/ui/spinner";
 
 interface AppointmentDetailViewProps {
   appointment: Appointment;
@@ -54,6 +54,9 @@ interface AppointmentDetailViewProps {
   } | null;
   backHref: string;
   editHref?: string;
+  createExamHref?: string;
+  viewExamHref?: string;
+  patientProfileBaseHref?: string; // Base path for patient profile link (default: /admin/patients)
 }
 
 export function AppointmentDetailView({
@@ -61,6 +64,9 @@ export function AppointmentDetailView({
   user,
   backHref,
   editHref,
+  createExamHref,
+  viewExamHref,
+  patientProfileBaseHref = "/admin/patients",
 }: AppointmentDetailViewProps) {
   const router = useRouter();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -76,7 +82,7 @@ export function AppointmentDetailView({
   const canCancel =
     isScheduled &&
     ["ADMIN", "NURSE", "RECEPTIONIST", "DOCTOR", "PATIENT"].includes(
-      user?.role || "",
+      user?.role || ""
     );
   const canComplete =
     isScheduled &&
@@ -100,7 +106,7 @@ export function AppointmentDetailView({
         onSuccess: () => {
           setCancelDialogOpen(false);
         },
-      },
+      }
     );
   };
 
@@ -108,7 +114,9 @@ export function AppointmentDetailView({
     completeMutation.mutate(appointment.id, {
       onSuccess: () => {
         setCompleteDialogOpen(false);
-        router.push(`/admin/exams/new?appointmentId=${appointment.id}`);
+        if (createExamHref) {
+          router.push(createExamHref);
+        }
       },
     });
   };
@@ -188,7 +196,9 @@ export function AppointmentDetailView({
                 className="h-auto p-0 text-primary"
                 asChild
               >
-                <Link href={`/admin/patients/${appointment.patient.id}`}>
+                <Link
+                  href={`${patientProfileBaseHref}/${appointment.patient.id}`}
+                >
                   View Patient Profile →
                 </Link>
               </Button>
@@ -275,7 +285,7 @@ export function AppointmentDetailView({
               <p className="font-medium">
                 {format(
                   new Date(appointment.cancelledAt),
-                  "MMMM d, yyyy 'at' h:mm a",
+                  "MMMM d, yyyy 'at' h:mm a"
                 )}
               </p>
             </div>
@@ -298,16 +308,15 @@ export function AppointmentDetailView({
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-3">
-              <Button variant="outline" asChild>
-                <Link href={`/admin/exams?appointmentId=${appointment.id}`}>
-                  View Medical Exam Record
-                </Link>
-              </Button>
-              <Button asChild>
-                <Link href={`/admin/exams/new?appointmentId=${appointment.id}`}>
-                  Create Medical Exam
-                </Link>
-              </Button>
+              {appointment.medicalExamId && viewExamHref ? (
+                <Button asChild>
+                  <Link href={viewExamHref}>View Medical Exam Record</Link>
+                </Button>
+              ) : createExamHref ? (
+                <Button asChild>
+                  <Link href={createExamHref}>Create Medical Exam</Link>
+                </Button>
+              ) : null}
             </div>
           </CardContent>
         </Card>
@@ -326,7 +335,7 @@ export function AppointmentDetailView({
               <p className="font-medium">
                 {format(
                   new Date(appointment.createdAt),
-                  "MMM d, yyyy 'at' h:mm a",
+                  "MMM d, yyyy 'at' h:mm a"
                 )}
               </p>
             </div>
@@ -335,7 +344,7 @@ export function AppointmentDetailView({
               <p className="font-medium">
                 {format(
                   new Date(appointment.updatedAt),
-                  "MMM d, yyyy 'at' h:mm a",
+                  "MMM d, yyyy 'at' h:mm a"
                 )}
                 {appointment.updatedBy && (
                   <span className="text-muted-foreground">
@@ -375,7 +384,7 @@ export function AppointmentDetailView({
               disabled={completeMutation.isPending}
             >
               {completeMutation.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Spinner size="sm" className="mr-2" />
               )}
               Confirm
             </AlertDialogAction>

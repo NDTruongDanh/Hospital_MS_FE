@@ -10,7 +10,7 @@ import { PrescriptionForm } from "../../_components/prescription-form";
 import { PrescriptionFormValues } from "@/lib/schemas/medical-exam";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function ManagePrescriptionPage() {
   const params = useParams();
@@ -62,7 +63,7 @@ export default function ManagePrescriptionPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Spinner className="text-muted-foreground" />
         <span className="ml-2 text-muted-foreground">
           Loading exam details...
         </span>

@@ -36,6 +36,7 @@ import { EmptyReportState } from "@/components/reports/EmptyReportState";
 import { CacheInfoBanner } from "@/components/reports/CacheInfoBanner";
 import { RetryButton } from "@/components/reports/RetryButton";
 import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 
 // Pie Chart Component
 function PieChart({
@@ -226,10 +227,10 @@ export default function PatientActivityPage() {
   const [role, setRole] = useState<string>("ADMIN");
   const presets = useDateRangePresets();
   const [startDate, setStartDate] = useState<Date | undefined>(
-    presets.thisMonth.startDate,
+    presets.thisMonth.startDate
   );
   const [endDate, setEndDate] = useState<Date | undefined>(
-    presets.thisMonth.endDate,
+    presets.thisMonth.endDate
   );
   const [status, setStatus] = useState<string>("ALL");
 
@@ -291,16 +292,16 @@ export default function PatientActivityPage() {
   const handleExport = () => {
     const rows: any[] = [];
     data?.patientsByGender?.forEach((g) =>
-      rows.push({ section: "gender", label: g.gender, value: g.count }),
+      rows.push({ section: "gender", label: g.gender, value: g.count })
     );
     // data?.demographics?.ageGroups?.forEach((a) =>
     //   rows.push({ section: "age", label: a.range, value: a.count })
     // );
     data?.topDiagnoses?.forEach((d) =>
-      rows.push({ section: "diagnosis", label: d.diagnosis, value: d.count }),
+      rows.push({ section: "diagnosis", label: d.diagnosis, value: d.count })
     );
     data?.registrationTrend?.forEach((t) =>
-      rows.push({ section: "trend", date: t.date, value: t.newPatients }),
+      rows.push({ section: "trend", date: t.date, value: t.newPatients })
     );
     exportToCSV(rows, "patient-activity.csv");
   };
@@ -365,7 +366,7 @@ export default function PatientActivityPage() {
               }}
               disabled={isLoading}
             >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading && <Spinner size="sm" className="mr-2" />}
               Generate Report
             </Button>
           </div>

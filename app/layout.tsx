@@ -20,7 +20,7 @@ export default function RootLayout({
 }) {
   const queryClient = useMemo(() => new QueryClient(), []);
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${poppins.variable} font-sans text-[16px] antialiased`}>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>

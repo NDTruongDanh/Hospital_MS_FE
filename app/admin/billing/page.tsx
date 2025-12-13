@@ -56,7 +56,7 @@ export default function InvoiceListPage() {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [sort, setSort] = useState("invoiceDate,desc");
-  const debouncedSearch = useDebounce(search, 500);
+  const debouncedSearch = useDebounce(search, 300);
 
   const { data, isLoading } = useInvoiceList({
     page,
@@ -246,7 +246,7 @@ export default function InvoiceListPage() {
               variant="outline"
               className={cn(
                 "w-[150px] justify-start text-left font-normal",
-                !startDate && "text-muted-foreground",
+                !startDate && "text-muted-foreground"
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
@@ -270,7 +270,7 @@ export default function InvoiceListPage() {
               variant="outline"
               className={cn(
                 "w-[150px] justify-start text-left font-normal",
-                !endDate && "text-muted-foreground",
+                !endDate && "text-muted-foreground"
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />

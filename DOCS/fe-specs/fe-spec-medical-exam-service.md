@@ -93,12 +93,17 @@ The Medical Exam Service manages medical examination records created after compl
 │                          ↓                                  │
 │ System prompts: "Create Medical Exam Record?"               │
 │                          ↓                                  │
-│ Doctor clicks "Create Exam" → Navigate to /doctor/exams/new │
+│ Doctor clicks "Create Exam"                                 │
+│     → Navigate to /doctor/exams/new?appointmentId={id}      │
 │                          ↓                                  │
-│ System pre-fills: Patient info, Doctor info, Appointment ID │
+│ System fetches appointment details and displays:            │
+│   - Patient info (read-only, from appointment)              │
+│   - Doctor info (read-only, from appointment)               │
+│   - Appointment details (read-only, from appointment)       │
+│   - NO appointment selector shown                           │
 │                          ↓                                  │
-│ Doctor enters:                                              │
-│   - Diagnosis* (primary medical condition)                  │
+│ Doctor enters clinical data:                                │
+│   - Diagnosis (primary medical condition)                   │
 │   - Symptoms (patient-reported)                             │
 │   - Treatment plan                                          │
 │   - Vitals (temperature, BP, heart rate, weight, height)    │
@@ -115,17 +120,24 @@ The Medical Exam Service manages medical examination records created after compl
 │   └────┬────┘    └──────┬───────┘                          │
 │        ↓                ↓                                   │
 │   Toast "Created"   Toast error message                     │
-│   Navigate to detail   Stay on form                         │
-│        ↓                                                    │
+│        ↓            Stay on form                            │
 │   Prompt: "Add Prescription?"                               │
+│         ↓                    ↓                              │
+│   [Add Prescription]    [Later]                             │
+│         ↓                    ↓                              │
+│   /doctor/exams/      /doctor/exams/{id}                    │
+│   {id}/prescription   (detail page)                         │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 **Acceptance Criteria:**
 
 - [ ] Can only create exam for COMPLETED appointments
-- [ ] Appointment selector shows only completed appointments without existing exams
-- [ ] Patient and Doctor info auto-populated from appointment (read-only)
+- [ ] When `appointmentId` exists in URL query, auto-fetch and display appointment details
+- [ ] Appointment selector is hidden (not shown)
+- [ ] Patient and Doctor info displayed as read-only (cannot change)
+- [ ] Appointment details (date, time, reason) shown in read-only section
+- [ ] Form focuses on clinical data entry (Diagnosis, Symptoms, Treatment, Vitals, Notes)
 - [ ] Vitals section with proper input types and ranges:
   - Temperature: 30.0 - 45.0 °C (decimal input)
   - Blood Pressure Systolic: 50 - 250 mmHg (integer)
@@ -137,8 +149,8 @@ The Medical Exam Service manages medical examination records created after compl
 - [ ] Error 400 APPOINTMENT_NOT_COMPLETED: Show "Appointment must be completed first"
 - [ ] Error 409 EXAM_EXISTS: Show "Medical exam already exists for this appointment"
 - [ ] Error 404 APPOINTMENT_NOT_FOUND: Show "Appointment not found"
-- [ ] Success: Toast "Medical exam created successfully", navigate to detail page
-- [ ] After creation, prompt to create prescription
+- [ ] Success: Toast "Medical exam created successfully"
+- [ ] After creation, show dialog: "Add Prescription?" with options "Add Prescription" or "Later"
 
 ---
 
@@ -475,17 +487,31 @@ The Medical Exam Service manages medical examination records created after compl
 │ (Edit mode: "⏱️ 23h 45m remaining to edit")                         │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  Appointment Information (Read-only)                                │
+│  Appointment Information (Auto-loaded from URL)                     │
 │  ┌─────────────────────────────────────────────────────────────┐   │
-│  │ Appointment*    [Select completed appointment...        ▼]   │   │
-│  │                 (Create mode only - shows appointments       │   │
-│  │                  without existing exams)                     │   │
+│  │ ┌───────────────────────────────────────────────────────┐   │   │
+│  │ │ 👤 Patient Information                                │   │   │
+│  │ │ Name:     Nguyen Van A                                │   │   │
+│  │ │ DOB:      January 15, 1985 (39 years old)             │   │   │
+│  │ │ Gender:   Male                                        │   │   │
+│  │ └───────────────────────────────────────────────────────┘   │   │
 │  │                                                              │   │
-│  │ Patient:        Nguyen Van A                                 │   │
-│  │ Appointment:    December 5, 2025 at 09:00 AM                 │   │
-│  │ Type:           Consultation                                 │   │
-│  │ Reason:         Chest pain                                   │   │
+│  │ ┌───────────────────────────────────────────────────────┐   │   │
+│  │ │ 👨‍⚕️ Doctor Information                                │   │   │
+│  │ │ Name:     Dr. Nguyen Van Hung                         │   │   │
+│  │ │ Specialty: Cardiology                                 │   │   │
+│  │ └───────────────────────────────────────────────────────┘   │   │
+│  │                                                              │   │
+│  │ ┌───────────────────────────────────────────────────────┐   │   │
+│  │ │ 📅 Appointment Details                                │   │   │
+│  │ │ Date & Time: December 5, 2025 at 09:00 AM             │   │   │
+│  │ │ Type:        Consultation                             │   │   │
+│  │ │ Reason:      Chest pain                               │   │   │
+│  │ │ Status:      COMPLETED                                │   │   │
+│  │ └───────────────────────────────────────────────────────┘   │   │
 │  └─────────────────────────────────────────────────────────────┘   │
+│  Note: Appointment data is fetched automatically from URL          │
+│        parameter (appointmentId) and displayed as read-only         │
 │                                                                     │
 │  Clinical Findings                                                  │
 │  ┌─────────────────────────────────────────────────────────────┐   │
@@ -519,19 +545,19 @@ The Medical Exam Service manages medical examination records created after compl
 
 #### Form Fields
 
-| Field                    | Type     | Required | Validation                          | Edit Mode |
-| ------------------------ | -------- | -------- | ----------------------------------- | --------- |
-| `appointmentId`          | Select   | Yes      | Must be COMPLETED, no existing exam | Read-only |
-| `diagnosis`              | Textarea | No       | Max 2000 chars                      | Editable  |
-| `symptoms`               | Textarea | No       | Max 2000 chars                      | Editable  |
-| `treatment`              | Textarea | No       | Max 2000 chars                      | Editable  |
-| `temperature`            | Number   | No       | 30.0 - 45.0 (°C)                    | Editable  |
-| `bloodPressureSystolic`  | Number   | No       | 50 - 250 (mmHg)                     | Editable  |
-| `bloodPressureDiastolic` | Number   | No       | 30 - 150 (mmHg)                     | Editable  |
-| `heartRate`              | Number   | No       | 30 - 200 (bpm)                      | Editable  |
-| `weight`                 | Number   | No       | > 0 (kg)                            | Editable  |
-| `height`                 | Number   | No       | > 0 (cm)                            | Editable  |
-| `notes`                  | Textarea | No       | Max 2000 chars                      | Editable  |
+| Field                    | Type      | Required | Validation                                                  | Edit Mode |
+| ------------------------ | --------- | -------- | ----------------------------------------------------------- | --------- |
+| `appointmentId`          | URL Param | Yes      | Auto-loaded from query string, displayed as read-only cards | Read-only |
+| `diagnosis`              | Textarea  | No       | Max 2000 chars                                              | Editable  |
+| `symptoms`               | Textarea  | No       | Max 2000 chars                                              | Editable  |
+| `treatment`              | Textarea  | No       | Max 2000 chars                                              | Editable  |
+| `temperature`            | Number    | No       | 30.0 - 45.0 (°C)                                            | Editable  |
+| `bloodPressureSystolic`  | Number    | No       | 50 - 250 (mmHg)                                             | Editable  |
+| `bloodPressureDiastolic` | Number    | No       | 30 - 150 (mmHg)                                             | Editable  |
+| `heartRate`              | Number    | No       | 30 - 200 (bpm)                                              | Editable  |
+| `weight`                 | Number    | No       | > 0 (kg)                                                    | Editable  |
+| `height`                 | Number    | No       | > 0 (cm)                                                    | Editable  |
+| `notes`                  | Textarea  | No       | Max 2000 chars                                              | Editable  |
 
 #### Vital Signs Validation Ranges
 
@@ -1052,14 +1078,14 @@ const medicalExamService = {
   // Get exam by appointment ID
   getByAppointment: (appointmentId: string) =>
     api.get<{ status: string; data: MedicalExam }>(
-      `${BASE_URL}/by-appointment/${appointmentId}`,
+      `${BASE_URL}/by-appointment/${appointmentId}`
     ),
 
   // List exams with filters
   getList: (params: MedicalExamListParams) =>
     api.get<{ status: string; data: PaginatedResponse<MedicalExamListItem> }>(
       BASE_URL,
-      { params },
+      { params }
     ),
 
   // Update exam (within 24 hours)
@@ -1070,29 +1096,29 @@ const medicalExamService = {
   createPrescription: (examId: string, data: PrescriptionCreateRequest) =>
     api.post<{ status: string; data: Prescription }>(
       `${BASE_URL}/${examId}/prescriptions`,
-      data,
+      data
     ),
 
   // Get prescription by exam ID
   getPrescriptionByExam: (examId: string) =>
     api.get<{ status: string; data: Prescription }>(
-      `${BASE_URL}/${examId}/prescription`,
+      `${BASE_URL}/${examId}/prescription`
     ),
 
   // Get prescription by ID
   getPrescriptionById: (prescriptionId: string) =>
     api.get<{ status: string; data: Prescription }>(
-      `${BASE_URL}/prescriptions/${prescriptionId}`,
+      `${BASE_URL}/prescriptions/${prescriptionId}`
     ),
 
   // Get prescriptions by patient
   getPrescriptionsByPatient: (
     patientId: string,
-    params?: { page?: number; size?: number },
+    params?: { page?: number; size?: number }
   ) =>
     api.get<{ status: string; data: PaginatedResponse<PrescriptionListItem> }>(
       `${BASE_URL}/prescriptions/by-patient/${patientId}`,
-      { params },
+      { params }
     ),
 };
 
@@ -1175,7 +1201,7 @@ export const useCreateMedicalExam = () => {
     },
     onError: (error: any) => {
       const message = getMedicalExamErrorMessage(
-        error.response?.data?.error?.code,
+        error.response?.data?.error?.code
       );
       toast.error(message);
     },
@@ -1203,7 +1229,7 @@ export const useUpdateMedicalExam = () => {
     },
     onError: (error: any) => {
       const message = getMedicalExamErrorMessage(
-        error.response?.data?.error?.code,
+        error.response?.data?.error?.code
       );
       toast.error(message);
     },
@@ -1234,7 +1260,7 @@ export const usePrescription = (id: string) => {
 // Get prescriptions by patient
 export const usePrescriptionsByPatient = (
   patientId: string,
-  params?: { page?: number; size?: number },
+  params?: { page?: number; size?: number }
 ) => {
   return useQuery({
     queryKey: medicalExamKeys.prescriptionsByPatient(patientId),
@@ -1265,12 +1291,12 @@ export const useCreatePrescription = () => {
         queryKey: medicalExamKeys.detail(variables.examId),
       });
       toast.success(
-        "Prescription created successfully. Invoice has been generated.",
+        "Prescription created successfully. Invoice has been generated."
       );
     },
     onError: (error: any) => {
       const message = getPrescriptionErrorMessage(
-        error.response?.data?.error?.code,
+        error.response?.data?.error?.code
       );
       toast.error(message);
     },

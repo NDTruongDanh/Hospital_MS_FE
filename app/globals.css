@@ -79,6 +79,7 @@
   --border: var(--color-app-border);
   --input: #ffffff;
   --input-background: #f8fafc;
+  --input-border: #cbd5e1;
   --switch-background: #cbd5e1;
   --font-weight-medium: 600;
   --font-weight-normal: 400;
@@ -235,5 +236,19 @@ html {
 
   .animate-fade-in {
     animation: fadeIn 0.6s ease-out both;
+  }
+}
+
+@layer components {
+  /* Enhanced input focus states for better visibility */
+  input:not([type="checkbox"]):not([type="radio"]):focus,
+  textarea:focus,
+  select:focus {
+    @apply border-2 border-primary ring-2 ring-primary/20;
+  }
+
+  /* Info card with gradient background */
+  .info-card-gradient {
+    @apply border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50 to-white;
   }
 }

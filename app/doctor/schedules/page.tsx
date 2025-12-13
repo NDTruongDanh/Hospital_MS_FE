@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { addDays, format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -28,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { useDoctorSchedules } from "@/hooks/queries/useHr";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type ScheduleStatus = "AVAILABLE" | "BOOKED" | "CANCELLED";
 
@@ -37,11 +39,47 @@ const statusTone: Record<ScheduleStatus, string> = {
   CANCELLED: "bg-red-100 text-red-700",
 };
 
+const SchedulePageSkeleton = () => (
+  <div className="page-shell space-y-6">
+    <div>
+      <Skeleton className="h-8 w-48" />
+      <Skeleton className="h-4 w-64 mt-2" />
+    </div>
+    <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+      <Card className="shadow-sm">
+        <CardHeader>
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-4 w-48 mt-1" />
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Skeleton className="h-40 w-full" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-10 w-[180px]" />
+            <Skeleton className="h-10 w-20" />
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="shadow-sm w-full">
+        <CardHeader>
+          <Skeleton className="h-6 w-24" />
+          <Skeleton className="h-4 w-40 mt-1" />
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="p-4 border-t">
+            <Skeleton className="h-10 w-full mb-2" />
+            <Skeleton className="h-10 w-full mb-2" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+);
+
+
 export default function MySchedulesPage() {
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
-    from: new Date(),
-    to: addDays(new Date(), 7),
-  });
+  const router = useRouter();
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | undefined>(undefined);
   const [status, setStatus] = useState<ScheduleStatus | "ALL">("ALL");
   const [doctorId, setDoctorId] = useState<string | undefined>(() => {
     const stored =
@@ -49,12 +87,24 @@ export default function MySchedulesPage() {
     return stored || undefined;
   });
 
+  useEffect(() => {
+    setDateRange({
+        from: new Date(),
+        to: addDays(new Date(), 7),
+    });
+  }, []);
+
   const { data, isLoading, refetch } = useDoctorSchedules({
-    startDate: format(dateRange.from, "yyyy-MM-dd"),
-    endDate: format(dateRange.to, "yyyy-MM-dd"),
+    startDate: dateRange ? format(dateRange.from, "yyyy-MM-dd") : undefined,
+    endDate: dateRange ? format(dateRange.to, "yyyy-MM-dd") : undefined,
     status: status === "ALL" ? undefined : status,
     doctorId,
+    enabled: !!dateRange,
   });
+
+  if (!dateRange) {
+    return <SchedulePageSkeleton />;
+  }
 
   return (
     <div className="page-shell space-y-6">
@@ -81,10 +131,10 @@ export default function MySchedulesPage() {
                   value={format(dateRange.from, "yyyy-MM-dd")}
                   onChange={(e) =>
                     setDateRange((prev) => ({
-                      ...prev,
+                      ...prev!,
                       from: e.target.value
                         ? new Date(e.target.value)
-                        : prev.from,
+                        : prev!.from,
                     }))
                   }
                 />
@@ -97,8 +147,8 @@ export default function MySchedulesPage() {
                   value={format(dateRange.to, "yyyy-MM-dd")}
                   onChange={(e) =>
                     setDateRange((prev) => ({
-                      ...prev,
-                      to: e.target.value ? new Date(e.target.value) : prev.to,
+                      ...prev!,
+                      to: e.target.value ? new Date(e.target.value) : prev!.to,
                     }))
                   }
                 />

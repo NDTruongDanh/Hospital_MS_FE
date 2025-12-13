@@ -43,6 +43,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Spinner } from "@/components/ui/spinner";
 
 type Step = 1 | 2 | 3;
 
@@ -254,7 +255,7 @@ export default function PatientBookingPage() {
             <div className="space-y-4">
               {isLoadingDoctors ? (
                 <div className="flex items-center justify-center py-10">
-                  <Loader2 className="h-8 w-8 animate-spin" />
+                  <Spinner className="h-8 w-8" />
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -310,7 +311,7 @@ export default function PatientBookingPage() {
                 </Label>
                 {isLoadingSlots && (
                   <div className="flex items-center">
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" /> Đang
+                    <Spinner className="h-4 w-4 mr-2" /> Đang
                     tải...
                   </div>
                 )}
@@ -433,7 +434,7 @@ export default function PatientBookingPage() {
               disabled={createMutation.isPending}
             >
               {createMutation.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Spinner className="mr-2 h-4 w-4" />
               )}
               Xác nhận
             </AlertDialogAction>

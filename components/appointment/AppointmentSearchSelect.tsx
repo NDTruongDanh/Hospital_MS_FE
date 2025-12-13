@@ -6,7 +6,10 @@ import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useAppointmentSearch } from "@/hooks/queries/useAppointment";
+import {
+  useAppointmentSearch,
+  useCompletedAppointmentsWithoutExam,
+} from "@/hooks/queries/useAppointment";
 import { Appointment } from "@/interfaces/appointment";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,17 +28,23 @@ import {
 
 interface AppointmentSearchSelectProps {
   onSelect: (appointment: Appointment) => void;
+  mode?: "scheduled" | "completedWithoutExam"; // Add mode prop
 }
 
 export function AppointmentSearchSelect({
   onSelect,
+  mode = "scheduled", // Default to scheduled
 }: AppointmentSearchSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
 
+  // Use different hook based on mode
+  const scheduledQuery = useAppointmentSearch(debouncedSearch);
+  const completedQuery = useCompletedAppointmentsWithoutExam(debouncedSearch);
+
   const { data: appointments, isLoading } =
-    useAppointmentSearch(debouncedSearch);
+    mode === "completedWithoutExam" ? completedQuery : scheduledQuery;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -46,7 +55,9 @@ export function AppointmentSearchSelect({
           aria-expanded={open}
           className="w-full justify-between"
         >
-          Select an appointment...
+          {mode === "completedWithoutExam"
+            ? "Select completed appointment without exam..."
+            : "Select an appointment..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -63,7 +74,11 @@ export function AppointmentSearchSelect({
                 Loading...
               </div>
             )}
-            <CommandEmpty>No scheduled appointments found.</CommandEmpty>
+            <CommandEmpty>
+              {mode === "completedWithoutExam"
+                ? "No completed appointments without exams found."
+                : "No scheduled appointments found."}
+            </CommandEmpty>
             <CommandGroup>
               {appointments?.map((appointment) => (
                 <CommandItem
@@ -82,7 +97,7 @@ export function AppointmentSearchSelect({
                       with {appointment.doctor.fullName} on{" "}
                       {format(
                         new Date(appointment.appointmentTime),
-                        "MMM d, yyyy 'at' h:mm a",
+                        "MMM d, yyyy 'at' h:mm a"
                       )}
                     </p>
                   </div>

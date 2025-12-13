@@ -37,6 +37,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Plus, Search, Loader2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { useDepartments, useDeleteDepartment } from "@/hooks/queries/useHr";
 import { useDebounce } from "@/hooks/useDebounce";
 import { DepartmentStatusBadge } from "../_components/department-status-badge";
@@ -83,7 +84,7 @@ export default function DepartmentsPage() {
     try {
       await deleteMutation.mutateAsync(departmentToDelete.id);
       toast.success(
-        `Department "${departmentToDelete.name}" deleted successfully`,
+        `Department "${departmentToDelete.name}" deleted successfully`
       );
       setDeleteDialogOpen(false);
       setDepartmentToDelete(null);
@@ -177,7 +178,7 @@ export default function DepartmentsPage() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={7} className="py-10 text-center">
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                      <Spinner className="mx-auto" />
                     </TableCell>
                   </TableRow>
                 ) : departments.length ? (
@@ -218,7 +219,7 @@ export default function DepartmentsPage() {
                               className="rounded-full"
                               onClick={() =>
                                 router.push(
-                                  `/admin/hr/departments/${row.id}/edit`,
+                                  `/admin/hr/departments/${row.id}/edit`
                                 )
                               }
                             >
@@ -326,7 +327,7 @@ export default function DepartmentsPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Spinner size="sm" className="mr-2" />
               ) : null}
               Delete
             </AlertDialogAction>

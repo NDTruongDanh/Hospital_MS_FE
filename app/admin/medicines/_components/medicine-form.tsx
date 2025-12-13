@@ -21,11 +21,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
 import MyDatePicker from "@/app/admin/_components/MyDatePicker";
 import { Medicine } from "@/interfaces/medicine";
 import { medicineFormSchema, MedicineFormValues } from "@/lib/schemas/medicine";
 import { useCategories } from "@/hooks/queries/useCategory";
+import { Spinner } from "@/components/ui/spinner";
 
 export { medicineFormSchema, type MedicineFormValues };
 
@@ -275,7 +275,7 @@ export function MedicineForm({
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <Spinner size="sm" className="mr-2" />}
             {initialData ? "Update Medicine" : "Create Medicine"}
           </Button>
         </div>

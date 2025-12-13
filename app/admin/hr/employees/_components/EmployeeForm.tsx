@@ -30,7 +30,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Employee, EmployeeRequest } from "@/interfaces/hr";
 import { useDepartments } from "@/hooks/queries/useHr";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 const formSchema = z
   .object({
@@ -396,7 +396,7 @@ export default function EmployeeForm({
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <Spinner size="sm" className="mr-2" />}
             {initialData ? "Update Employee" : "Create Employee"}
           </Button>
         </div>

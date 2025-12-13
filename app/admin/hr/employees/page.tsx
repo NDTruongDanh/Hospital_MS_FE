@@ -42,6 +42,7 @@ import { RoleBadge } from "../_components/role-badge";
 import { EmployeeStatusBadge } from "../_components/employee-status-badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function EmployeesPage() {
   const router = useRouter();
@@ -80,9 +81,10 @@ export default function EmployeesPage() {
         toast.success(`Employee "${fullName}" has been deleted.`);
       },
       onError: (error: any) => {
-        const message = error.response?.data?.error?.code === 'HAS_FUTURE_APPOINTMENTS'
-          ? "Cannot delete: Employee has scheduled future appointments."
-          : "Failed to delete employee.";
+        const message =
+          error.response?.data?.error?.code === "HAS_FUTURE_APPOINTMENTS"
+            ? "Cannot delete: Employee has scheduled future appointments."
+            : "Failed to delete employee.";
         toast.error(message);
       },
     });
@@ -236,7 +238,7 @@ export default function EmployeesPage() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={8} className="py-10 text-center">
-                      <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+                      <Spinner className="mx-auto text-muted-foreground" />
                     </TableCell>
                   </TableRow>
                 ) : employees.length ? (

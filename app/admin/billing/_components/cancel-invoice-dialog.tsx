@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 interface CancelInvoiceDialogProps {
   open: boolean;
@@ -100,7 +101,7 @@ export function CancelInvoiceDialog({
             onClick={handleConfirm}
             disabled={isLoading || !reason.trim()}
           >
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <Spinner size="sm" className="mr-2" />}
             Confirm Cancellation
           </Button>
         </DialogFooter>

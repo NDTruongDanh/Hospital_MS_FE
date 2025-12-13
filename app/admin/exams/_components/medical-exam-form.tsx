@@ -17,7 +17,7 @@ import {
   MedicalExamFormValues,
   medicalExamSchema,
 } from "@/lib/schemas/medical-exam";
-import { UserRole } from "@/hooks/use-auth";
+import { UserRole } from "@/contexts/AuthContext";
 import { Appointment } from "@/interfaces/appointment";
 import { ExamStatus } from "@/interfaces/medical-exam";
 import { useEffect, useState } from "react";
@@ -51,10 +51,11 @@ interface MedicalExamFormProps {
   isSubmitting?: boolean;
   onSubmitWithStatus?: (
     data: MedicalExamFormValues,
-    status: "PENDING" | "FINALIZED",
+    status: "PENDING" | "FINALIZED"
   ) => void;
   userRole?: UserRole;
   currentExamStatus?: ExamStatus;
+  defaultAppointmentId?: string;
 }
 
 export function MedicalExamForm({
@@ -65,6 +66,7 @@ export function MedicalExamForm({
   onSubmitWithStatus,
   userRole,
   currentExamStatus,
+  defaultAppointmentId,
 }: MedicalExamFormProps) {
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(appointment || null);
@@ -72,7 +74,7 @@ export function MedicalExamForm({
   const form = useForm<MedicalExamFormValues>({
     resolver: zodResolver(medicalExamSchema) as any,
     defaultValues: defaultValues || {
-      appointmentId: appointment?.id || "",
+      appointmentId: appointment?.id || defaultAppointmentId || "",
       temperature: 37,
       bloodPressureSystolic: 120,
       bloodPressureDiastolic: 80,
@@ -89,6 +91,7 @@ export function MedicalExamForm({
   useEffect(() => {
     if (appointment) {
       form.setValue("appointmentId", appointment.id);
+      setSelectedAppointment(appointment);
     }
   }, [appointment, form]);
 
@@ -141,7 +144,10 @@ export function MedicalExamForm({
               <FormItem>
                 <FormLabel>Find Appointment</FormLabel>
                 <FormControl>
-                  <AppointmentSearchSelect onSelect={handleAppointmentSelect} />
+                  <AppointmentSearchSelect
+                    onSelect={handleAppointmentSelect}
+                    mode="completedWithoutExam"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -234,16 +240,16 @@ export function MedicalExamForm({
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Diagnosis & Treatment</h3>
+          <h3 className="text-lg font-medium">Clinical Findings</h3>
           <FormField
             control={form.control}
-            name="symptoms"
+            name="diagnosis"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Symptoms</FormLabel>
+                <FormLabel>Diagnosis</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Describe the patient's symptoms..."
+                    placeholder="Enter the diagnosis..."
                     className="min-h-[100px]"
                     {...field}
                   />
@@ -254,13 +260,13 @@ export function MedicalExamForm({
           />
           <FormField
             control={form.control}
-            name="diagnosis"
+            name="symptoms"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Diagnosis</FormLabel>
+                <FormLabel>Symptoms</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Enter the diagnosis..."
+                    placeholder="Describe the patient's symptoms..."
                     className="min-h-[100px]"
                     {...field}
                   />
@@ -286,6 +292,10 @@ export function MedicalExamForm({
               </FormItem>
             )}
           />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Additional Notes</h3>
           <FormField
             control={form.control}
             name="notes"
@@ -293,7 +303,11 @@ export function MedicalExamForm({
               <FormItem>
                 <FormLabel>Notes (Optional)</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="Any additional notes..." {...field} />
+                  <Textarea
+                    placeholder="Any additional notes..."
+                    className="min-h-[100px]"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -312,7 +326,7 @@ export function MedicalExamForm({
                 disabled={isSubmitting}
                 onClick={() =>
                   form.handleSubmit((values) =>
-                    onSubmitWithStatus(values, "PENDING"),
+                    onSubmitWithStatus(values, "PENDING")
                   )()
                 }
               >
@@ -325,7 +339,7 @@ export function MedicalExamForm({
                 disabled={isSubmitting || !canFinalize}
                 onClick={() =>
                   form.handleSubmit((values) =>
-                    onSubmitWithStatus(values, "FINALIZED"),
+                    onSubmitWithStatus(values, "FINALIZED")
                   )()
                 }
               >

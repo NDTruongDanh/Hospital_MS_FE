@@ -1,5 +1,6 @@
 "use client";
 
+import { Loading } from "@/components/ui/loading";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
@@ -58,11 +59,7 @@ export function RoleGuard({
 
   // Show loading or nothing while checking auth
   if (isLoading || !user || !allowedRoles.includes(user.role)) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600"></div>
-      </div>
-    );
+    return <Loading fullScreen />;
   }
 
   return <>{children}</>;

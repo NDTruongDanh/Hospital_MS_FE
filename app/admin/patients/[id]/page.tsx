@@ -45,7 +45,6 @@ import {
   CreditCard,
   Edit,
   Trash2,
-  Loader2,
   Clock,
   Stethoscope,
   FileText,
@@ -53,6 +52,7 @@ import {
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function PatientDetailPage() {
   const params = useParams();
@@ -200,7 +200,7 @@ export default function PatientDetailPage() {
   }
 
   const appointments = appointmentsData?.content || [];
-  const exams = examsData?.content || [];
+  const exams = examsData?.data?.content || [];
   const invoices = invoicesData?.data?.content || [];
   const age = calculateAge(patient.dateOfBirth);
 
@@ -281,7 +281,7 @@ export default function PatientDetailPage() {
                   >
                     {isDeleting ? (
                       <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        <Spinner size="sm" className="mr-2" />
                         Đang xóa...
                       </>
                     ) : (

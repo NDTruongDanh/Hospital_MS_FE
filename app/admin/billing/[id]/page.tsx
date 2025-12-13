@@ -21,7 +21,8 @@ import { ItemTypeBadge } from "../_components/item-type-badge";
 import { CancelInvoiceDialog } from "../_components/cancel-invoice-dialog";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useAuth } from "@/hooks/use-auth";
+import { Loading } from "@/components/ui/loading";
+import { useAuth } from "@/contexts/AuthContext";
 import { PaymentHistoryTable } from "@/components/billing/PaymentHistoryTable";
 
 export default function InvoiceDetailPage() {
@@ -35,11 +36,7 @@ export default function InvoiceDetailPage() {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <Loading />;
   }
 
   if (!invoice) {
@@ -67,7 +64,7 @@ export default function InvoiceDetailPage() {
       setCancelDialogOpen(false);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to cancel invoice",
+        error instanceof Error ? error.message : "Failed to cancel invoice"
       );
     }
   };
@@ -272,7 +269,6 @@ export default function InvoiceDetailPage() {
               />
             </CardContent>
           </Card>
-
         </div>
 
         <div className="space-y-6">

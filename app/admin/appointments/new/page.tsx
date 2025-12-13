@@ -35,6 +35,7 @@ import { PatientSearchSelect } from "@/components/appointment/PatientSearchSelec
 import { DoctorSearchSelect } from "@/components/appointment/DoctorSearchSelect";
 import { DepartmentSelect } from "@/components/hr/DepartmentSelect";
 import { TimeSlotPicker } from "@/components/appointment/TimeSlotPicker";
+import { Spinner } from "@/components/ui/spinner";
 
 // Form schema
 const appointmentFormSchema = z.object({
@@ -105,7 +106,7 @@ export default function NewAppointmentPage() {
         onSuccess: () => {
           router.push("/admin/appointments");
         },
-      },
+      }
     );
   };
 
@@ -206,7 +207,7 @@ export default function NewAppointmentPage() {
                             variant="outline"
                             className={cn(
                               "w-full justify-start text-left font-normal",
-                              !field.value && "text-muted-foreground",
+                              !field.value && "text-muted-foreground"
                             )}
                           >
                             <CalendarDays className="mr-2 h-4 w-4" />
@@ -358,7 +359,7 @@ export default function NewAppointmentPage() {
             </Button>
             <Button type="submit" disabled={createMutation.isPending}>
               {createMutation.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Spinner size="sm" className="mr-2" />
               )}
               Book Appointment
             </Button>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, MoreHorizontal } from "lucide-react";
+import { Plus, MoreHorizontal } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -25,15 +25,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-  } from "@/components/ui/alert-dialog";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   useCategories,
   useCreateCategory,
@@ -42,10 +42,13 @@ import {
 } from "@/hooks/queries/useCategory";
 import { Category, CategoryRequest } from "@/interfaces/category";
 import { CategoryForm } from "./CategoryForm";
+import { Spinner } from "@/components/ui/spinner";
 
 export function CategoryListPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null
+  );
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const { data: categoriesData, isLoading } = useCategories();
@@ -57,17 +60,20 @@ export function CategoryListPage() {
 
   const handleFormSubmit = (values: CategoryRequest) => {
     if (selectedCategory) {
-      updateCategory.mutate({ id: selectedCategory.id, data: values }, {
-        onSuccess: () => {
-          setIsFormOpen(false);
-          setSelectedCategory(null);
+      updateCategory.mutate(
+        { id: selectedCategory.id, data: values },
+        {
+          onSuccess: () => {
+            setIsFormOpen(false);
+            setSelectedCategory(null);
+          },
         }
-      });
+      );
     } else {
       createCategory.mutate(values, {
         onSuccess: () => {
           setIsFormOpen(false);
-        }
+        },
       });
     }
   };
@@ -76,7 +82,7 @@ export function CategoryListPage() {
     setSelectedCategory(category);
     setIsFormOpen(true);
   };
-  
+
   const openDeleteConfirm = (category: Category) => {
     setSelectedCategory(category);
     setIsDeleteConfirmOpen(true);
@@ -86,9 +92,9 @@ export function CategoryListPage() {
     if (selectedCategory) {
       deleteCategory.mutate(selectedCategory.id, {
         onSuccess: () => {
-            setIsDeleteConfirmOpen(false);
-            setSelectedCategory(null);
-        }
+          setIsDeleteConfirmOpen(false);
+          setSelectedCategory(null);
+        },
       });
     }
   };
@@ -130,7 +136,7 @@ export function CategoryListPage() {
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={3} className="h-24 text-center">
-                  <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+                  <Spinner className="mx-auto" />
                 </TableCell>
               </TableRow>
             ) : categories.length ? (
@@ -152,7 +158,10 @@ export function CategoryListPage() {
                         <DropdownMenuItem onClick={() => openForm(category)}>
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => openDeleteConfirm(category)} className="text-destructive">
+                        <DropdownMenuItem
+                          onClick={() => openDeleteConfirm(category)}
+                          className="text-destructive"
+                        >
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -171,13 +180,16 @@ export function CategoryListPage() {
         </Table>
       </div>
 
-       <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+      <AlertDialog
+        open={isDeleteConfirmOpen}
+        onOpenChange={setIsDeleteConfirmOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the category
-              "{selectedCategory?.name}".
+              This action cannot be undone. This will permanently delete the
+              category "{selectedCategory?.name}".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -192,7 +204,6 @@ export function CategoryListPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
     </div>
   );
 }

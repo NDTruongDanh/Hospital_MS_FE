@@ -9,10 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
 import EmployeeForm from "../../_components/EmployeeForm";
 import { EmployeeRequest } from "@/interfaces/hr";
 import { useEmployee, useUpdateEmployee } from "@/hooks/queries/useHr";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function EmployeeEditPage() {
   const params = useParams<{ id: string }>();
@@ -28,14 +28,14 @@ export default function EmployeeEditPage() {
       {
         onSuccess: () => router.push("/admin/hr/employees"),
         onError: () => alert("Failed to update employee. Please try again."),
-      },
+      }
     );
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-10">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Spinner className="text-muted-foreground" />
       </div>
     );
   }

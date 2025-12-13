@@ -55,6 +55,7 @@ import { EmptyReportState } from "@/components/reports/EmptyReportState";
 import { CacheInfoBanner } from "@/components/reports/CacheInfoBanner";
 import { RetryButton } from "@/components/reports/RetryButton";
 import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 
 // Completion Rate Badge
 function CompletionRateBadge({ rate }: { rate: number }) {
@@ -161,10 +162,10 @@ export default function DoctorPerformancePage() {
   const [role, setRole] = useState<string>(user?.role || "ADMIN");
   const presets = useDateRangePresets();
   const [startDate, setStartDate] = useState<Date | undefined>(
-    presets.thisMonth.startDate,
+    presets.thisMonth.startDate
   );
   const [endDate, setEndDate] = useState<Date | undefined>(
-    presets.thisMonth.endDate,
+    presets.thisMonth.endDate
   );
   const [departmentId, setDepartmentId] = useState<string>("ALL");
 
@@ -282,7 +283,7 @@ export default function DoctorPerformancePage() {
                 value={sortBy}
                 onValueChange={(v) =>
                   setSortBy(
-                    v as "completionRate" | "patientsSeen" | "totalRevenue",
+                    v as "completionRate" | "patientsSeen" | "totalRevenue"
                   )
                 }
               >
@@ -305,7 +306,7 @@ export default function DoctorPerformancePage() {
               }}
               disabled={isLoading}
             >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading && <Spinner size="sm" className="mr-2" />}
               Generate Report
             </Button>
           </div>
@@ -362,7 +363,7 @@ export default function DoctorPerformancePage() {
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={7} className="py-10 text-center">
-                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+                    <Spinner className="mx-auto text-muted-foreground" />
                   </TableCell>
                 </TableRow>
               ) : doctors.length > 0 ? (

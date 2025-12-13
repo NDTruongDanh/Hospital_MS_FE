@@ -30,7 +30,14 @@ import { usePathname } from "next/navigation";
 import React, { useMemo } from "react";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { CalendarDays, FileText, CalendarClock, LogOut } from "lucide-react";
+import {
+  CalendarDays,
+  FileText,
+  CalendarClock,
+  LogOut,
+  User,
+  Users,
+} from "lucide-react";
 
 const navItems = [
   {
@@ -40,6 +47,7 @@ const navItems = [
   },
   { title: "My Exams", href: "/doctor/exams", icon: FileText },
   { title: "My Schedule", href: "/doctor/schedules", icon: CalendarClock },
+  { title: "Patients", href: "/doctor/patients", icon: Users },
 ];
 
 function buildBreadcrumbs(pathname: string) {

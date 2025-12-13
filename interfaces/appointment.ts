@@ -32,6 +32,7 @@ export interface Appointment {
   notes?: string;
   cancelledAt?: string;
   cancelReason?: string;
+  medicalExamId?: string;
   createdAt: string;
   updatedAt: string;
   updatedBy?: string;

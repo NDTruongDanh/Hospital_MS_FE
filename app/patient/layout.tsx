@@ -34,7 +34,11 @@ import { CalendarDays, FileText, CreditCard, User, LogOut } from "lucide-react";
 
 const navItems = [
   { title: "Appointments", href: "/patient/appointments", icon: CalendarDays },
-  { title: "Medical Records", href: "/patient/appointments", icon: FileText },
+  {
+    title: "Medical Records",
+    href: "/patient/medical-records",
+    icon: FileText,
+  },
   { title: "Billing", href: "/patient/billing", icon: CreditCard },
   { title: "Profile", href: "/profile", icon: User },
 ];

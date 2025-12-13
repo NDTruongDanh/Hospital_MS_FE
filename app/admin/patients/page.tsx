@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -42,7 +43,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Plus,
-  Loader2,
   LayoutGrid,
   List,
   MoreHorizontal,
@@ -59,6 +59,7 @@ import { Patient, PatientListParams } from "@/interfaces/patient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { appointmentService } from "@/services/appointment.service";
+import { Spinner } from "@/components/ui/spinner";
 
 type ViewMode = "table" | "grid";
 
@@ -118,7 +119,7 @@ export default function PatientsPage() {
       patientId: patient.id,
     });
     const futureAppointments = appointments.content.filter(
-      (appt) => new Date(appt.appointmentTime) > new Date(),
+      (appt) => new Date(appt.appointmentTime) > new Date()
     );
 
     if (futureAppointments.length > 0) {
@@ -133,7 +134,7 @@ export default function PatientsPage() {
     (patient: Patient) => {
       router.push(`/admin/patients/${patient.id}`);
     },
-    [router],
+    [router]
   );
 
   const confirmDelete = useCallback(() => {
@@ -189,7 +190,7 @@ export default function PatientsPage() {
           ))}
         </TableRow>
       )),
-    [],
+    []
   );
 
   return (
@@ -325,6 +326,7 @@ export default function PatientsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[50px]"></TableHead>
                     <TableHead
                       className="cursor-pointer"
                       onClick={() => toggleSort("fullName")}
@@ -360,6 +362,13 @@ export default function PatientsPage() {
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => handleViewPatient(patient)}
                         >
+                          <TableCell>
+                            <Avatar className="h-9 w-9">
+                              <AvatarFallback className="bg-primary/10 text-primary">
+                                {patient.fullName.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </TableCell>
                           <TableCell>
                             <span className="font-medium">
                               {patient.fullName}
@@ -522,7 +531,7 @@ export default function PatientsPage() {
             >
               {isDeleting ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Spinner size="sm" className="mr-2" />
                   Deleting...
                 </>
               ) : (

@@ -80,6 +80,9 @@ export default function DoctorAppointmentDetailPage() {
       user={user}
       backHref="/doctor/appointments"
       editHref={`/doctor/appointments/${appointment.id}/edit`}
+      createExamHref={`/doctor/exams/new?appointmentId=${appointment.id}`}
+      viewExamHref={`/doctor/exams/${appointment.medicalExamId}`}
+      patientProfileBaseHref="/doctor/patients"
     />
   );
 }

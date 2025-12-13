@@ -22,6 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CalendarClock, Loader2, Search } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { useMedicalExamList } from "@/hooks/queries/useMedicalExam";
 import { useDebounce } from "@/hooks/useDebounce";
 import { MedicalExamListItem } from "@/interfaces/medical-exam";
@@ -68,7 +69,7 @@ export default function DoctorExamsPage() {
     return exams.filter(
       (exam: MedicalExamListItem) =>
         exam.patient.fullName.toLowerCase().includes(term) ||
-        exam.diagnosis?.toLowerCase().includes(term),
+        exam.diagnosis?.toLowerCase().includes(term)
     );
   }, [exams, debouncedSearch]);
 
@@ -157,7 +158,7 @@ export default function DoctorExamsPage() {
                   <TableRow>
                     <TableCell colSpan={6} className="py-10 text-center">
                       <span className="inline-flex items-center gap-2 text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Đang tải...
+                        <Spinner size="sm" /> Đang tải...
                       </span>
                     </TableCell>
                   </TableRow>

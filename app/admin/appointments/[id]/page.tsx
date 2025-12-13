@@ -62,6 +62,8 @@ export default function AppointmentDetailPage() {
       user={user}
       backHref="/admin/appointments"
       editHref={`/admin/appointments/${appointment.id}/edit`}
+      createExamHref={`/admin/exams/new?appointmentId=${appointment.id}&patientId=${appointment.patient.id}`}
+      viewExamHref={`/admin/exams/${appointment.medicalExamId}`}
     />
   );
 }

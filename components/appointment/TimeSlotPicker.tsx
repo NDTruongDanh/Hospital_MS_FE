@@ -3,13 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTimeSlots } from "@/hooks/queries/useAppointment"; // Import useTimeSlots
-import { Loader2 } from "lucide-react"; // Import Loader2 for loading indicator
+import { Spinner } from "@/components/ui/spinner";
 import { TimeSlot } from "@/interfaces/appointment";
 
 interface TimeSlotPickerProps {
   doctorId: string;
   date: string; // YYYY-MM-DD format
-  selectedSlot: string | null;
+  selectedSlot: string | null | undefined;
   onSelect: (time: string) => void; // Changed to just time (HH:mm)
   disabled?: boolean;
   excludeAppointmentId?: string;
@@ -33,7 +33,7 @@ export function TimeSlotPicker({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-24">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin text-muted-foreground" />
+        <Spinner className="mr-2 text-muted-foreground" />
         <span className="text-muted-foreground">Loading slots...</span>
       </div>
     );

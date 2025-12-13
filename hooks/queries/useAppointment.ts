@@ -73,6 +73,24 @@ export const useAppointmentSearch = (searchTerm: string) => {
   });
 };
 
+// Search for completed appointments without medical exams (for creating exams)
+export const useCompletedAppointmentsWithoutExam = (searchTerm: string) => {
+  return useQuery({
+    queryKey: appointmentKeys.list({ search: searchTerm, status: "COMPLETED" }),
+    queryFn: () =>
+      appointmentService.list({
+        search: searchTerm,
+        status: "COMPLETED",
+        size: 20,
+      }),
+    select: (data) => {
+      // Filter out appointments that already have medical exams
+      return data.content.filter((apt) => !apt.medicalExamId);
+    },
+    enabled: !!searchTerm,
+  });
+};
+
 export const usePatientAppointments = (patientId?: string) => {
   return useQuery({
     queryKey: appointmentKeys.list({ patientId } as AppointmentListParams),
@@ -115,7 +133,7 @@ export const useAppointment = (id: string) => {
 export const useTimeSlots = (
   doctorId: string,
   date: string,
-  excludeAppointmentId?: string,
+  excludeAppointmentId?: string
 ) => {
   return useQuery({
     queryKey: appointmentKeys.timeSlots(doctorId, date),
@@ -172,7 +190,7 @@ export const useUpdateAppointment = () => {
 // Cancel appointment
 export const useCancelAppointment = (
   currentUserId?: string,
-  currentUserRole?: string,
+  currentUserRole?: string
 ) => {
   const queryClient = useQueryClient();
 
@@ -200,7 +218,7 @@ export const useCancelAppointment = (
 // Complete appointment
 export const useCompleteAppointment = (
   currentUserId?: string,
-  currentUserRole?: string,
+  currentUserRole?: string
 ) => {
   const queryClient = useQueryClient();
 

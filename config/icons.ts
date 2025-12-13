@@ -15,6 +15,7 @@ import {
   TrendingUp,
   Users,
   UserPlus,
+  User,
   XCircle,
 } from "lucide-react";
 
@@ -28,6 +29,7 @@ export const NAV_ICONS = {
   hr: Briefcase,
   billing: CreditCard,
   reports: BarChart3,
+  profile: User,
 };
 
 export const ACTION_ICONS = {

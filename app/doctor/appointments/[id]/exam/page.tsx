@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MedicalExamForm } from "@/app/admin/exams/_components/medical-exam-form";
 
 import { useAppointment } from "@/hooks/queries/useAppointment";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useCreateMedicalExam } from "@/hooks/queries/useMedicalExam";
 import { MedicalExamFormValues } from "@/lib/schemas/medical-exam";
 
@@ -29,7 +29,7 @@ export default function CreateExamFromAppointmentPage() {
 
   const handleSubmit = (
     data: MedicalExamFormValues,
-    status: "PENDING" | "FINALIZED",
+    status: "PENDING" | "FINALIZED"
   ) => {
     createMutation.mutate(
       { ...data, status },
@@ -38,7 +38,7 @@ export default function CreateExamFromAppointmentPage() {
           // Redirect to the new exam's detail page
           router.push(`/admin/exams/${createdExam.id}`);
         },
-      },
+      }
     );
   };
 

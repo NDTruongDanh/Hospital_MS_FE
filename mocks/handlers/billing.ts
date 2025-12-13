@@ -295,7 +295,9 @@ const invoices = [
     patientId: "p-demo",
     patientName: "Demo Cancel",
     invoiceDate: new Date().toISOString(),
-    dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
+    dueDate: new Date(
+      new Date().setDate(new Date().getDate() + 7)
+    ).toISOString(),
     appointmentId: "app-demo-1",
     subtotal: 250000,
     discount: 0,
@@ -331,7 +333,7 @@ const allPayments = () =>
       invoiceId: inv.id,
       invoiceNumber: inv.invoiceNumber,
       patientName: inv.patientName,
-    })),
+    }))
   );
 
 export const billingHandlers = [
@@ -355,22 +357,18 @@ export const billingHandlers = [
       filtered = filtered.filter(
         (inv) =>
           inv.patientName.toLowerCase().includes(search) ||
-          inv.invoiceNumber.toLowerCase().includes(search),
+          inv.invoiceNumber.toLowerCase().includes(search)
       );
     }
 
     if (startDate) {
       const start = new Date(startDate);
-      filtered = filtered.filter(
-        (inv) => new Date(inv.invoiceDate) >= start,
-      );
+      filtered = filtered.filter((inv) => new Date(inv.invoiceDate) >= start);
     }
 
     if (endDate) {
       const end = new Date(endDate);
-      filtered = filtered.filter(
-        (inv) => new Date(inv.invoiceDate) <= end,
-      );
+      filtered = filtered.filter((inv) => new Date(inv.invoiceDate) <= end);
     }
 
     const [sortKey, sortDir] = sortParam.split(",");
@@ -385,7 +383,8 @@ export const billingHandlers = [
         default:
           return (
             (new Date(a.invoiceDate).getTime() -
-              new Date(b.invoiceDate).getTime()) * direction
+              new Date(b.invoiceDate).getTime()) *
+            direction
           );
       }
     });
@@ -393,8 +392,7 @@ export const billingHandlers = [
     const totalElements = filtered.length;
     const startIndex = pageParam * sizeParam;
     const content = filtered.slice(startIndex, startIndex + sizeParam);
-    const totalPages =
-      sizeParam > 0 ? Math.ceil(totalElements / sizeParam) : 1;
+    const totalPages = sizeParam > 0 ? Math.ceil(totalElements / sizeParam) : 1;
 
     return HttpResponse.json({
       content,
@@ -410,7 +408,7 @@ export const billingHandlers = [
     const totalInvoices = invoices.length;
     const totalAmount = invoices.reduce((sum, inv) => sum + inv.totalAmount, 0);
     const unpaid = invoices.filter(
-      (inv) => inv.status === "UNPAID" || inv.status === "PARTIALLY_PAID",
+      (inv) => inv.status === "UNPAID" || inv.status === "PARTIALLY_PAID"
     );
     const unpaidCount = unpaid.length;
     const unpaidAmount = unpaid.reduce((sum, inv) => sum + inv.balance, 0);
@@ -448,7 +446,7 @@ export const billingHandlers = [
           status: "error",
           error: { code: "INVOICE_NOT_FOUND", message: "Invoice not found" },
         },
-        { status: 404 },
+        { status: 404 }
       );
     }
     return HttpResponse.json({
@@ -475,7 +473,7 @@ export const billingHandlers = [
           status: "error",
           error: { code: "INVOICE_NOT_FOUND", message: "Invoice not found" },
         },
-        { status: 404 },
+        { status: 404 }
       );
     }
     return HttpResponse.json({
@@ -548,7 +546,7 @@ export const billingHandlers = [
           status: "error",
           error: { code: "PAYMENT_NOT_FOUND", message: "Payment not found" },
         },
-        { status: 404 },
+        { status: 404 }
       );
     }
     return HttpResponse.json(payment);
@@ -573,22 +571,18 @@ export const billingHandlers = [
       payments = payments.filter(
         (p) =>
           p.invoiceNumber.toLowerCase().includes(search) ||
-          p.patientName.toLowerCase().includes(search),
+          p.patientName.toLowerCase().includes(search)
       );
     }
 
     if (startDate) {
       const start = new Date(startDate);
-      payments = payments.filter(
-        (p) => new Date(p.paymentDate) >= start,
-      );
+      payments = payments.filter((p) => new Date(p.paymentDate) >= start);
     }
 
     if (endDate) {
       const end = new Date(endDate);
-      payments = payments.filter(
-        (p) => new Date(p.paymentDate) <= end,
-      );
+      payments = payments.filter((p) => new Date(p.paymentDate) <= end);
     }
 
     const [sortKey, sortDir] = sortParam.split(",");
@@ -601,7 +595,8 @@ export const billingHandlers = [
         default:
           return (
             (new Date(a.paymentDate).getTime() -
-              new Date(b.paymentDate).getTime()) * direction
+              new Date(b.paymentDate).getTime()) *
+            direction
           );
       }
     });
@@ -626,7 +621,7 @@ export const billingHandlers = [
           status: "error",
           error: { code: "VALIDATION_ERROR", message: "Invalid payload" },
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
     const invoice = invoices.find((i) => i.id === body.invoiceId);
@@ -636,7 +631,7 @@ export const billingHandlers = [
           status: "error",
           error: { code: "INVOICE_NOT_FOUND", message: "Invoice not found" },
         },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
@@ -650,7 +645,7 @@ export const billingHandlers = [
             message: "Amount exceeds remaining balance",
           },
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -665,11 +660,14 @@ export const billingHandlers = [
 
     const payment = {
       id: `pay-${Date.now()}`,
+      invoiceId: invoice.id,
       amount: body.amount,
       method: body.method ?? "CASH",
       status: "COMPLETED",
       paymentDate: new Date().toISOString(),
-      notes: body.notes,
+      notes: body.notes ?? "",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
     invoice.payments = [...(invoice.payments ?? []), payment];
 
@@ -686,7 +684,7 @@ export const billingHandlers = [
             status: "error",
             error: { code: "INVOICE_NOT_FOUND", message: "Invoice not found" },
           },
-          { status: 404 },
+          { status: 404 }
         );
       }
       if (invoice.status !== "UNPAID" || (invoice.payments ?? []).length > 0) {
@@ -698,14 +696,13 @@ export const billingHandlers = [
               message: "Only unpaid invoices without payments can be cancelled",
             },
           },
-          { status: 400 },
+          { status: 400 }
         );
       }
       const body = (await request.json()) as any;
       invoice.status = "CANCELLED";
       invoice.notes = `Cancelled: ${body?.reason || ""}`;
       return HttpResponse.json(invoice);
-    },
+    }
   ),
-
 ];

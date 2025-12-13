@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 interface CancelAppointmentDialogProps {
   open: boolean;
@@ -90,7 +90,7 @@ export function CancelAppointmentDialog({
             onClick={handleConfirm}
             disabled={isLoading}
           >
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <Spinner size="sm" className="mr-2" />}
             Cancel Appointment
           </Button>
         </DialogFooter>

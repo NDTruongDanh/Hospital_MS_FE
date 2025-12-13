@@ -9,11 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import DepartmentForm from "../../_components/DepartmentForm";
 import { DepartmentRequest } from "@/interfaces/hr";
 import { useDepartment, useUpdateDepartment } from "@/hooks/queries/useHr";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function DepartmentEditPage() {
   const params = useParams<{ id: string }>();
@@ -37,7 +37,7 @@ export default function DepartmentEditPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-10">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Spinner className="text-muted-foreground" />
       </div>
     );
   }

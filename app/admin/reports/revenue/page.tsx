@@ -43,6 +43,7 @@ import { EmptyReportState } from "@/components/reports/EmptyReportState";
 import { CacheInfoBanner } from "@/components/reports/CacheInfoBanner";
 import { RetryButton } from "@/components/reports/RetryButton";
 import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 
 // Simple Bar Chart
 function SimpleBarChart({
@@ -159,10 +160,10 @@ export default function RevenueReportPage() {
   const [role, setRole] = useState<string>("ADMIN");
   const presets = useDateRangePresets();
   const [startDate, setStartDate] = useState<Date | undefined>(
-    presets.thisMonth.startDate,
+    presets.thisMonth.startDate
   );
   const [endDate, setEndDate] = useState<Date | undefined>(
-    presets.thisMonth.endDate,
+    presets.thisMonth.endDate
   );
   const [departmentId, setDepartmentId] = useState<string>("ALL");
   const [paymentMethod, setPaymentMethod] = useState<string>("ALL");
@@ -324,7 +325,7 @@ export default function RevenueReportPage() {
               }}
               disabled={isLoading}
             >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading && <Spinner size="sm" className="mr-2" />}
               Generate Report
             </Button>
           </div>

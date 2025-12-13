@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth, UserRole } from "@/hooks/use-auth";
+import { useAuth, UserRole } from "@/contexts/AuthContext";
 import Header from "@/components/landing/Header";
 import HeroSection from "@/components/landing/HeroSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import Footer from "@/components/landing/Footer";
 import { landingContent } from "@/lib/constants/landing-content";
+
+import { Loading } from "@/components/ui/loading";
 
 const redirectMap: Record<UserRole, string> = {
   ADMIN: "/admin",
@@ -58,15 +60,7 @@ export default function LandingPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div
-          className="h-12 w-12 rounded-full border-2 border-sky-500 border-t-transparent animate-spin"
-          aria-label="Dang kiem tra phien dang nhap"
-          role="status"
-        />
-      </div>
-    );
+    return <Loading fullScreen />;
   }
 
   if (isAuthenticated && user?.role) {

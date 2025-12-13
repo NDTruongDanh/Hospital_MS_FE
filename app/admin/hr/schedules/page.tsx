@@ -11,13 +11,7 @@ import {
   differenceInCalendarDays,
   isToday,
 } from "date-fns";
-import {
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Loader2,
-} from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -69,6 +63,7 @@ import type {
   EmployeeSchedule,
 } from "@/interfaces/hr";
 import { cn } from "@/lib/utils";
+import { Spinner } from "@/components/ui/spinner";
 
 const shiftPresets = [
   {
@@ -109,15 +104,15 @@ export default function SchedulesPage() {
 
   const weekStart = useMemo(
     () => startOfWeek(date || new Date(), { weekStartsOn: 1 }),
-    [date],
+    [date]
   );
   const weekEnd = useMemo(
     () => endOfWeek(weekStart, { weekStartsOn: 1 }),
-    [weekStart],
+    [weekStart]
   );
   const weekDays = useMemo(
     () => Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i)),
-    [weekStart],
+    [weekStart]
   );
   const monthStart = useMemo(() => startOfMonth(date || new Date()), [date]);
   const monthEnd = useMemo(() => endOfMonth(monthStart), [monthStart]);
@@ -173,7 +168,7 @@ export default function SchedulesPage() {
       onError: (error) => {
         console.error("Failed to create schedule:", error);
         alert(
-          "Failed to create schedule. Employee may already have a schedule for this date.",
+          "Failed to create schedule. Employee may already have a schedule for this date."
         );
       },
     });
@@ -218,7 +213,7 @@ export default function SchedulesPage() {
           console.error("Failed to update schedule:", error);
           alert("Failed to update schedule.");
         },
-      },
+      }
     );
   };
 
@@ -250,7 +245,9 @@ export default function SchedulesPage() {
               size="icon"
               className="rounded-full"
               onClick={() =>
-                setDate(addDays(date || new Date(), viewMode === "week" ? -7 : -30))
+                setDate(
+                  addDays(date || new Date(), viewMode === "week" ? -7 : -30)
+                )
               }
             >
               <ChevronLeft className="h-4 w-4" />
@@ -267,7 +264,9 @@ export default function SchedulesPage() {
               size="icon"
               className="rounded-full"
               onClick={() =>
-                setDate(addDays(date || new Date(), viewMode === "week" ? 7 : 30))
+                setDate(
+                  addDays(date || new Date(), viewMode === "week" ? 7 : 30)
+                )
               }
             >
               <ChevronRight className="h-4 w-4" />
@@ -278,46 +277,46 @@ export default function SchedulesPage() {
                 {viewMode === "week"
                   ? `${format(weekStart, "MMM dd")} - ${format(
                       weekEnd,
-                      "MMM dd, yyyy",
+                      "MMM dd, yyyy"
                     )}`
                   : format(monthStart, "MMMM yyyy")}
               </span>
             </div>
             <div className="ml-auto flex items-center gap-2">
-                <Button
+              <Button
                 variant={viewMode === "week" ? "default" : "outline"}
                 onClick={() => setViewMode("week")}
                 className="rounded-full"
-                >
+              >
                 Week
-                </Button>
-                <Button
+              </Button>
+              <Button
                 variant={viewMode === "month" ? "default" : "outline"}
                 onClick={() => setViewMode("month")}
                 className="rounded-full"
-                >
+              >
                 Month
-                </Button>
-                <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              </Button>
+              <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                 <DialogTrigger asChild>
-                    <Button className="rounded-lg">
+                  <Button className="rounded-lg">
                     <Plus className="mr-2 h-4 w-4" /> Create Schedule
-                    </Button>
+                  </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-lg">
-                    <DialogHeader>
+                  <DialogHeader>
                     <DialogTitle>Create Schedule</DialogTitle>
-                    </DialogHeader>
-                    <ScheduleForm
+                  </DialogHeader>
+                  <ScheduleForm
                     onSubmit={handleCreate}
                     isLoading={createSchedule.isPending}
                     onCancel={() => setIsCreateOpen(false)}
                     initialData={{
-                        workDate: format(date || weekStart, "yyyy-MM-dd"),
+                      workDate: format(date || weekStart, "yyyy-MM-dd"),
                     }}
-                    />
+                  />
                 </DialogContent>
-                </Dialog>
+              </Dialog>
             </div>
           </div>
         </CardHeader>
@@ -358,7 +357,7 @@ export default function SchedulesPage() {
 
           {isLoading ? (
             <div className="flex items-center justify-center py-10">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <Spinner className="text-muted-foreground" />
             </div>
           ) : viewMode === "week" ? (
             <div className="overflow-auto">
@@ -368,7 +367,9 @@ export default function SchedulesPage() {
                   {weekDays.map((day) => (
                     <div
                       key={day.toISOString()}
-                      className={cn("px-4 py-3 text-center", { "bg-blue-50 text-blue-700": isToday(day) })}
+                      className={cn("px-4 py-3 text-center", {
+                        "bg-blue-50 text-blue-700": isToday(day),
+                      })}
                     >
                       <div className="font-semibold">{format(day, "eee")}</div>
                       <div className="text-xs text-muted-foreground">
@@ -397,7 +398,7 @@ export default function SchedulesPage() {
                     {weekDays.map((day) => {
                       const dateStr = format(day, "yyyy-MM-dd");
                       const dayItems = filtered.filter(
-                        (s) => s.workDate === dateStr && s.shift === shift.key,
+                        (s) => s.workDate === dateStr && s.shift === shift.key
                       );
                       return (
                         <div

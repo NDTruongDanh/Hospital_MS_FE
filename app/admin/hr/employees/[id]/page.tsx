@@ -10,8 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 import { useEmployee } from "@/hooks/queries/useHr";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function EmployeeViewPage() {
   const params = useParams();
@@ -23,7 +23,7 @@ export default function EmployeeViewPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-10">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Spinner className="text-muted-foreground" />
       </div>
     );
   }

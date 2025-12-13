@@ -41,7 +41,6 @@ import {
 import {
   Search,
   Plus,
-  Loader2,
   MoreHorizontal,
   Eye,
   Edit,
@@ -58,6 +57,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { MedicineCard } from "./medicine-card";
 import { Medicine, MedicineListParams } from "@/interfaces/medicine";
 import { format, isBefore } from "date-fns";
+import { Spinner } from "@/components/ui/spinner";
 
 export function MedicineListPage() {
   const [view, setView] = useState<"table" | "grid">("table");
@@ -98,7 +98,7 @@ export function MedicineListPage() {
         onSuccess: () => setDeleteId(null),
       });
     },
-    [deleteMedicine],
+    [deleteMedicine]
   );
 
   const clearFilters = useCallback(() => {
@@ -214,7 +214,7 @@ export function MedicineListPage() {
         <CardContent className="p-0">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <Spinner size="lg" className="text-muted-foreground" />
             </div>
           ) : medicines.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">

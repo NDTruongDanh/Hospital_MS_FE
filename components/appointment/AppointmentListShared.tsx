@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CalendarDays, Plus, Search } from "lucide-react";
 import { format } from "date-fns";
 import { SortingState } from "@tanstack/react-table";
@@ -33,7 +33,7 @@ import {
 } from "@/hooks/queries/useAppointment";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useEmployees } from "@/hooks/queries/useHr";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { CancelAppointmentDialog } from "@/app/admin/appointments/_components/cancel-appointment-dialog";
 import { getAppointmentColumnsByRole } from "@/components/appointment/AppointmentColumnsShared";
 
@@ -47,14 +47,22 @@ interface AppointmentListSharedProps {
 
 export function AppointmentListShared({ role }: AppointmentListSharedProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
+
+  const paramDate = searchParams.get("date");
+  const paramDoctorId = searchParams.get("doctorId");
 
   // State
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<AppointmentStatus | "ALL">("ALL");
-  const [doctorId, setDoctorId] = useState<string>("ALL");
-  const [startDate, setStartDate] = useState<Date | undefined>();
-  const [endDate, setEndDate] = useState<Date | undefined>();
+  const [doctorId, setDoctorId] = useState<string>(paramDoctorId || "ALL");
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    paramDate ? new Date(paramDate) : undefined
+  );
+  const [endDate, setEndDate] = useState<Date | undefined>(
+    paramDate ? new Date(paramDate) : undefined
+  );
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [sorting, setSorting] = useState<SortingState>([
@@ -81,14 +89,10 @@ export function AppointmentListShared({ role }: AppointmentListSharedProps) {
 
   const effectivePatientId = useMemo(() => {
     if (role === "PATIENT") {
-      // Get patientId from localStorage for PATIENT role
-      if (typeof window !== "undefined") {
-        return localStorage.getItem("patientId") || "";
-      }
-      return "";
+      return user?.patientId || "";
     }
     return undefined;
-  }, [role]);
+  }, [role, user?.patientId]);
 
   // Build query params
   const queryParams = useMemo(

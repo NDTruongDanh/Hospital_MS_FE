@@ -1,6 +1,6 @@
 import { Invoice } from "@/interfaces/billing";
-import { EmployeeSchedule } from "@/interfaces/hr";
-import { Patient, PatientStatus } from "@/interfaces/patient";
+import { EmployeeSchedule, Employee } from "@/interfaces/hr";
+import { Patient } from "@/interfaces/patient";
 import { Appointment } from "@/interfaces/appointment";
 
 export const mockDepartments = [
@@ -119,15 +119,6 @@ export const mockEmployees: Employee[] = [
     createdAt: "2025-12-06T00:00:00Z",
     updatedAt: "2025-12-06T00:00:00Z",
   },
-];
-
-const patientStatuses: PatientStatus[] = [
-  "New",
-  "Waiting",
-  "In Visit",
-  "Completed",
-  "Active",
-  "Inactive",
 ];
 
 export const mockPatients: Patient[] = [
@@ -570,10 +561,12 @@ export const mockInvoices: Invoice[] = [
         id: "PAY-2",
         invoiceId: "INV-003",
         amount: 700000,
-        method: "CARD",
+        method: "CREDIT_CARD",
         status: "COMPLETED",
         paymentDate: "2025-12-01T09:30:00Z",
         notes: "Full payment",
+        createdAt: "2025-12-01T09:30:00Z",
+        updatedAt: "2025-12-01T09:30:00Z",
       },
     ],
   },
