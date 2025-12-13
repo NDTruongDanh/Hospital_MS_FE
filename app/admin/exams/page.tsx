@@ -29,6 +29,8 @@ import { MedicalExamListItem } from "@/interfaces/medical-exam";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { useEmployees } from "@/hooks/queries/useHr";
 import { Spinner } from "@/components/ui/spinner";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { DataTableRowActions } from "@/components/ui/data-table-row-actions";
 
 const formatDate = (value: string) =>
   new Date(value).toLocaleString("en-US", {
@@ -185,14 +187,15 @@ export default function MedicalExamListPage() {
                           )}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="rounded-full"
-                            asChild
-                          >
-                            <Link href={`/admin/exams/${exam.id}`}>View</Link>
-                          </Button>
+                          <DataTableRowActions
+                            rowId={exam.id}
+                            actions={[
+                              {
+                                label: "View details",
+                                href: `/admin/exams/${exam.id}`,
+                              },
+                            ]}
+                          />
                         </TableCell>
                       </TableRow>
                     ))
@@ -214,30 +217,14 @@ export default function MedicalExamListPage() {
 
             {/* Pagination */}
             {!isLoading && data?.data && data.data.totalElements > 0 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t">
-                <span className="text-sm text-muted-foreground">
-                  Showing {page * size + 1}-
-                  {Math.min((page + 1) * size, data.data.totalElements)} of{" "}
-                  {data.data.totalElements}
-                </span>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.max(0, p - 1))}
-                    disabled={page === 0}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => p + 1)}
-                    disabled={page >= totalPages - 1}
-                  >
-                    Next
-                  </Button>
-                </div>
+              <div className="px-4 py-3 border-t">
+                <DataTablePagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  totalElements={data.data.totalElements}
+                  pageSize={size}
+                  onPageChange={setPage}
+                />
               </div>
             )}
           </CardContent>

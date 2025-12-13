@@ -22,13 +22,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -41,10 +34,6 @@ import {
 import {
   Search,
   Plus,
-  MoreHorizontal,
-  Eye,
-  Edit,
-  Trash2,
   Pill,
   LayoutGrid,
   List,
@@ -58,6 +47,8 @@ import { MedicineCard } from "./medicine-card";
 import { Medicine, MedicineListParams } from "@/interfaces/medicine";
 import { format, isBefore } from "date-fns";
 import { Spinner } from "@/components/ui/spinner";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { DataTableRowActions } from "@/components/ui/data-table-row-actions";
 
 export function MedicineListPage() {
   const [view, setView] = useState<"table" | "grid">("table");
@@ -292,42 +283,26 @@ export function MedicineListPage() {
                           <AlertTriangle className="h-3 w-3 inline ml-1 text-destructive" />
                         )}
                       </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link href={`/admin/medicines/${medicine.id}`}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link
-                                href={`/admin/medicines/${medicine.id}/edit`}
-                              >
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => setDeleteId(medicine.id)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                      <TableCell className="text-right">
+                        <DataTableRowActions
+                          rowId={medicine.id}
+                          actions={[
+                            {
+                              label: "View details",
+                              href: `/admin/medicines/${medicine.id}`,
+                            },
+                            {
+                              label: "Edit",
+                              href: `/admin/medicines/${medicine.id}/edit`,
+                            },
+                            {
+                              label: "Delete",
+                              onClick: () => setDeleteId(medicine.id),
+                              destructive: true,
+                              separator: true,
+                            },
+                          ]}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -350,56 +325,26 @@ export function MedicineListPage() {
 
       {medicines.length > 0 && (
         <Card>
-          <CardContent className="flex flex-wrap items-center justify-between gap-4 py-4">
-            <p className="text-sm text-muted-foreground">
-              Showing {medicines.length} of {totalElements} medicines
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={params.page === 1}
-                onClick={() =>
-                  setParams((prev) => ({ ...prev, page: prev.page! - 1 }))
-                }
-              >
-                Previous
-              </Button>
-              <span className="text-sm px-2">
-                Page {params.page} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={params.page === totalPages}
-                onClick={() =>
-                  setParams((prev) => ({ ...prev, page: prev.page! + 1 }))
-                }
-              >
-                Next
-              </Button>
-              <Select
-                value={String(params.size)}
-                onValueChange={(value) =>
-                  setParams((prev) => ({
-                    ...prev,
-                    size: Number(value),
-                    page: 1,
-                  }))
-                }
-              >
-                <SelectTrigger className="h-9 w-20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[10, 20, 30, 50].map((size) => (
-                    <SelectItem key={size} value={String(size)}>
-                      {size}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <CardContent className="py-4">
+            <DataTablePagination
+              currentPage={(params.page || 1) - 1} // Convert from 1-indexed to 0-indexed
+              totalPages={totalPages}
+              totalElements={totalElements}
+              pageSize={params.size || 10}
+              onPageChange={(page) =>
+                setParams((prev) => ({ ...prev, page: page + 1 }))
+              }
+              showRowsPerPage={true}
+              rowsPerPageOptions={[10, 20, 30, 50]}
+              rowsPerPage={params.size || 10}
+              onRowsPerPageChange={(newSize) =>
+                setParams((prev) => ({
+                  ...prev,
+                  size: newSize,
+                  page: 1,
+                }))
+              }
+            />
           </CardContent>
         </Card>
       )}

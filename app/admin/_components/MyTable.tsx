@@ -10,7 +10,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -18,7 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
+import { Skeleton } from "@/components/ui/skeleton";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
 
 export type Column<T> = {
   key: keyof T | string;
@@ -59,45 +59,6 @@ const TableRowSkeleton = ({ columnsLength }: { columnsLength: number }) => (
     ))}
   </TableRow>
 );
-
-function getPaginationNumbers(current: number, total: number) {
-  const pages: (number | string)[] = [];
-
-  // Trang 1
-  pages.push(1);
-
-  // "..." trước khi tới currentPage-1
-  if (current > 3) {
-    pages.push("...");
-  }
-
-  // current-1
-  if (current > 2) {
-    pages.push(current - 1);
-  }
-
-  // current
-  if (current !== 1 && current !== total) {
-    pages.push(current);
-  }
-
-  // current+1
-  if (current < total - 1) {
-    pages.push(current + 1);
-  }
-
-  // "..." sau current+1
-  if (current < total - 2) {
-    pages.push("...");
-  }
-
-  // Trang cuối
-  if (total > 1) {
-    pages.push(total);
-  }
-
-  return pages;
-}
 
 export function ReusableTable<T>({
   data,
@@ -143,7 +104,9 @@ export function ReusableTable<T>({
               data.map((row, i) => (
                 <TableRow
                   key={i}
-                  className={onRowClick ? "cursor-pointer hover:bg-muted/60" : ""}
+                  className={
+                    onRowClick ? "cursor-pointer hover:bg-muted/60" : ""
+                  }
                   onClick={() => onRowClick?.(row)}
                 >
                   {columns.map((col, idx) => (
@@ -158,73 +121,18 @@ export function ReusableTable<T>({
         </Table>
       </div>
 
-      {/* Pagination UI giữ nguyên */}
-      <div className="flex items-center justify-between ">
-        {/* Rows per page */}
-        <div className="flex items-center space-x-2 text-sm">
-          <span>Rows per page</span>
-          <Select
-            value={rowsPerPage.toString()}
-            onValueChange={(v) => onRowsPerPageChange(+v)}
-          >
-            <SelectTrigger className="w-20">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        {/* Pagination */}
-        <div className="flex items-center space-x-2">
-          <Button
-            size="icon"
-            className="border-app-primary-blue-500 border"
-            disabled={currentPage === 1}
-            onClick={() => onPageChange(currentPage - 1)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-
-          <div className="flex space-x-1">
-            {getPaginationNumbers(currentPage, totalPages).map((p, idx) =>
-              p === "..." ? (
-                <span
-                  key={idx}
-                  className="flex items-center px-2 text-gray-500"
-                >
-                  ...
-                </span>
-              ) : (
-                <Button
-                  key={idx}
-                  size="icon"
-                  variant={p === currentPage ? "default" : "outline"}
-                  className={
-                    p === currentPage
-                      ? "border-app-primary-blue-500 border bg-white text-app-primary-blue-700"
-                      : " border"
-                  }
-                  onClick={() => onPageChange(p as number)}
-                >
-                  {p}
-                </Button>
-              ),
-            )}
-          </div>
-
-          <Button
-            size="icon"
-            className="border-app-primary-blue-500 border"
-            disabled={currentPage === totalPages}
-            onClick={() => onPageChange(currentPage + 1)}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      {/* Pagination */}
+      <DataTablePagination
+        currentPage={currentPage - 1} // Convert from 1-indexed to 0-indexed
+        totalPages={totalPages}
+        totalElements={totalItems}
+        pageSize={rowsPerPage}
+        onPageChange={(page) => onPageChange(page + 1)} // Convert back to 1-indexed
+        showRowsPerPage={true}
+        rowsPerPageOptions={[10, 20, 50]}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={onRowsPerPageChange}
+      />
     </div>
   );
 }

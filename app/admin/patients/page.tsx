@@ -25,13 +25,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -41,19 +34,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Plus,
-  LayoutGrid,
-  List,
-  MoreHorizontal,
-  Eye,
-  Edit,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
-  Users,
-  ArrowUpDown,
-} from "lucide-react";
+import { Plus, LayoutGrid, List, Users, ArrowUpDown } from "lucide-react";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { DataTableRowActions } from "@/components/ui/data-table-row-actions";
 import { format } from "date-fns";
 import { Patient, PatientListParams } from "@/interfaces/patient";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -401,42 +384,33 @@ export default function PatientsPage() {
                           <TableCell className="text-muted-foreground">
                             {patient.healthInsuranceNumber || "N/A"}
                           </TableCell>
-                          <TableCell onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => handleViewPatient(patient)}
-                                >
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                  <Link
-                                    href={`/admin/patients/${patient.id}/edit`}
-                                  >
-                                    <Edit className="h-4 w-4 mr-2" />
-                                    Edit
-                                  </Link>
-                                </DropdownMenuItem>
-                                {canDelete && (
-                                  <>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                      className="text-destructive focus:text-destructive"
-                                      onClick={() => handleDelete(patient)}
-                                    >
-                                      <Trash2 className="h-4 w-4 mr-2" />
-                                      Delete
-                                    </DropdownMenuItem>
-                                  </>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                          <TableCell
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-right"
+                          >
+                            <DataTableRowActions
+                              rowId={patient.id}
+                              actions={[
+                                {
+                                  label: "View details",
+                                  href: `/admin/patients/${patient.id}`,
+                                },
+                                {
+                                  label: "Edit",
+                                  href: `/admin/patients/${patient.id}/edit`,
+                                },
+                                ...(canDelete
+                                  ? [
+                                      {
+                                        label: "Delete",
+                                        onClick: () => handleDelete(patient),
+                                        destructive: true,
+                                        separator: true,
+                                      },
+                                    ]
+                                  : []),
+                              ]}
+                            />
                           </TableCell>
                         </TableRow>
                       ))}
@@ -460,53 +434,20 @@ export default function PatientsPage() {
               of <span className="font-medium">{totalElements}</span> patients
             </p>
 
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  Rows per page
-                </span>
-                <Select
-                  value={String(pageSize)}
-                  onValueChange={(value) => {
-                    setPageSize(Number(value));
-                    setPage(0);
-                  }}
-                >
-                  <SelectTrigger className="h-9 w-20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[10, 20, 50].map((size) => (
-                      <SelectItem key={size} value={String(size)}>
-                        {size}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  disabled={page === 0}
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="px-3 text-sm">
-                  Page {page + 1} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  disabled={page >= totalPages - 1}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+            <DataTablePagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalElements={totalElements}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              showRowsPerPage={true}
+              rowsPerPageOptions={[10, 20, 50]}
+              rowsPerPage={pageSize}
+              onRowsPerPageChange={(newSize) => {
+                setPageSize(newSize);
+                setPage(0);
+              }}
+            />
           </CardContent>
         </Card>
       )}

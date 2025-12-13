@@ -7,7 +7,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MedicalExam } from "@/interfaces/medical-exam";
@@ -36,20 +35,19 @@ export const medicalExamColumns: Column<MedicalExam>[] = [
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          <Link href={`/admin/exams/${exam.id}`}>
-            <DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={`/admin/exams/${exam.id}`}>
               <Eye className="mr-2 h-4 w-4" />
-              View Details
-            </DropdownMenuItem>
-          </Link>
-          {exam.status !== "FINALIZED" && (
-            <Link href={`/admin/exams/${exam.id}/edit`}>
-              <DropdownMenuItem>
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit Exam
-              </DropdownMenuItem>
+              View details
             </Link>
+          </DropdownMenuItem>
+          {exam.status !== "FINALIZED" && (
+            <DropdownMenuItem asChild>
+              <Link href={`/admin/exams/${exam.id}/edit`}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </Link>
+            </DropdownMenuItem>
           )}
         </DropdownMenuContent>
       </DropdownMenu>

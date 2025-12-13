@@ -30,7 +30,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useDebounce } from "@/hooks/useDebounce";
 import {
@@ -43,6 +42,7 @@ import { EmployeeStatusBadge } from "../_components/employee-status-badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
+import { DataTableRowActions } from "@/components/ui/data-table-row-actions";
 
 export default function EmployeesPage() {
   const router = useRouter();
@@ -55,6 +55,11 @@ export default function EmployeesPage() {
   const [role, setRole] = useState<string>("ALL");
   const [status, setStatus] = useState<string>("ALL");
   const [sort, setSort] = useState("fullName,asc");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<{
+    id: string;
+    fullName: string;
+  } | null>(null);
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -265,56 +270,36 @@ export default function EmployeesPage() {
                       <TableCell>
                         <EmployeeStatusBadge status={row.status} />
                       </TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="rounded-full"
-                          onClick={() =>
-                            router.push(`/admin/hr/employees/${row.id}`)
-                          }
-                        >
-                          View {isAdmin ? "/ Edit" : ""}
-                        </Button>
-                        {isAdmin && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="rounded-full text-destructive"
-                                disabled={deleteEmployee.isPending}
-                              >
-                                Delete
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Delete Employee
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete{" "}
-                                  <strong>{row.fullName}</strong>? This action
-                                  cannot be undone. If the employee has upcoming
-                                  appointments, you will need to cancel them
-                                  first.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() =>
-                                    handleDelete(row.id, row.fullName)
-                                  }
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
+                      <TableCell className="text-right">
+                        <DataTableRowActions
+                          rowId={row.id}
+                          actions={[
+                            {
+                              label: "View details",
+                              href: `/admin/hr/employees/${row.id}`,
+                            },
+                            ...(isAdmin
+                              ? [
+                                  {
+                                    label: "Edit",
+                                    href: `/admin/hr/employees/${row.id}/edit`,
+                                  },
+                                  {
+                                    label: "Delete",
+                                    onClick: () => {
+                                      setEmployeeToDelete({
+                                        id: row.id,
+                                        fullName: row.fullName,
+                                      });
+                                      setDeleteDialogOpen(true);
+                                    },
+                                    destructive: true,
+                                    separator: true,
+                                  },
+                                ]
+                              : []),
+                          ]}
+                        />
                       </TableCell>
                     </TableRow>
                   ))
@@ -333,6 +318,46 @@ export default function EmployeesPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Employee</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete{" "}
+              <strong>{employeeToDelete?.fullName}</strong>? This action cannot
+              be undone. If the employee has upcoming appointments, you will
+              need to cancel them first.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (employeeToDelete) {
+                  handleDelete(employeeToDelete.id, employeeToDelete.fullName);
+                  setDeleteDialogOpen(false);
+                  setEmployeeToDelete(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteEmployee.isPending}
+            >
+              {deleteEmployee.isPending ? (
+                <>
+                  <Spinner size="sm" className="mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -21,12 +21,12 @@ export default function DoctorAppointmentDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="container mx-auto py-6 space-y-6">
         <div className="flex items-center gap-4">
           <Skeleton className="h-10 w-10" />
           <div className="space-y-2">
-            <Skeleton className="h-7 w-48" />
-            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-9 w-48" />
+            <Skeleton className="h-5 w-32" />
           </div>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
@@ -40,10 +40,12 @@ export default function DoctorAppointmentDetailPage() {
 
   if (error || !appointment) {
     return (
-      <div className="mx-auto max-w-4xl">
+      <div className="container mx-auto py-6">
         <Card className="p-8 text-center">
           <AlertCircle className="mx-auto h-12 w-12 text-destructive" />
-          <h2 className="mt-4 text-xl font-semibold">Appointment Not Found</h2>
+          <h2 className="mt-4 text-2xl font-bold tracking-tight">
+            Appointment Not Found
+          </h2>
           <p className="mt-2 text-muted-foreground">
             The appointment you&apos;re looking for doesn&apos;t exist or has
             been removed.
@@ -58,10 +60,12 @@ export default function DoctorAppointmentDetailPage() {
 
   if (user?.role === "DOCTOR" && user?.employeeId !== appointment.doctor.id) {
     return (
-      <div className="mx-auto max-w-4xl">
+      <div className="container mx-auto py-6">
         <Card className="p-8 text-center">
           <AlertCircle className="mx-auto h-12 w-12 text-destructive" />
-          <h2 className="mt-4 text-xl font-semibold">Access Denied</h2>
+          <h2 className="mt-4 text-2xl font-bold tracking-tight">
+            Access Denied
+          </h2>
           <p className="mt-2 text-muted-foreground">
             You are not authorized to view this appointment as it is not
             assigned to you.

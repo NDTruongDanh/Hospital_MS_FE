@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ReportPageHeader } from "@/app/admin/reports/_components/report-page-header";
 import {
   DateRangePicker,
   useDateRangePresets,
@@ -174,17 +173,24 @@ export default function DoctorAppointmentReportsPage() {
   };
 
   return (
-    <div className="page-shell space-y-6">
-      <ReportPageHeader
-        title="Báo cáo lịch hẹn của tôi"
-        description="Thống kê lịch hẹn theo trạng thái và xu hướng"
-        actions={
+    <div className="container mx-auto py-6 space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Báo cáo lịch hẹn của tôi
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Thống kê lịch hẹn theo trạng thái và xu hướng
+          </p>
+        </div>
+        <div className="flex gap-2">
           <Button variant="outline" onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
             Export CSV
           </Button>
-        }
-      />
+        </div>
+      </div>
 
       <Card>
         <CardHeader>

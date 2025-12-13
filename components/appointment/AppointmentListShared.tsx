@@ -24,6 +24,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { DataTable } from "@/components/ui/data-table";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
 
 import { AppointmentStatus, Appointment } from "@/interfaces/appointment";
 import {
@@ -331,51 +332,21 @@ export function AppointmentListShared({ role }: AppointmentListSharedProps) {
 
       {/* Pagination */}
       {totalElements > 0 && (
-        <div className="flex items-center justify-between border-t px-4 py-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>
-              Showing {page * pageSize + 1}-
-              {Math.min((page + 1) * pageSize, totalElements)} of{" "}
-              {totalElements}
-            </span>
-            <Select
-              value={pageSize.toString()}
-              onValueChange={(v) => {
-                setPageSize(Number(v));
-                setPage(0);
-              }}
-            >
-              <SelectTrigger className="h-8 w-[70px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PAGE_SIZE_OPTIONS.map((size) => (
-                  <SelectItem key={size} value={size.toString()}>
-                    {size}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <span>per page</span>
-          </div>
-          <div className="flex gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page === 0 || isFetching}
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= totalPages - 1 || isFetching}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </Button>
-          </div>
+        <div className="border-t px-4 py-3">
+          <DataTablePagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            showRowsPerPage={true}
+            rowsPerPageOptions={PAGE_SIZE_OPTIONS}
+            rowsPerPage={pageSize}
+            onRowsPerPageChange={(newSize) => {
+              setPageSize(newSize);
+              setPage(0);
+            }}
+          />
         </div>
       )}
 

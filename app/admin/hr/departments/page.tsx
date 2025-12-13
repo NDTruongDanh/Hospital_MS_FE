@@ -44,6 +44,8 @@ import { DepartmentStatusBadge } from "../_components/department-status-badge";
 import { Department, DepartmentStatus } from "@/interfaces/hr";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { DataTableRowActions } from "@/components/ui/data-table-row-actions";
 
 export default function DepartmentsPage() {
   const router = useRouter();
@@ -200,41 +202,30 @@ export default function DepartmentsPage() {
                       <TableCell className="text-muted-foreground">
                         {row.headDoctorName || "N/A"}
                       </TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="rounded-full"
-                          onClick={() =>
-                            router.push(`/admin/hr/departments/${row.id}`)
-                          }
-                        >
-                          View
-                        </Button>
-                        {isAdmin && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="rounded-full"
-                              onClick={() =>
-                                router.push(
-                                  `/admin/hr/departments/${row.id}/edit`
-                                )
-                              }
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="rounded-full text-destructive"
-                              onClick={() => handleDeleteClick(row)}
-                            >
-                              Delete
-                            </Button>
-                          </>
-                        )}
+                      <TableCell className="text-right">
+                        <DataTableRowActions
+                          rowId={row.id}
+                          actions={[
+                            {
+                              label: "View details",
+                              href: `/admin/hr/departments/${row.id}`,
+                            },
+                            ...(isAdmin
+                              ? [
+                                  {
+                                    label: "Edit",
+                                    href: `/admin/hr/departments/${row.id}/edit`,
+                                  },
+                                  {
+                                    label: "Delete",
+                                    onClick: () => handleDeleteClick(row),
+                                    destructive: true,
+                                    separator: true,
+                                  },
+                                ]
+                              : []),
+                          ]}
+                        />
                       </TableCell>
                     </TableRow>
                   ))
@@ -255,59 +246,21 @@ export default function DepartmentsPage() {
       </Card>
 
       <Card className="shadow-sm w-full">
-        <CardHeader className="flex-row items-center justify-between gap-3 border-b">
-          <CardTitle className="text-base">Pagination</CardTitle>
-          <CardDescription className="text-sm">
-            {totalItems} departments total
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-3 py-4">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-full"
-              disabled={page === 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              Prev
-            </Button>
-            <div className="text-sm text-muted-foreground">
-              Page <span className="text-foreground font-medium">{page}</span>{" "}
-              of
-              <span className="text-foreground font-medium"> {totalPages}</span>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-full"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </Button>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Rows per page</span>
-            <Select
-              value={String(size)}
-              onValueChange={(value) => {
-                setSize(Number(value));
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="h-9 w-24">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[10, 20, 50].map((count) => (
-                  <SelectItem key={count} value={String(count)}>
-                    {count}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <CardContent className="py-4">
+          <DataTablePagination
+            currentPage={page - 1} // Convert from 1-indexed to 0-indexed
+            totalPages={totalPages}
+            totalElements={totalItems}
+            pageSize={size}
+            onPageChange={(newPage) => setPage(newPage + 1)} // Convert back to 1-indexed
+            showRowsPerPage={true}
+            rowsPerPageOptions={[10, 20, 50]}
+            rowsPerPage={size}
+            onRowsPerPageChange={(newSize) => {
+              setSize(newSize);
+              setPage(1);
+            }}
+          />
         </CardContent>
       </Card>
 

@@ -8,7 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
@@ -98,40 +98,27 @@ export const getInvoiceColumns = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-              <button
-                type="button"
-                onClick={() => onViewDetails(row)}
-                className="flex items-center gap-2 w-full text-left"
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View Details
-              </button>
+            <DropdownMenuItem onClick={() => onViewDetails(row)}>
+              <Eye className="mr-2 h-4 w-4" />
+              View details
             </DropdownMenuItem>
             {row.status !== "PAID" && row.status !== "CANCELLED" && (
-              <DropdownMenuItem asChild>
-                <button
-                  type="button"
-                  onClick={() => onRecordPayment(row)}
-                  className="flex items-center gap-2 w-full text-left"
-                >
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  Record Payment
-                </button>
+              <DropdownMenuItem onClick={() => onRecordPayment(row)}>
+                <CreditCard className="mr-2 h-4 w-4" />
+                Record Payment
               </DropdownMenuItem>
             )}
             {row.status === "UNPAID" && (row.payments?.length ?? 0) === 0 && (
-              <DropdownMenuItem asChild>
-                <button
-                  type="button"
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
                   onClick={() => onCancelInvoice(row)}
-                  className="flex items-center gap-2 w-full text-left text-destructive hover:text-destructive"
+                  className="text-destructive focus:text-destructive"
                 >
                   <XCircle className="mr-2 h-4 w-4" />
                   Cancel Invoice
-                </button>
-              </DropdownMenuItem>
+                </DropdownMenuItem>
+              </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>

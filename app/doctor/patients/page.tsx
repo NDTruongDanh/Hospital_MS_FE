@@ -53,11 +53,10 @@ import {
   Eye,
   Edit,
   Trash2,
-  ChevronLeft,
-  ChevronRight,
   Users,
   ArrowUpDown,
 } from "lucide-react";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { format } from "date-fns";
 import { Patient, PatientListParams } from "@/interfaces/patient";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -146,11 +145,11 @@ export default function DoctorPatientsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="container mx-auto py-6 space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-semibold">My Patients</h1>
+          <h1 className="text-3xl font-bold tracking-tight">My Patients</h1>
           <p className="text-muted-foreground mt-1">
             Patients you have appointments with
           </p>
@@ -183,13 +182,15 @@ export default function DoctorPatientsPage() {
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4" />
-          <span>
+          <span className="text-sm font-medium leading-none">
             Showing {patients.length} of {totalElements} patient
             {totalElements !== 1 ? "s" : ""}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span>Rows per page:</span>
+          <span className="text-sm font-medium leading-none">
+            Rows per page:
+          </span>
           <Select
             value={String(pageSize)}
             onValueChange={(val) => {
@@ -197,7 +198,7 @@ export default function DoctorPatientsPage() {
               setPage(0);
             }}
           >
-            <SelectTrigger className="w-20">
+            <SelectTrigger className="w-20 h-9">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -277,16 +278,26 @@ export default function DoctorPatientsPage() {
                     </TableCell>
                     <TableCell>
                       {patient.gender ? (
-                        <Badge variant="outline">{patient.gender}</Badge>
+                        <Badge
+                          variant="outline"
+                          className="text-xs font-medium"
+                        >
+                          {patient.gender}
+                        </Badge>
                       ) : (
-                        "-"
+                        <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
                     <TableCell>
                       {patient.bloodType ? (
-                        <Badge variant="secondary">{patient.bloodType}</Badge>
+                        <Badge
+                          variant="destructive"
+                          className="text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200"
+                        >
+                          {patient.bloodType}
+                        </Badge>
                       ) : (
-                        "-"
+                        <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
                     <TableCell>{patient.phoneNumber || "-"}</TableCell>
@@ -397,7 +408,7 @@ export default function DoctorPatientsPage() {
                     {patient.bloodType && (
                       <Badge
                         variant="destructive"
-                        className="text-xs bg-red-100 text-red-700"
+                        className="text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200"
                       >
                         {patient.bloodType}
                       </Badge>
@@ -425,31 +436,13 @@ export default function DoctorPatientsPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Page {page + 1} of {totalPages}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              disabled={page >= totalPages - 1}
-            >
-              Next
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-        </div>
+        <DataTablePagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalElements={totalElements}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       )}
     </div>
   );

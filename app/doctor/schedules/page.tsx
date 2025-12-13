@@ -27,6 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useDoctorSchedules } from "@/hooks/queries/useHr";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,10 +42,10 @@ const statusTone: Record<ScheduleStatus, string> = {
 };
 
 const SchedulePageSkeleton = () => (
-  <div className="page-shell space-y-6">
+  <div className="container mx-auto py-6 space-y-6">
     <div>
-      <Skeleton className="h-8 w-48" />
-      <Skeleton className="h-4 w-64 mt-2" />
+      <Skeleton className="h-9 w-48" />
+      <Skeleton className="h-5 w-64 mt-1" />
     </div>
     <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
       <Card className="shadow-sm">
@@ -76,10 +78,11 @@ const SchedulePageSkeleton = () => (
   </div>
 );
 
-
 export default function MySchedulesPage() {
   const router = useRouter();
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | undefined>(undefined);
+  const [dateRange, setDateRange] = useState<
+    { from: Date; to: Date } | undefined
+  >(undefined);
   const [status, setStatus] = useState<ScheduleStatus | "ALL">("ALL");
   const [doctorId, setDoctorId] = useState<string | undefined>(() => {
     const stored =
@@ -89,8 +92,8 @@ export default function MySchedulesPage() {
 
   useEffect(() => {
     setDateRange({
-        from: new Date(),
-        to: addDays(new Date(), 7),
+      from: new Date(),
+      to: addDays(new Date(), 7),
     });
   }, []);
 
@@ -107,10 +110,11 @@ export default function MySchedulesPage() {
   }
 
   return (
-    <div className="page-shell space-y-6">
+    <div className="container mx-auto py-6 space-y-6">
+      {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">My Schedules</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-3xl font-bold tracking-tight">My Schedules</h1>
+        <p className="text-muted-foreground mt-1">
           Lịch trực và ca khám của bác sĩ.
         </p>
       </div>
@@ -121,13 +125,18 @@ export default function MySchedulesPage() {
             <CardTitle>Khoảng thời gian</CardTitle>
             <CardDescription>Chọn ngày bắt đầu và kết thúc</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-sm text-muted-foreground">Start</label>
-                <input
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="start-date"
+                  className="text-sm font-medium leading-none"
+                >
+                  Start
+                </Label>
+                <Input
+                  id="start-date"
                   type="date"
-                  className="w-full rounded-md border px-3 py-2 text-sm"
                   value={format(dateRange.from, "yyyy-MM-dd")}
                   onChange={(e) =>
                     setDateRange((prev) => ({
@@ -137,13 +146,19 @@ export default function MySchedulesPage() {
                         : prev!.from,
                     }))
                   }
+                  className="h-10"
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-sm text-muted-foreground">End</label>
-                <input
+              <div className="space-y-2">
+                <Label
+                  htmlFor="end-date"
+                  className="text-sm font-medium leading-none"
+                >
+                  End
+                </Label>
+                <Input
+                  id="end-date"
                   type="date"
-                  className="w-full rounded-md border px-3 py-2 text-sm"
                   value={format(dateRange.to, "yyyy-MM-dd")}
                   onChange={(e) =>
                     setDateRange((prev) => ({
@@ -151,6 +166,7 @@ export default function MySchedulesPage() {
                       to: e.target.value ? new Date(e.target.value) : prev!.to,
                     }))
                   }
+                  className="h-10"
                 />
               </div>
             </div>
@@ -164,9 +180,9 @@ export default function MySchedulesPage() {
               defaultMonth={dateRange.from}
               numberOfMonths={1}
             />
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 pt-2">
               <Select value={status} onValueChange={(v) => setStatus(v as any)}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="h-10 w-[180px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -226,7 +242,7 @@ export default function MySchedulesPage() {
                         <TableCell>
                           <Badge
                             variant="secondary"
-                            className={`rounded-full px-3 py-1 text-xs font-medium ${
+                            className={`px-3 py-1 text-xs font-medium ${
                               statusTone[schedule.status as ScheduleStatus] ||
                               ""
                             }`}

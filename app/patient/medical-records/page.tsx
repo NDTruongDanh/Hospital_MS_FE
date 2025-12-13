@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { useMedicalExamList } from "@/hooks/queries/useMedicalExam";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
 
 export default function PatientMedicalRecordsPage() {
   const router = useRouter();
@@ -192,31 +193,14 @@ export default function PatientMedicalRecordsPage() {
 
       {/* Pagination */}
       {totalElements > 0 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Showing {page * pageSize + 1}-
-            {Math.min((page + 1) * pageSize, totalElements)} of {totalElements}{" "}
-            records
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page === 0}
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= totalPages - 1}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
+        <DataTablePagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalElements={totalElements}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          showRowsPerPage={false}
+        />
       )}
     </div>
   );

@@ -3,6 +3,7 @@
 import { use } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ArrowLeft, Edit, FilePlus, Printer } from "lucide-react";
 import { useMedicalExam } from "@/hooks/queries/useMedicalExam";
 import { MedicalExamDetailView } from "@/app/admin/exams/_components/MedicalExamDetailView";
@@ -31,8 +32,8 @@ export default function DoctorMedicalExamDetailPage({
   if (error || !medicalExam) {
     return (
       <div className="container mx-auto py-6">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-destructive">
+        <Card className="p-8 text-center">
+          <h2 className="text-2xl font-bold tracking-tight text-destructive">
             Medical Exam Not Found
           </h2>
           <p className="text-muted-foreground mt-2">
@@ -43,7 +44,7 @@ export default function DoctorMedicalExamDetailPage({
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to My Exams
           </Button>
-        </div>
+        </Card>
       </div>
     );
   }
