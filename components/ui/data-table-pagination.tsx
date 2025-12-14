@@ -116,7 +116,7 @@ export function DataTablePagination({
       : `Page ${currentPage + 1} of ${totalPages}`;
 
   return (
-    <div className={cn("flex items-center justify-between", className)}>
+    <div className={cn("flex items-center justify-between px-2", className)}>
       {/* Left: Info & Rows per page */}
       <div className="flex items-center gap-4">
         {showInfo && (
@@ -196,12 +196,14 @@ export function DataTablePagination({
               return (
                 <Button
                   key={pageNum}
-                  variant={isActive ? "default" : "outline"}
+                  variant={isActive ? "default" : "ghost"}
                   size="sm"
                   onClick={() => onPageChange(pageNum)}
                   className={cn(
-                    "h-9 w-9 p-0",
-                    isActive && "bg-primary text-primary-foreground"
+                    "h-9 w-9 p-0 rounded-md",
+                    isActive
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "hover:bg-slate-100"
                   )}
                 >
                   {pageNum + 1}
