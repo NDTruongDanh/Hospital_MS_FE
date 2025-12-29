@@ -623,4 +623,81 @@ export const hrService = {
     );
     return response.data.data;
   },
+
+  // --- Employee Self-Service (me) ---
+  
+  getMyEmployeeProfile: async (): Promise<Employee> => {
+    const response = await axiosInstance.get<{ data: Employee }>("/hr/employees/me");
+    return response.data.data;
+  },
+
+  updateMyEmployeeProfile: async (data: Partial<EmployeeRequest>): Promise<Employee> => {
+    const response = await axiosInstance.put<{ data: Employee }>("/hr/employees/me", data);
+    return response.data.data;
+  },
+
+  // --- Schedules Extended ---
+
+  getSchedules: async (params?: {
+    page?: number;
+    size?: number;
+    employeeId?: string;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+  }) => {
+    if (!USE_MOCK) {
+      const apiParams: any = {
+        ...params,
+        page: params?.page && params.page > 0 ? params.page - 1 : 0,
+      };
+
+      const filters: string[] = [];
+      if (params?.employeeId) filters.push(`employeeId==${params.employeeId}`);
+      if (params?.status && params.status !== "ALL") filters.push(`status==${params.status}`);
+      if (params?.startDate) filters.push(`workDate>=${params.startDate}`);
+      if (params?.endDate) filters.push(`workDate<=${params.endDate}`);
+
+      if (filters.length > 0) {
+        apiParams.filter = filters.join(";");
+      }
+      delete apiParams.employeeId;
+      delete apiParams.status;
+      delete apiParams.startDate;
+      delete apiParams.endDate;
+
+      const response = await axiosInstance.get("/hr/schedules/all", { params: apiParams });
+      return response.data.data;
+    }
+
+    await delay(500);
+    return {
+      content: scheduleData,
+      totalPages: 1,
+      totalElements: scheduleData.length,
+    };
+  },
+
+  getSchedule: async (id: string): Promise<EmployeeSchedule> => {
+    if (!USE_MOCK) {
+      const response = await axiosInstance.get<{ data: EmployeeSchedule }>(`/hr/schedules/${id}`);
+      return response.data.data;
+    }
+    await delay(300);
+    const schedule = scheduleData.find(s => s.id === id);
+    if (!schedule) throw new Error("Schedule not found");
+    return schedule;
+  },
+
+  cancelSchedule: async (id: string, reason?: string): Promise<void> => {
+    await axiosInstance.post(`/hr/schedules/${id}/cancel`, { reason });
+  },
+
+  updateScheduleStatus: async (id: string, status: string): Promise<EmployeeSchedule> => {
+    const response = await axiosInstance.put<{ data: EmployeeSchedule }>(
+      `/hr/schedules/${id}/status`,
+      { status }
+    );
+    return response.data.data;
+  },
 };

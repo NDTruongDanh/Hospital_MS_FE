@@ -524,6 +524,45 @@ export const appointmentService = {
     return newAppointment;
   },
 
+  /**
+   * Get available time slots for a doctor on a specific date
+   * @param doctorId - Doctor ID
+   * @param date - Date in yyyy-MM-dd format
+   */
+  getAvailableSlots: async (
+    doctorId: string,
+    date: string
+  ): Promise<TimeSlot[]> => {
+    if (USE_MOCK) {
+      await delay(300);
+      // Mock: Generate slots from 8:00 to 17:00, mark some as unavailable
+      const slots: TimeSlot[] = [];
+      for (let h = 8; h <= 17; h++) {
+        for (let m = 0; m < 60; m += 30) {
+          if (h === 17 && m > 0) break;
+          const time = `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+          // Mock: Random unavailability (30% chance)
+          const available = Math.random() > 0.3;
+          slots.push({ time, available });
+        }
+      }
+      return slots;
+    }
+
+    try {
+      const response = await axiosInstance.get<{ data: TimeSlot[] }>(
+        `${BASE_URL}/slots`,
+        {
+          params: { doctorId, date },
+        }
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error("Failed to fetch available slots:", error);
+      throw error;
+    }
+  },
+
   // Update appointment (reschedule)
   update: async (
     id: string,

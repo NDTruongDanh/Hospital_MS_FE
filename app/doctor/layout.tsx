@@ -18,12 +18,14 @@ import {
   Search,
   ChevronDown,
   Calendar,
+  TestTube,
 } from "lucide-react";
 
 const navItems = [
   { title: "Dashboard", href: "/doctor/dashboard", icon: Home },
   { title: "Hàng đợi", href: "/doctor/queue", icon: ClipboardList },
   { title: "Khám bệnh", href: "/doctor/exam", icon: Stethoscope },
+  { title: "Xét nghiệm", href: "/doctor/lab-results", icon: TestTube },
   { title: "Lịch làm việc", href: "/doctor/schedule", icon: Calendar },
   { title: "Đơn thuốc", href: "/doctor/prescriptions", icon: FileText },
 ];

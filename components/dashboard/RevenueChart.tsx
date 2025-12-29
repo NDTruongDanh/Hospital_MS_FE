@@ -12,19 +12,10 @@ interface RevenueChartProps {
 }
 
 export function RevenueChart({ data = [], height = 200 }: RevenueChartProps) {
-  // Generate sample data if none provided
-  const chartData = useMemo(() => {
-    if (data.length > 0) return data;
-    
-    // Sample data for demo
-    return Array.from({ length: 7 }, (_, i) => ({
-      date: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][i],
-      revenue: Math.floor(Math.random() * 50) + 30,
-      expenses: Math.floor(Math.random() * 30) + 10,
-    }));
-  }, [data]);
+  // Use provided data directly, no sample data generation
+  const chartData = data;
 
-  const maxValue = Math.max(...chartData.map((d) => d.revenue));
+  const maxValue = chartData.length > 0 ? Math.max(...chartData.map((d) => d.revenue)) : 0;
 
   return (
     <div className="card-base">
@@ -41,6 +32,11 @@ export function RevenueChart({ data = [], height = 200 }: RevenueChartProps) {
       </div>
 
       {/* Simple Bar Chart */}
+      {chartData.length === 0 ? (
+        <div className="flex items-center justify-center text-[hsl(var(--muted-foreground))]" style={{ height }}>
+          Không có dữ liệu doanh thu
+        </div>
+      ) : (
       <div className="flex items-end gap-2" style={{ height }}>
         {chartData.map((item, index) => (
           <div key={index} className="flex-1 flex flex-col items-center gap-2">
@@ -72,6 +68,7 @@ export function RevenueChart({ data = [], height = 200 }: RevenueChartProps) {
           </div>
         ))}
       </div>
+      )}
 
       {/* Legend */}
       <div className="flex items-center gap-6 mt-4 pt-4 border-t border-[hsl(var(--border))]">

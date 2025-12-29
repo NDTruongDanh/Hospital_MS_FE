@@ -53,8 +53,8 @@ export const getPatients = async (
     if (params.search) {
       const searchTerm = params.search.trim();
       if (searchTerm) {
-        // RSQL pattern matching with wildcard
-        filterParts.push(`fullName==*${searchTerm}*,phoneNumber==*${searchTerm}*,email==*${searchTerm}*`);
+        // RSQL pattern matching with =like= operator (handles spaces better)
+        filterParts.push(`fullName=like='%${searchTerm}%',phoneNumber=like='%${searchTerm}%',email=like='%${searchTerm}%'`);
       }
     }
     
@@ -326,6 +326,72 @@ export const updateMyProfile = async (
   return updated;
 };
 
+// GET /api/patients/by-account/{accountId} - Get patient by account ID
+export const getPatientByAccountId = async (accountId: string): Promise<Patient | null> => {
+  if (!USE_MOCK) {
+    try {
+      const response = await axiosInstance.get<{ data: Patient }>(`/patients/by-account/${accountId}`);
+      return response.data.data;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  await delay(200);
+  const patient = patientData.find((p) => p.accountId === accountId);
+  return patient || null;
+};
+
+// GET /api/patients/stats - Get patient statistics (Admin only)
+export interface PatientStats {
+  totalPatients: number;
+  newPatientsThisMonth: number;
+  byGender: Record<string, number>;
+  byAgeGroup: Record<string, number>;
+  byBloodType: Record<string, number>;
+  generatedAt: string;
+}
+
+export const getPatientStats = async (): Promise<PatientStats> => {
+  if (!USE_MOCK) {
+    const response = await axiosInstance.get<{ data: PatientStats }>("/patients/stats");
+    return response.data.data;
+  }
+
+  await delay(300);
+  // Mock stats
+  return {
+    totalPatients: patientData.length,
+    newPatientsThisMonth: Math.floor(patientData.length * 0.1),
+    byGender: {
+      MALE: patientData.filter(p => p.gender === 'MALE').length,
+      FEMALE: patientData.filter(p => p.gender === 'FEMALE').length,
+      OTHER: patientData.filter(p => p.gender === 'OTHER').length,
+    },
+    byAgeGroup: {
+      '0-18': 5,
+      '19-35': 12,
+      '36-50': 8,
+      '51-65': 6,
+      '65+': 4,
+    },
+    byBloodType: {
+      'A+': 8,
+      'A-': 2,
+      'B+': 6,
+      'B-': 1,
+      'O+': 10,
+      'O-': 3,
+      'AB+': 4,
+      'AB-': 1,
+    },
+    generatedAt: new Date().toISOString(),
+  };
+};
+
 // DELETE /api/patients/:id - Soft delete patient
 export const deletePatient = async (
   id: string,
@@ -456,10 +522,50 @@ export const uploadProfileImage = async (
   return response.data.data;
 };
 
-// DELETE /api/patients/:id/profile-image - Delete profile image
+// DELETE /api/patients/:id/profile-image - Delete profile image (Admin/Receptionist)
 export const deleteProfileImage = async (patientId: string): Promise<Patient> => {
   const response = await axiosInstance.delete<{ data: Patient }>(
     `/patients/${patientId}/profile-image`
   );
+  return response.data.data;
+};
+
+// POST /api/patients/me/profile-image - Patient uploads own profile image
+export const uploadMyProfileImage = async (file: File): Promise<Patient> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await axiosInstance.post<{ data: Patient }>(
+    "/patients/me/profile-image",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+  return response.data.data;
+};
+
+// DELETE /api/patients/me/profile-image - Patient deletes own profile image
+export const deleteMyProfileImage = async (): Promise<Patient> => {
+  const response = await axiosInstance.delete<{ data: Patient }>(
+    "/patients/me/profile-image"
+  );
+  return response.data.data;
+};
+
+// POST /api/patients/me - Patient creates own profile (self-registration)
+export interface PatientSelfCreateRequest {
+  fullName: string;
+  phoneNumber: string;
+  dateOfBirth?: string;
+  gender?: string;
+  address?: string;
+  identificationNumber?: string;
+}
+
+export const createMyProfile = async (data: PatientSelfCreateRequest): Promise<Patient> => {
+  const response = await axiosInstance.post<{ data: Patient }>("/patients/me", data);
   return response.data.data;
 };

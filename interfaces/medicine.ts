@@ -6,10 +6,14 @@ export interface Medicine {
   unit: string;
   description: string | null;
   quantity: number;
+  concentration?: string | null;
   packaging: string | null;
   purchasePrice: number;
   sellingPrice: number;
   expiresAt: string; // ISO date string
+  manufacturer?: string | null;
+  sideEffects?: string | null;
+  storageConditions?: string | null;
   categoryId: string | null;
   categoryName: string | null;
   createdAt: string;
@@ -42,10 +46,14 @@ export interface CreateMedicineRequest {
   unit: string;
   description?: string;
   quantity: number;
+  concentration?: string;
   packaging?: string;
   purchasePrice: number;
   sellingPrice: number;
   expiresAt: string;
+  manufacturer?: string;
+  sideEffects?: string;
+  storageConditions?: string;
   categoryId?: string;
 }
 
@@ -56,9 +64,13 @@ export interface UpdateMedicineRequest {
   unit?: string;
   description?: string | null;
   quantity?: number;
+  concentration?: string | null;
   packaging?: string | null;
   purchasePrice?: number;
   sellingPrice?: number;
   expiresAt?: string;
+  manufacturer?: string | null;
+  sideEffects?: string | null;
+  storageConditions?: string | null;
   categoryId?: string | null;
 }

@@ -90,6 +90,23 @@ export const authService = {
     };
   },
 
+  // Refresh token to get new access token
+  refreshToken: async (refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> => {
+    const response = await axiosInstance.post<{ data: { accessToken: string; refreshToken: string } }>(
+      "/auth/refresh",
+      { refreshToken },
+    );
+    return response.data.data;
+  },
+
+  // Get current authenticated user info
+  getMe: async (): Promise<Account> => {
+    const response = await axiosInstance.get<{ data: Account }>(
+      "/auth/me",
+    );
+    return response.data.data;
+  },
+
   // Account management (Admin only)
   getAccounts: async (
     search?: string, 

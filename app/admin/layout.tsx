@@ -46,16 +46,18 @@ import axiosInstance from "@/config/axios";
 
 const navItems = [
   { title: "Dashboard", href: "/admin/dashboard", icon: Home },
-  { title: "Appointments", href: "/admin/appointments", icon: Calendar },
-  { title: "Patients", href: "/admin/patients", icon: Users },
-  { title: "Employees", href: "/admin/employees", icon: Stethoscope },
-  { title: "Departments", href: "/admin/departments", icon: Building2 },
-  { title: "Schedules", href: "/admin/schedules", icon: ClipboardList },
-  { title: "Medicines", href: "/admin/medicines", icon: Pill },
-  { title: "Lab Tests", href: "/admin/lab-tests", icon: TestTube },
-  { title: "Billing", href: "/admin/billing", icon: CreditCard },
-  { title: "Reports", href: "/admin/reports", icon: BarChart3 },
-  { title: "Accounts", href: "/admin/accounts", icon: Settings },
+  { title: "Lịch hẹn", href: "/admin/appointments", icon: Calendar },
+  { title: "Tiếp nhận BN", href: "/admin/walk-in", icon: UserCircle },
+  { title: "Bệnh nhân", href: "/admin/patients", icon: Users },
+  { title: "Nhân viên", href: "/admin/employees", icon: Stethoscope },
+  { title: "Khoa", href: "/admin/departments", icon: Building2 },
+  { title: "Lịch làm việc", href: "/admin/schedules", icon: ClipboardList },
+  { title: "Thuốc", href: "/admin/medicines", icon: Pill },
+  { title: "Phát thuốc", href: "/admin/pharmacy", icon: Pill },
+  { title: "Xét nghiệm", href: "/admin/lab-tests", icon: TestTube },
+  { title: "Thanh toán", href: "/admin/billing", icon: CreditCard },
+  { title: "Báo cáo", href: "/admin/reports", icon: BarChart3 },
+  { title: "Tài khoản", href: "/admin/accounts", icon: Settings },
 ];
 
 interface SearchResult {
@@ -85,6 +87,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
+      return;
+    }
+
+    // Don't search if not authenticated
+    if (!user) {
       return;
     }
 
@@ -161,12 +168,15 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     }, 300);
 
     return () => clearTimeout(searchTimeout);
-  }, [searchQuery]);
+  }, [searchQuery, user]);
 
-  // Fetch notifications (mock for now - backend doesn't have notification API yet)
+  // Fetch notifications (only when authenticated)
   useEffect(() => {
-    // In a real app, this would fetch from /notifications API
-    // For now, we'll use appointment data as "notifications"
+    // Don't fetch if not authenticated
+    if (!user) {
+      return;
+    }
+
     const fetchNotifications = async () => {
       try {
         const today = new Date().toISOString().split("T")[0];
@@ -197,7 +207,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     // Refresh every 5 minutes
     const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
   const handleSearchResultClick = (result: SearchResult) => {
     router.push(result.href);

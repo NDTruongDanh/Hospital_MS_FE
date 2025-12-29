@@ -84,6 +84,7 @@ export interface MedicalExamCreateRequest {
   weight?: number;
   height?: number;
   notes?: string;
+  hasPrescription?: boolean; // Indicates if prescription will be created
   followUpDate?: string;
 }
 

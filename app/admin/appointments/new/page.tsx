@@ -27,7 +27,7 @@ interface Doctor {
   departmentId?: string;
 }
 
-export default function ReceptionistNewAppointmentPage() {
+export default function AdminNewAppointmentPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedPatientId = searchParams.get("patientId");
@@ -70,6 +70,7 @@ export default function ReceptionistNewAppointmentPage() {
     } else {
       setDoctors(allDoctors.filter(d => d.departmentId === selectedDepartment));
     }
+    // Reset doctor selection when department changes
     setFormData(prev => ({ ...prev, doctorId: "" }));
   }, [selectedDepartment, allDoctors]);
 
@@ -100,7 +101,10 @@ export default function ReceptionistNewAppointmentPage() {
   const fetchDepartments = async () => {
     try {
       const response = await hrService.getDepartments();
-      setDepartments(response.content.map((dept: any) => ({ id: dept.id, name: dept.name })));
+      setDepartments(response.content.map((dept: any) => ({
+        id: dept.id,
+        name: dept.name,
+      })));
     } catch (error) {
       console.error("Failed to fetch departments:", error);
     }
@@ -169,7 +173,7 @@ export default function ReceptionistNewAppointmentPage() {
       });
 
       toast.success("Đặt lịch hẹn thành công!");
-      router.push("/receptionist/appointments");
+      router.push("/admin/appointments");
     } catch (error) {
       toast.error("Không thể đặt lịch hẹn");
     } finally {
@@ -185,7 +189,7 @@ export default function ReceptionistNewAppointmentPage() {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/receptionist/appointments" className="btn-icon">
+        <Link href="/admin/appointments" className="btn-icon">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
@@ -264,17 +268,33 @@ export default function ReceptionistNewAppointmentPage() {
 
           <div className="space-y-2">
             <label className="text-label">Khoa *</label>
-            <select className="dropdown w-full" value={selectedDepartment} onChange={(e) => setSelectedDepartment(e.target.value)}>
+            <select
+              className="dropdown w-full"
+              value={selectedDepartment}
+              onChange={(e) => setSelectedDepartment(e.target.value)}
+            >
               <option value="">-- Tất cả khoa --</option>
-              {departments.map((dept) => <option key={dept.id} value={dept.id}>{dept.name}</option>)}
+              {departments.map((dept) => (
+                <option key={dept.id} value={dept.id}>
+                  {dept.name}
+                </option>
+              ))}
             </select>
           </div>
 
           <div className="space-y-2">
             <label className="text-label">Bác sĩ *</label>
-            <select className="dropdown w-full" value={formData.doctorId} onChange={(e) => setFormData({ ...formData, doctorId: e.target.value })}>
+            <select
+              className="dropdown w-full"
+              value={formData.doctorId}
+              onChange={(e) => setFormData({ ...formData, doctorId: e.target.value })}
+            >
               <option value="">-- Chọn bác sĩ --</option>
-              {doctors.map((doc) => <option key={doc.id} value={doc.id}>BS. {doc.fullName} {doc.department && `- ${doc.department}`}</option>)}
+              {doctors.map((doc) => (
+                <option key={doc.id} value={doc.id}>
+                  BS. {doc.fullName} {doc.department && `- ${doc.department}`}
+                </option>
+              ))}
             </select>
           </div>
 

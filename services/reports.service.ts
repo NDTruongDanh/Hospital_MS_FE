@@ -326,8 +326,7 @@ export const reportsService = {
         };
       } catch (error) {
         console.error("Error fetching revenue report:", error);
-        // Fallback to mock on error
-        return { ...mockRevenueReport, generatedAt: new Date().toISOString() };
+        throw error;
       }
     }
 
@@ -373,7 +372,7 @@ export const reportsService = {
         };
       } catch (error) {
         console.error("Error fetching appointment stats:", error);
-        return { ...mockAppointmentStats, generatedAt: new Date().toISOString() };
+        throw error;
       }
     }
 
@@ -453,7 +452,7 @@ export const reportsService = {
         };
       } catch (error) {
         console.error("Error fetching patient activity:", error);
-        return { ...mockPatientActivity, generatedAt: new Date().toISOString() };
+        throw error;
       }
     }
 

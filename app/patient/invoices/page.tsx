@@ -12,7 +12,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
-import { getInvoiceList, initPayment, InvoiceListParams } from "@/services/billing.service";
+import { getMyInvoices, initPayment } from "@/services/billing.service";
 import { Invoice } from "@/interfaces/billing";
 import {
   Dialog,
@@ -43,11 +43,8 @@ export default function PatientInvoicesPage() {
   const fetchInvoices = async () => {
     try {
       setLoading(true);
-      const params: InvoiceListParams = {
-        status: statusFilter || undefined,
-      };
-      const response = await getInvoiceList(params);
-      setInvoices(response.data.data.content || []);
+      const response = await getMyInvoices(statusFilter || undefined);
+      setInvoices(response.data.data || []);
     } catch (error) {
       console.error("Failed to fetch invoices:", error);
       toast.error("Không thể tải danh sách hóa đơn");
@@ -166,7 +163,7 @@ export default function PatientInvoicesPage() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                      invoice.status === "PENDING" 
+                      invoice.status === "UNPAID" || invoice.status === "OVERDUE" 
                         ? "bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]" 
                         : "bg-green-100 text-green-600"
                     }`}>
@@ -225,7 +222,7 @@ export default function PatientInvoicesPage() {
             <div className="space-y-4">
               <div className="p-4 rounded-xl bg-[hsl(var(--secondary))]">
                 <p className="font-semibold text-lg">#{selectedInvoice.id.slice(0, 8)}</p>
-                <p className="text-small">{formatDate(selectedInvoice.createdAt)}</p>
+                <p className="text-small">{formatDate(selectedInvoice.createdAt || selectedInvoice.invoiceDate || new Date().toISOString())}</p>
               </div>
 
               {selectedInvoice.items && selectedInvoice.items.length > 0 && (

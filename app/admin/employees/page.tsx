@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { hrService } from "@/services/hr.service";
-import { Employee } from "@/interfaces/employee";
+import { Employee, EmployeeRequest, EmployeeRole, EmployeeStatus } from "@/interfaces/hr";
 import {
   Dialog,
   DialogContent,
@@ -128,6 +128,48 @@ export default function EmployeesPage() {
     return labels[position] || position;
   };
 
+  const handleExportExcel = () => {
+    try {
+      // Prepare data for export
+      const exportData = employees.map(emp => ({
+        "Họ và tên": emp.fullName,
+        "ID": emp.id,
+        "Số điện thoại": emp.phoneNumber || "-",
+        "Phòng ban": emp.departmentName || "-",
+        "Vị trí": getRoleLabel(emp.role || ""),
+        "Trạng thái": emp.status === "ACTIVE" ? "Đang làm việc" : emp.status === "ON_LEAVE" ? "Nghỉ phép" : "Đã nghỉ việc",
+        "Chuyên khoa": emp.specialization || "-",
+        "Số chứng chỉ": emp.licenseNumber || "-",
+        "Địa chỉ": emp.address || "-",
+      }));
+
+      // Create CSV
+      const headers = Object.keys(exportData[0] || {});
+      const csvContent = [
+        headers.join(","),
+        ...exportData.map(row => 
+          headers.map(h => `"${(row as any)[h] || ""}"`).join(",")
+        )
+      ].join("\n");
+
+      // Download
+      const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `NhanVien_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success("Đã xuất file Excel thành công");
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Không thể xuất file Excel");
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -206,7 +248,7 @@ export default function EmployeesPage() {
           </select>
 
           {/* Export */}
-          <button className="btn-outline-icon">
+          <button onClick={handleExportExcel} className="btn-outline-icon">
             <Download className="w-4 h-4" />
             Xuất Excel
           </button>
@@ -264,7 +306,7 @@ export default function EmployeesPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 text-sm">
                         <Mail className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                        {employee.email || "-"}
+                        -
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <Phone className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
@@ -277,25 +319,25 @@ export default function EmployeesPage() {
                   <td>
                     <div className="flex items-center gap-2">
                       <Building2 className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                      {employee.department || "-"}
+                      {employee.departmentName || "-"}
                     </div>
                   </td>
 
                   {/* Position */}
                   <td>
-                    <span className={`badge ${getRoleBadge(employee.position || "")}`}>
-                      {getRoleLabel(employee.position || "")}
+                    <span className={`badge ${getRoleBadge(employee.role || "")}`}>
+                      {getRoleLabel(employee.role || "")}
                     </span>
                   </td>
 
                   {/* Status */}
                   <td>
                     <span className={`badge ${
-                      employee.status === "Active" 
+                      employee.status === "ACTIVE" 
                         ? "badge-success" 
                         : "badge-danger"
                     }`}>
-                      {employee.status === "Active" ? "Đang làm" : "Nghỉ việc"}
+                      {employee.status === "ACTIVE" ? "Đang làm" : "Nghỉ việc"}
                     </span>
                   </td>
 
@@ -369,18 +411,17 @@ interface EmployeeFormProps {
 
 function EmployeeForm({ employee, departments, onSuccess, onCancel }: EmployeeFormProps) {
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<EmployeeRequest>({
+    accountId: employee?.accountId || "",
     fullName: employee?.fullName || "",
-    email: employee?.email || "",
+    role: employee?.role || "DOCTOR",
+    departmentId: employee?.departmentId || "",
+    specialization: employee?.specialization || "",
+    licenseNumber: employee?.licenseNumber || "",
     phoneNumber: employee?.phoneNumber || "",
-    dateOfBirth: employee?.dateOfBirth || "",
-    gender: employee?.gender || "Male",
-    department: employee?.department || "",
-    position: employee?.position || "DOCTOR",
     address: employee?.address || "",
-    idCard: employee?.idCard || "",
-    baseSalary: employee?.baseSalary || 0,
-    startingDay: employee?.startingDay || new Date().toISOString().split("T")[0],
+    status: employee?.status || "ACTIVE",
+    hiredAt: employee?.hiredAt || "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -403,7 +444,8 @@ function EmployeeForm({ employee, departments, onSuccess, onCancel }: EmployeeFo
     }
   };
 
-  const positions = ["DOCTOR", "NURSE", "RECEPTIONIST", "ADMIN"];
+  const roles: EmployeeRole[] = ["DOCTOR", "NURSE", "RECEPTIONIST", "ADMIN"];
+  const statuses: EmployeeStatus[] = ["ACTIVE", "ON_LEAVE", "RESIGNED"];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -420,16 +462,79 @@ function EmployeeForm({ employee, departments, onSuccess, onCancel }: EmployeeFo
           />
         </div>
 
-        {/* Email */}
+        {/* Account ID */}
         <div className="col-span-2 sm:col-span-1 space-y-2">
-          <label className="text-label">Email *</label>
+          <label className="text-label">Account ID</label>
           <input
-            type="email"
+            type="text"
             className="input-base"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            required
+            value={formData.accountId}
+            onChange={(e) => setFormData({ ...formData, accountId: e.target.value })}
+            placeholder="Tùy chọn"
           />
+        </div>
+
+        {/* Role */}
+        <div className="space-y-2">
+          <label className="text-label">Vai trò *</label>
+          <select
+            className="input-base"
+            value={formData.role}
+            onChange={(e) => setFormData({ ...formData, role: e.target.value as EmployeeRole })}
+            required
+          >
+            {roles.map((role) => (
+              <option key={role} value={role}>
+                {role === "DOCTOR" ? "Bác sĩ" : 
+                 role === "NURSE" ? "Y tá" : 
+                 role === "RECEPTIONIST" ? "Lễ tân" : "Quản trị"}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Department */}
+        <div className="space-y-2">
+          <label className="text-label">Khoa *</label>
+          <select
+            className="input-base"
+            value={formData.departmentId}
+            onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
+            required
+          >
+            <option value="">Chọn khoa</option>
+            {departments.map((dept) => (
+              <option key={dept.id} value={dept.id}>
+                {dept.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Specialization */}
+        <div className="space-y-2">
+          <label className="text-label">Chuyên khoa</label>
+          <input
+            type="text"
+            className="input-base"
+            value={formData.specialization}
+            onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+            placeholder="VD: Tim mạch, Nội tiết"
+          />
+        </div>
+
+        {/* License Number */}
+        <div className="space-y-2">
+          <label className="text-label">Số chứng chỉ hành nghề</label>
+          <input
+            type="text"
+            className="input-base"
+            value={formData.licenseNumber}
+            onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
+            placeholder="XX-12345"
+            pattern="^[A-Z]{2}-[0-9]{5}$"
+          />
+          <p className="text-xs text-[hsl(var(--muted-foreground))]">Định dạng: 2 chữ cái viết hoa, dấu gạch ngang, 5 số (VD: BS-12345)</p>
         </div>
 
         {/* Phone */}
@@ -440,76 +545,25 @@ function EmployeeForm({ employee, departments, onSuccess, onCancel }: EmployeeFo
             className="input-base"
             value={formData.phoneNumber}
             onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+            placeholder="0123456789"
+            pattern="^[0-9]{10,15}$"
           />
+          <p className="text-xs text-[hsl(var(--muted-foreground))]">10-15 chữ số</p>
         </div>
 
-        {/* ID Card */}
+        {/* Status */}
         <div className="space-y-2">
-          <label className="text-label">CMND/CCCD</label>
-          <input
-            type="text"
-            className="input-base"
-            value={formData.idCard}
-            onChange={(e) => setFormData({ ...formData, idCard: e.target.value })}
-          />
-        </div>
-
-        {/* Date of Birth */}
-        <div className="space-y-2">
-          <label className="text-label">Ngày sinh</label>
-          <input
-            type="date"
-            className="input-base"
-            value={formData.dateOfBirth}
-            onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-          />
-        </div>
-
-        {/* Gender */}
-        <div className="space-y-2">
-          <label className="text-label">Giới tính</label>
+          <label className="text-label">Trạng thái *</label>
           <select
             className="input-base"
-            value={formData.gender}
-            onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-          >
-            <option value="Male">Nam</option>
-            <option value="Female">Nữ</option>
-            <option value="Other">Khác</option>
-          </select>
-        </div>
-
-        {/* Position */}
-        <div className="space-y-2">
-          <label className="text-label">Vị trí *</label>
-          <select
-            className="input-base"
-            value={formData.position}
-            onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+            value={formData.status}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value as EmployeeStatus })}
             required
           >
-            {positions.map((pos) => (
-              <option key={pos} value={pos}>
-                {pos === "DOCTOR" ? "Bác sĩ" : 
-                 pos === "NURSE" ? "Y tá" : 
-                 pos === "RECEPTIONIST" ? "Lễ tân" : "Quản trị"}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Department */}
-        <div className="space-y-2">
-          <label className="text-label">Phòng ban</label>
-          <select
-            className="input-base"
-            value={formData.department}
-            onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-          >
-            <option value="">Chọn phòng ban</option>
-            {departments.map((dept) => (
-              <option key={dept.id} value={dept.name}>
-                {dept.name}
+            {statuses.map((status) => (
+              <option key={status} value={status}>
+                {status === "ACTIVE" ? "Đang làm việc" : 
+                 status === "ON_LEAVE" ? "Nghỉ phép" : "Đã nghỉ việc"}
               </option>
             ))}
           </select>
@@ -526,25 +580,14 @@ function EmployeeForm({ employee, departments, onSuccess, onCancel }: EmployeeFo
           />
         </div>
 
-        {/* Base Salary */}
-        <div className="space-y-2">
-          <label className="text-label">Lương cơ bản</label>
-          <input
-            type="number"
-            className="input-base"
-            value={formData.baseSalary}
-            onChange={(e) => setFormData({ ...formData, baseSalary: Number(e.target.value) })}
-          />
-        </div>
-
-        {/* Starting Day */}
-        <div className="space-y-2">
-          <label className="text-label">Ngày bắt đầu</label>
+        {/* Hired At */}
+        <div className="col-span-2 sm:col-span-1 space-y-2">
+          <label className="text-label">Ngày bắt đầu làm việc</label>
           <input
             type="date"
             className="input-base"
-            value={formData.startingDay}
-            onChange={(e) => setFormData({ ...formData, startingDay: e.target.value })}
+            value={formData.hiredAt}
+            onChange={(e) => setFormData({ ...formData, hiredAt: e.target.value })}
           />
         </div>
       </div>

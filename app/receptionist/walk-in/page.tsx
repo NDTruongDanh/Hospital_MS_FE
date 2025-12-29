@@ -23,12 +23,16 @@ interface Doctor {
   id: string;
   fullName: string;
   department?: string;
+  departmentId?: string;
 }
 
 export default function WalkInPage() {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [loading, setLoading] = useState(false);
+  const [departments, setDepartments] = useState<{id: string; name: string}[]>([]);
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [allDoctors, setAllDoctors] = useState<Doctor[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   
   // Patient search/create
@@ -54,10 +58,49 @@ export default function WalkInPage() {
     appointmentDate: new Date().toISOString().split("T")[0],
     appointmentTime: "",
   });
+  const [timeSlots, setTimeSlots] = useState<{time: string; available: boolean}[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
   useEffect(() => {
+    fetchDepartments();
     fetchDoctors();
   }, []);
+
+  // Filter doctors when department changes
+  useEffect(() => {
+    if (!selectedDepartment) {
+      setDoctors(allDoctors);
+    } else {
+      setDoctors(allDoctors.filter(d => d.departmentId === selectedDepartment));
+    }
+    setAppointmentForm(prev => ({ ...prev, doctorId: "" }));
+  }, [selectedDepartment, allDoctors]);
+
+  // Fetch available time slots when doctor and date are selected
+  useEffect(() => {
+    const fetchSlots = async () => {
+      if (!appointmentForm.doctorId || !appointmentForm.appointmentDate) {
+        setTimeSlots([]);
+        return;
+      }
+
+      try {
+        setLoadingSlots(true);
+        const slots = await appointmentService.getAvailableSlots(
+          appointmentForm.doctorId,
+          appointmentForm.appointmentDate
+        );
+        setTimeSlots(slots);
+      } catch (error) {
+        console.error("Failed to fetch time slots:", error);
+        setTimeSlots([]);
+      } finally {
+        setLoadingSlots(false);
+      }
+    };
+
+    fetchSlots();
+  }, [appointmentForm.doctorId, appointmentForm.appointmentDate]);
 
   useEffect(() => {
     if (searchQuery.length >= 2) {
@@ -67,10 +110,26 @@ export default function WalkInPage() {
     }
   }, [searchQuery]);
 
+  const fetchDepartments = async () => {
+    try {
+      const response = await hrService.getDepartments();
+      setDepartments(response.content.map((dept: any) => ({ id: dept.id, name: dept.name })));
+    } catch (error) {
+      console.error("Failed to fetch departments:", error);
+    }
+  };
+
   const fetchDoctors = async () => {
     try {
       const response = await hrService.getEmployees({ role: "DOCTOR" });
-      setDoctors(response.content || []);
+      const doctorList = response.content.map((emp: any) => ({
+        id: emp.id,
+        fullName: emp.fullName,
+        department: emp.departmentName,
+        departmentId: emp.departmentId,
+      }));
+      setAllDoctors(doctorList);
+      setDoctors(doctorList);
     } catch (error) {
       console.error("Failed to fetch doctors:", error);
     }
@@ -129,10 +188,13 @@ export default function WalkInPage() {
 
     try {
       setLoading(true);
+      // Format datetime with local timezone offset (Asia/Ho_Chi_Minh = +07:00)
+      const appointmentTime = `${appointmentForm.appointmentDate}T${appointmentForm.appointmentTime}:00+07:00`;
+      
       await appointmentService.create({
         patientId: selectedPatient.id,
         doctorId: appointmentForm.doctorId,
-        appointmentTime: `${appointmentForm.appointmentDate}T${appointmentForm.appointmentTime}:00`,
+        appointmentTime,
         reason: appointmentForm.reason || "Khám tổng quát",
         type: "CONSULTATION",
       });
@@ -145,11 +207,7 @@ export default function WalkInPage() {
     }
   };
 
-  const timeSlots = [
-    "07:00", "07:30", "08:00", "08:30", "09:00", "09:30", 
-    "10:00", "10:30", "11:00", "11:30", "13:00", "13:30",
-    "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
-  ];
+  // timeSlots now loaded dynamically via useEffect
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -351,6 +409,20 @@ export default function WalkInPage() {
           <div className="space-y-4">
             {/* Doctor Selection */}
             <div className="space-y-2">
+              <label className="text-label">Chọn khoa</label>
+              <select
+                className="input-base"
+                value={selectedDepartment}
+                onChange={(e) => setSelectedDepartment(e.target.value)}
+              >
+                <option value="">-- Tất cả khoa --</option>
+                {departments.map((dept) => (
+                  <option key={dept.id} value={dept.id}>{dept.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
               <label className="text-label">Chọn bác sĩ *</label>
               <select
                 className="input-base"
@@ -371,20 +443,34 @@ export default function WalkInPage() {
             <div className="space-y-2">
               <label className="text-label">Chọn giờ khám *</label>
               <div className="grid grid-cols-6 gap-2">
-                {timeSlots.map((time) => (
-                  <button
-                    key={time}
-                    type="button"
-                    onClick={() => setAppointmentForm({ ...appointmentForm, appointmentTime: time })}
-                    className={`py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
-                      appointmentForm.appointmentTime === time
-                        ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]"
-                        : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary))]"
-                    }`}
-                  >
-                    {time}
-                  </button>
-                ))}
+                {loadingSlots ? (
+                  <div className="col-span-6 text-center py-4 text-sm text-[hsl(var(--muted-foreground))]">
+                    Đang tải danh sách giờ khám...
+                  </div>
+                ) : timeSlots.length === 0 ? (
+                  <div className="col-span-6 text-center py-4 text-sm text-[hsl(var(--muted-foreground))]">
+                    Chọn bác sĩ và ngày để xem giờ khám
+                  </div>
+                ) : (
+                  timeSlots.map((slot) => (
+                    <button
+                      key={slot.time}
+                      type="button"
+                      onClick={() => setAppointmentForm({ ...appointmentForm, appointmentTime: slot.time })}
+                      disabled={!slot.available}
+                      className={`py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
+                        appointmentForm.appointmentTime === slot.time
+                          ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]"
+                          : !slot.available
+                          ? "border-[hsl(var(--border))] opacity-50 cursor-not-allowed bg-gray-100"
+                          : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary))]"
+                      }`}
+                    >
+                      {slot.time}
+                      {!slot.available && <span className="block text-xs">Đã đặt</span>}
+                    </button>
+                  ))
+                )}
               </div>
             </div>
 

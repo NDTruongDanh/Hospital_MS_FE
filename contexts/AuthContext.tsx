@@ -28,6 +28,7 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   hasRole: (roles: string | string[]) => boolean;
+  refreshUserProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -171,11 +172,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (role === "PATIENT") {
       router.push("/patient/appointments");
     } else if (role === "RECEPTIONIST") {
-      router.push("/admin/patients");
+      router.push("/receptionist/appointments");
     } else if (role === "DOCTOR") {
       router.push("/doctor/appointments");
+    } else if (role === "NURSE") {
+      router.push("/nurse/exams");
+    } else if (role === "ADMIN") {
+      router.push("/admin/dashboard");
     } else {
-      router.push("/admin");
+      // Fallback for unknown roles
+      router.push("/admin/dashboard");
     }
   };
 
@@ -209,8 +215,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return roleArray.includes(user.role);
   };
 
+  // Fetch fresh user profile from backend using /auth/me
+  const refreshUserProfile = async () => {
+    const { USE_MOCK } = await import("@/lib/mocks/toggle");
+    
+    if (USE_MOCK) {
+      // In mock mode, user data is already complete from login
+      console.log("[AuthContext] Mock mode - refreshUserProfile skipped");
+      return;
+    }
+    
+    try {
+      const { authService } = await import("@/services/auth.service");
+      const account = await authService.getMe();
+      
+      // Update user state with fresh data
+      setUser(prev => ({
+        ...prev,
+        accountId: account.id,
+        email: account.email,
+        role: account.role,
+      }));
+      
+      // Update cookies
+      Cookies.set("userEmail", account.email, { expires: 7 });
+      Cookies.set("userRole", account.role, { expires: 7 });
+      Cookies.set("userAccountId", account.id, { expires: 7 });
+      
+      console.log("[AuthContext] User profile refreshed:", account);
+    } catch (error) {
+      console.error("[AuthContext] Failed to refresh user profile:", error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, hasRole }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, hasRole, refreshUserProfile }}>
       {children}
     </AuthContext.Provider>
   );
