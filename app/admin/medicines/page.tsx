@@ -368,7 +368,9 @@ interface MedicineFormProps {
 
 function MedicineForm({ medicine, categories, onSuccess, onCancel }: MedicineFormProps) {
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  // Note: Backend also supports optional fields: concentration, manufacturer, sideEffects, storageConditions
+  // These are not exposed in UI currently but can be added to this form if needed
+  const [formData, setFormData] = useState<Partial<CreateMedicineRequest>>({
     name: medicine?.name || "",
     activeIngredient: medicine?.activeIngredient || "",
     categoryId: medicine?.categoryId || "",
@@ -393,7 +395,8 @@ function MedicineForm({ medicine, categories, onSuccess, onCancel }: MedicineFor
         quantity: formData.quantity,
         purchasePrice: formData.purchasePrice,
         sellingPrice: formData.sellingPrice,
-        expiresAt: formData.expiresAt,
+        // Convert date string (YYYY-MM-DD) to ISO timestamp for backend
+        expiresAt: formData.expiresAt ? new Date(formData.expiresAt + "T00:00:00Z").toISOString() : undefined,
         description: formData.description || undefined,
         packaging: formData.packaging || undefined,
         categoryId: formData.categoryId || undefined,

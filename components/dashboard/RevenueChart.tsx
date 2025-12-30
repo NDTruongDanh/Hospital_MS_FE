@@ -9,9 +9,11 @@ interface RevenueChartProps {
     expenses?: number;
   }[];
   height?: number;
+  onFilterChange?: (filter: string) => void;
+  currentFilter?: string;
 }
 
-export function RevenueChart({ data = [], height = 200 }: RevenueChartProps) {
+export function RevenueChart({ data = [], height = 300, onFilterChange, currentFilter = "This Week" }: RevenueChartProps) {
   // Use provided data directly, no sample data generation
   const chartData = data;
 
@@ -21,13 +23,18 @@ export function RevenueChart({ data = [], height = 200 }: RevenueChartProps) {
     <div className="card-base">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-section">Revenue Overview</h3>
-          <p className="text-small mt-1">Weekly performance</p>
+          <h3 className="text-section">Appointment Overview</h3>
+          <p className="text-small mt-1">Daily trend</p>
         </div>
-        <select className="dropdown">
+        <select 
+          className="dropdown"
+          value={currentFilter}
+          onChange={(e) => onFilterChange?.(e.target.value)}
+        >
           <option>This Week</option>
           <option>Last Week</option>
           <option>This Month</option>
+          <option>Last Month</option>
         </select>
       </div>
 
@@ -41,14 +48,18 @@ export function RevenueChart({ data = [], height = 200 }: RevenueChartProps) {
         {chartData.map((item, index) => (
           <div key={index} className="flex-1 flex flex-col items-center gap-2">
             {/* Bar */}
-            <div className="w-full flex flex-col gap-1 flex-1 justify-end">
+            <div className="w-full flex flex-col gap-1 flex-1 justify-end relative group">
+              {/* Value Label */}
+              <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="text-xs font-semibold text-[hsl(var(--primary))]">{item.revenue}</span>
+              </div>
               <div
                 className="w-full bg-[hsl(var(--primary))] rounded-t-lg transition-all hover:bg-[hsl(var(--primary-dark))]"
                 style={{
-                  height: `${(item.revenue / maxValue) * 100}%`,
-                  minHeight: "4px",
+                  height: maxValue > 0 ? `${(item.revenue / maxValue) * 100}%` : "0%",
+                  minHeight: item.revenue > 0 ? "20px" : "0px",
                 }}
-                title={`Revenue: ${item.revenue}M`}
+                title={`Appointments: ${item.revenue}`}
               />
               {item.expenses && (
                 <div

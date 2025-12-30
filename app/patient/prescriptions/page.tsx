@@ -215,7 +215,7 @@ export default function PatientPrescriptionsPage() {
               <div className="space-y-3">
                 <p className="text-label">Danh sách thuốc</p>
                 {selectedPrescription.items.map((item, i) => (
-                  <div key={i} className="p-3 rounded-lg border border-[hsl(var(--border))]">
+                  <div key={i} className="p-4 bg-white border-2 border-gray-200 rounded-xl shadow-sm">
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="font-medium">{item.medicine.name}</p>

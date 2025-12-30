@@ -220,7 +220,7 @@ export default function DoctorPrescriptionsPage() {
                 <p className="text-label mb-2">Danh sách thuốc</p>
                 <div className="space-y-3">
                   {selectedPrescription.items.map((item, i) => (
-                    <div key={i} className="p-3 rounded-lg border border-[hsl(var(--border))]">
+                    <div key={i} className="p-4 bg-white border-2 border-gray-200 rounded-xl shadow-sm">
                       <p className="font-medium">{item.medicineName}</p>
                       <div className="grid grid-cols-2 gap-2 mt-2 text-sm text-[hsl(var(--muted-foreground))]">
                         <p>Liều: {item.dosage}</p>

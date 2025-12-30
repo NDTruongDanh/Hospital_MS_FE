@@ -26,6 +26,7 @@ import {
   ChevronDown,
   Stethoscope,
   ClipboardList,
+  Package,
   X,
 } from "lucide-react";
 import {
@@ -53,6 +54,7 @@ const navItems = [
   { title: "Khoa", href: "/admin/departments", icon: Building2 },
   { title: "Lịch làm việc", href: "/admin/schedules", icon: ClipboardList },
   { title: "Thuốc", href: "/admin/medicines", icon: Pill },
+  { title: "Danh mục thuốc", href: "/admin/medicine-categories", icon: Package },
   { title: "Phát thuốc", href: "/admin/pharmacy", icon: Pill },
   { title: "Xét nghiệm", href: "/admin/lab-tests", icon: TestTube },
   { title: "Thanh toán", href: "/admin/billing", icon: CreditCard },
@@ -184,7 +186,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           params: { size: 10 },
         });
         const todayAppts = (res.data.data?.content || [])
-          .filter((a: any) => a.appointmentTime.startsWith(today) && a.status === "SCHEDULED")
+          .filter((a: any) => a.appointmentTime.startsWith(today) && (a.status === "PENDING" || a.status === "CONFIRMED"))
           .slice(0, 5);
         
         const notifs = todayAppts.map((a: any) => ({

@@ -35,18 +35,50 @@ export default function AdminDashboardPage() {
     employees: { total: 0, doctors: 0 },
   });
   const [recentAppointments, setRecentAppointments] = useState<Appointment[]>([]);
+  const [revenueChartData, setRevenueChartData] = useState<{ date: string; revenue: number }[]>([]);
+  const [chartFilter, setChartFilter] = useState("This Week");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [chartFilter]); // Re-fetch when filter changes
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       
-      // Date ranges
       const today = new Date();
+      
+      // Calculate date ranges based on filter
+      const getDateRange = () => {
+        let startDate: Date;
+        let endDate = today;
+
+        switch (chartFilter) {
+          case "Last Week":
+            startDate = new Date(today);
+            startDate.setDate(today.getDate() - 14);
+            endDate = new Date(today);
+            endDate.setDate(today.getDate() - 7);
+            break;
+          case "This Month":
+            startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            break;
+          case "Last Month":
+            startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            endDate = new Date(today.getFullYear(), today.getMonth(), 0);
+            break;
+          case "This Week":
+          default:
+            startDate = new Date(today);
+            startDate.setDate(today.getDate() - 7);
+            break;
+        }
+
+        return { startDate, endDate };
+      };
+
+      const { startDate, endDate } = getDateRange();
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       const startOfYear = new Date(today.getFullYear(), 0, 1);
       
@@ -63,8 +95,8 @@ export default function AdminDashboardPage() {
           endDate: today.toISOString().split("T")[0],
         }),
         reportsService.getAppointmentStats({
-          startDate: startOfYear.toISOString().split("T")[0],
-          endDate: today.toISOString().split("T")[0],
+          startDate: startDate.toISOString().split("T")[0],
+          endDate: endDate.toISOString().split("T")[0],
         }),
         reportsService.getPatientActivity({
           startDate: startOfMonth.toISOString().split("T")[0],
@@ -120,6 +152,21 @@ export default function AdminDashboardPage() {
         },
       });
 
+      // Use appointment daily trend for chart (revenue API doesn't return daily data)
+      if (appts && appts.dailyTrend && Array.isArray(appts.dailyTrend)) {
+        // Filter based on selected range
+        const filteredTrend = appts.dailyTrend.filter((item: any) => {
+          const itemDate = new Date(item.date);
+          return itemDate >= startDate && itemDate <= endDate;
+        });
+        
+        const chartData = filteredTrend.slice(-7).map((item: any) => ({
+          date: new Date(item.date).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" }),
+          revenue: item.count, // Using appointment count as metric
+        }));
+        setRevenueChartData(chartData);
+      }
+
       // Set recent appointments (today's or latest)
       setRecentAppointments((apptList?.content || []).slice(0, 5));
       
@@ -151,7 +198,8 @@ export default function AdminDashboardPage() {
   ];
 
   const STATUS_CONFIG: Record<string, { label: string; class: string }> = {
-    SCHEDULED: { label: "Chờ khám", class: "badge-info" },
+    PENDING: { label: "Chờ xác nhận", class: "badge-warning" },
+    CONFIRMED: { label: "Đã xác nhận", class: "badge-info" },
     IN_PROGRESS: { label: "Đang khám", class: "badge-warning" },
     COMPLETED: { label: "Hoàn thành", class: "badge-success" },
     CANCELLED: { label: "Đã hủy", class: "badge-danger" },
@@ -219,7 +267,12 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue Chart */}
         <div className="lg:col-span-2">
-          <RevenueChart height={180} />
+          <RevenueChart 
+            data={revenueChartData} 
+            height={280}
+            onFilterChange={setChartFilter}
+            currentFilter={chartFilter}
+          />
         </div>
 
         {/* Appointment Distribution */}
@@ -282,7 +335,7 @@ export default function AdminDashboardPage() {
                 </thead>
                 <tbody>
                   {recentAppointments.map((apt) => {
-                    const statusCfg = STATUS_CONFIG[apt.status] || STATUS_CONFIG.SCHEDULED;
+                    const statusCfg = STATUS_CONFIG[apt.status] || STATUS_CONFIG.PENDING;
                     return (
                       <tr key={apt.id}>
                         <td className="font-medium">{apt.patient?.fullName || "-"}</td>

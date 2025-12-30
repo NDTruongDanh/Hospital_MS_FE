@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { labTestService } from "@/services/lab.service";
+import type { LabTest, LabTestCategory, LabTestCreateRequest } from "@/interfaces/lab";
 import {
   Dialog,
   DialogContent,
@@ -40,33 +41,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface LabTest {
-  id: string;
-  name: string;
-  code?: string;
-  category?: string;
-  categoryId?: string;
-  description?: string;
-  price: number;
-  turnaroundTime?: number; // in hours
-  unit?: string;
-  normalRange?: string;
-  isActive: boolean;
-  sampleType?: string;
-}
-
-interface Category {
-  id: string;
-  name: string;
-}
+const CATEGORY_CONFIG: Record<LabTestCategory, { label: string; color: string; icon: string }> = {
+  LAB: { label: "Xét nghiệm", color: "bg-blue-100 text-blue-700 border-blue-200", icon: "🧪" },
+  IMAGING: { label: "Chẩn đoán hình ảnh", color: "bg-purple-100 text-purple-700 border-purple-200", icon: "📷" },
+  PATHOLOGY: { label: "Giải phẫu bệnh", color: "bg-orange-100 text-orange-700 border-orange-200", icon: "🔬" },
+};
 
 export default function LabTestsPage() {
   const [labTests, setLabTests] = useState<LabTest[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [filteredTests, setFilteredTests] = useState<LabTest[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [categoryFilter, setCategoryFilter] = useState<LabTestCategory | "">("");
+  const [statusFilter, setStatusFilter] = useState<"active" | "inactive" | "">("");
   
   // Modal states
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -75,30 +62,45 @@ export default function LabTestsPage() {
 
   useEffect(() => {
     fetchLabTests();
-    fetchCategories();
-  }, [searchQuery, categoryFilter, statusFilter]);
+  }, []);
+
+  useEffect(() => {
+    // Client-side filtering
+    let filtered = labTests;
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (test) =>
+          test.code.toLowerCase().includes(query) ||
+          test.name.toLowerCase().includes(query) ||
+          test.description?.toLowerCase().includes(query)
+      );
+    }
+
+    if (categoryFilter) {
+      filtered = filtered.filter((test) => test.category === categoryFilter);
+    }
+
+    if (statusFilter === "active") {
+      filtered = filtered.filter((test) => test.isActive);
+    } else if (statusFilter === "inactive") {
+      filtered = filtered.filter((test) => !test.isActive);
+    }
+
+    setFilteredTests(filtered);
+  }, [searchQuery, categoryFilter, statusFilter, labTests]);
 
   const fetchLabTests = async () => {
     try {
       setLoading(true);
-      const response = await labTestService.getAll({
-        filter: searchQuery || categoryFilter ? `name=ilike="%${searchQuery}%"` : undefined,
-      });
+      const response = await labTestService.getAll();
       setLabTests(response.content || []);
     } catch (error) {
       console.error("Failed to fetch lab tests:", error);
       toast.error("Không thể tải danh sách xét nghiệm");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      // Categories are embedded in LabTest.category as enum, no separate endpoint
-      setCategories([]);
-    } catch (error) {
-      console.error("Failed to fetch categories:", error);
     }
   };
 
@@ -172,7 +174,6 @@ export default function LabTestsPage() {
             </DialogHeader>
             <LabTestForm
               labTest={editingLabTest}
-              categories={categories}
               onSuccess={handleFormSuccess}
               onCancel={() => setIsFormOpen(false)}
             />
@@ -200,12 +201,12 @@ export default function LabTestsPage() {
           <select
             className="dropdown min-w-[180px]"
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
+            onChange={(e) => setCategoryFilter(e.target.value as LabTestCategory | "")}
           >
-            <option value="">Tất cả danh mục</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
+            <option value="">🔬 Tất cả loại</option>
+            {Object.entries(CATEGORY_CONFIG).map(([key, config]) => (
+              <option key={key} value={key}>
+                {config.icon} {config.label}
               </option>
             ))}
           </select>
@@ -214,11 +215,11 @@ export default function LabTestsPage() {
           <select
             className="dropdown min-w-[150px]"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => setStatusFilter(e.target.value as "active" | "inactive" | "")}
           >
             <option value="">Tất cả trạng thái</option>
-            <option value="active">Đang hoạt động</option>
-            <option value="inactive">Đã vô hiệu</option>
+            <option value="active">✅ Đang hoạt động</option>
+            <option value="inactive">❌ Ngưng hoạt động</option>
           </select>
         </div>
       </div>
@@ -228,13 +229,13 @@ export default function LabTestsPage() {
         <table className="table-base">
           <thead>
             <tr>
+              <th className="w-32">Mã XN</th>
               <th>Tên xét nghiệm</th>
-              <th>Danh mục</th>
-              <th>Loại mẫu</th>
-              <th>Giá</th>
-              <th>Thời gian</th>
-              <th>Trạng thái</th>
-              <th className="w-12"></th>
+              <th className="w-40">Loại</th>
+              <th className="w-32">Đơn vị</th>
+              <th className="w-40">Giá</th>
+              <th className="w-32">Trạng thái</th>
+              <th className="w-20"></th>
             </tr>
           </thead>
           <tbody>
@@ -245,7 +246,7 @@ export default function LabTestsPage() {
                   <p className="text-small mt-2">Đang tải...</p>
                 </td>
               </tr>
-            ) : labTests.length === 0 ? (
+            ) : filteredTests.length === 0 ? (
               <tr>
                 <td colSpan={7} className="text-center py-12">
                   <TestTube className="w-12 h-12 mx-auto text-[hsl(var(--muted-foreground))] opacity-50" />
@@ -255,47 +256,34 @@ export default function LabTestsPage() {
                 </td>
               </tr>
             ) : (
-              labTests.map((labTest) => (
-                <tr key={labTest.id} className={!labTest.isActive ? "opacity-60" : ""}>
-                  {/* Name */}
+              filteredTests.map((labTest) => {
+                const categoryConfig = CATEGORY_CONFIG[labTest.category];
+                return (
+                <tr key={labTest.id}>
                   <td>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-[hsl(var(--primary-light))] flex items-center justify-center">
-                        <TestTube className="w-5 h-5 text-[hsl(var(--primary))]" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{labTest.name}</p>
-                        {labTest.code && (
-                          <p className="text-small text-[hsl(var(--primary))]">#{labTest.code}</p>
-                        )}
-                      </div>
-                    </div>
+                    <span className="font-mono font-semibold text-sm">{labTest.code}</span>
                   </td>
-
-                  {/* Category */}
-                  <td>{labTest.category || "-"}</td>
-
-                  {/* Sample Type */}
                   <td>
-                    <span className="badge badge-info">
-                      {labTest.sampleType || "Máu"}
+                    <p className="font-medium">{labTest.name}</p>
+                    {labTest.description && (
+                      <p className="text-sm text-gray-500 truncate max-w-md">
+                        {labTest.description}
+                      </p>
+                    )}
+                    {labTest.normalRange && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        Chỉ số bình thường: {labTest.normalRange}
+                      </p>
+                    )}
+                  </td>
+                  <td>
+                    <span className={`badge ${categoryConfig.color} border text-xs`}>
+                      {categoryConfig.icon} {categoryConfig.label}
                     </span>
                   </td>
-
-                  {/* Price */}
-                  <td>
-                    <div className="flex items-center gap-1 font-medium text-[hsl(var(--primary))]">
-                      <DollarSign className="w-4 h-4" />
-                      {formatCurrency(labTest.price)}
-                    </div>
-                  </td>
-
-                  {/* Turnaround Time */}
-                  <td>
-                    <div className="flex items-center gap-1 text-[hsl(var(--muted-foreground))]">
-                      <Clock className="w-4 h-4" />
-                      {formatTurnaroundTime(labTest.turnaroundTime)}
-                    </div>
+                  <td className="text-sm">{labTest.unit || "—"}</td>
+                  <td className="font-semibold text-[hsl(var(--primary))]">
+                    {formatCurrency(labTest.price)}
                   </td>
 
                   {/* Status */}
@@ -349,7 +337,8 @@ export default function LabTestsPage() {
                     </DropdownMenu>
                   </td>
                 </tr>
-              ))
+              );
+              })
             )}
           </tbody>
         </table>
@@ -383,23 +372,20 @@ export default function LabTestsPage() {
 // Lab Test Form Component
 interface LabTestFormProps {
   labTest: LabTest | null;
-  categories: Category[];
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-function LabTestForm({ labTest, categories, onSuccess, onCancel }: LabTestFormProps) {
+function LabTestForm({ labTest, onSuccess, onCancel }: LabTestFormProps) {
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: labTest?.name || "",
+  const [formData, setFormData] = useState<LabTestCreateRequest>({
     code: labTest?.code || "",
-    categoryId: labTest?.categoryId || "",
+    name: labTest?.name || "",
+    category: labTest?.category || "LAB",
     description: labTest?.description || "",
     price: labTest?.price || 0,
-    turnaroundTime: labTest?.turnaroundTime || 24,
     unit: labTest?.unit || "",
     normalRange: labTest?.normalRange || "",
-    sampleType: labTest?.sampleType || "Máu",
     isActive: labTest?.isActive ?? true,
   });
 
@@ -409,10 +395,10 @@ function LabTestForm({ labTest, categories, onSuccess, onCancel }: LabTestFormPr
 
     try {
       if (labTest) {
-        await labTestService.update(labTest.id, formData as any);
+        await labTestService.update(labTest.id, formData);
         toast.success("Đã cập nhật xét nghiệm thành công");
       } else {
-        await labTestService.create(formData as any);
+        await labTestService.create(formData);
         toast.success("Đã thêm xét nghiệm mới thành công");
       }
       onSuccess();
@@ -423,13 +409,42 @@ function LabTestForm({ labTest, categories, onSuccess, onCancel }: LabTestFormPr
     }
   };
 
-  const sampleTypes = ["Máu", "Nước tiểu", "Phân", "Dịch não tủy", "Dịch khớp", "Mô", "Khác"];
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
+        {/* Code */}
+        <div className="space-y-2">
+          <label className="text-label">Mã xét nghiệm *</label>
+          <input
+            type="text"
+            className="input-base"
+            placeholder="Ví dụ: XN-001"
+            value={formData.code}
+            onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+            required
+            disabled={!!labTest}
+          />
+        </div>
+
+        {/* Category */}
+        <div className="space-y-2">
+          <label className="text-label">Loại xét nghiệm *</label>
+          <select
+            className="input-base"
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value as LabTestCategory })}
+            required
+          >
+            {Object.entries(CATEGORY_CONFIG).map(([key, config]) => (
+              <option key={key} value={key}>
+                {config.icon} {config.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* Name */}
-        <div className="col-span-2 sm:col-span-1 space-y-2">
+        <div className="col-span-2 space-y-2">
           <label className="text-label">Tên xét nghiệm *</label>
           <input
             type="text"
@@ -438,101 +453,6 @@ function LabTestForm({ labTest, categories, onSuccess, onCancel }: LabTestFormPr
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
-          />
-        </div>
-
-        {/* Code */}
-        <div className="col-span-2 sm:col-span-1 space-y-2">
-          <label className="text-label">Mã xét nghiệm</label>
-          <input
-            type="text"
-            className="input-base"
-            placeholder="Ví dụ: CBC01"
-            value={formData.code}
-            onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-          />
-        </div>
-
-        {/* Category */}
-        <div className="space-y-2">
-          <label className="text-label">Danh mục</label>
-          <select
-            className="input-base"
-            value={formData.categoryId}
-            onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-          >
-            <option value="">Chọn danh mục</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Sample Type */}
-        <div className="space-y-2">
-          <label className="text-label">Loại mẫu *</label>
-          <select
-            className="input-base"
-            value={formData.sampleType}
-            onChange={(e) => setFormData({ ...formData, sampleType: e.target.value })}
-            required
-          >
-            {sampleTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Price */}
-        <div className="space-y-2">
-          <label className="text-label">Giá (VNĐ) *</label>
-          <input
-            type="number"
-            className="input-base"
-            value={formData.price}
-            onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-            required
-            min="0"
-          />
-        </div>
-
-        {/* Turnaround Time */}
-        <div className="space-y-2">
-          <label className="text-label">Thời gian trả kết quả (giờ)</label>
-          <input
-            type="number"
-            className="input-base"
-            value={formData.turnaroundTime}
-            onChange={(e) => setFormData({ ...formData, turnaroundTime: Number(e.target.value) })}
-            min="1"
-          />
-        </div>
-
-        {/* Unit */}
-        <div className="space-y-2">
-          <label className="text-label">Đơn vị kết quả</label>
-          <input
-            type="text"
-            className="input-base"
-            placeholder="Ví dụ: g/L, mmol/L"
-            value={formData.unit}
-            onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-          />
-        </div>
-
-        {/* Normal Range */}
-        <div className="space-y-2">
-          <label className="text-label">Khoảng tham chiếu</label>
-          <input
-            type="text"
-            className="input-base"
-            placeholder="Ví dụ: 4.0 - 10.0"
-            value={formData.normalRange}
-            onChange={(e) => setFormData({ ...formData, normalRange: e.target.value })}
           />
         </div>
 
@@ -545,6 +465,45 @@ function LabTestForm({ labTest, categories, onSuccess, onCancel }: LabTestFormPr
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 col-span-2">
+          {/* Price */}
+          <div className="space-y-2">
+            <label className="text-label">Giá (VNĐ) *</label>
+            <input
+              type="number"
+              className="input-base"
+              value={formData.price}
+              onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+              required
+              min="0"
+            />
+          </div>
+
+          {/* Unit */}
+          <div className="space-y-2">
+            <label className="text-label">Đơn vị kết quả</label>
+            <input
+              type="text"
+              className="input-base"
+              placeholder="Ví dụ: g/L, mmol/L"
+              value={formData.unit}
+              onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+            />
+          </div>
+
+          {/* Normal Range */}
+          <div className="space-y-2">
+            <label className="text-label">Khoảng tham chiếu</label>
+            <input
+              type="text"
+              className="input-base"
+              placeholder="Ví dụ: 4.0 - 10.0"
+              value={formData.normalRange}
+              onChange={(e) => setFormData({ ...formData, normalRange: e.target.value })}
+            />
+          </div>
         </div>
 
         {/* Active Status */}

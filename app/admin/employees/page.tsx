@@ -54,6 +54,7 @@ export default function EmployeesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [deleteEmployee, setDeleteEmployee] = useState<Employee | null>(null);
+  const [viewingEmployee, setViewingEmployee] = useState<Employee | null>(null);
 
   // Fetch data
   useEffect(() => {
@@ -66,7 +67,7 @@ export default function EmployeesPage() {
       setLoading(true);
       const response = await hrService.getEmployees({
         search: searchQuery || undefined,
-        position: roleFilter || undefined,
+        role: roleFilter || undefined,
         departmentId: departmentFilter || undefined,
       });
       setEmployees(response.content || []);
@@ -287,7 +288,11 @@ export default function EmployeesPage() {
               </tr>
             ) : (
               employees.map((employee) => (
-                <tr key={employee.id}>
+                <tr 
+                  key={employee.id}
+                  className="cursor-pointer hover:bg-[hsl(var(--secondary))] transition-colors"
+                  onClick={() => setViewingEmployee(employee)}
+                >
                   {/* Employee Info */}
                   <td>
                     <div className="flex items-center gap-3">
@@ -342,7 +347,7 @@ export default function EmployeesPage() {
                   </td>
 
                   {/* Actions */}
-                  <td>
+                  <td onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="btn-icon w-8 h-8">
@@ -375,6 +380,74 @@ export default function EmployeesPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Employee Detail Modal */}
+      <Dialog open={!!viewingEmployee} onOpenChange={() => setViewingEmployee(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Chi tiết nhân viên</DialogTitle>
+          </DialogHeader>
+          {viewingEmployee && (
+            <div className="space-y-4">
+              {/* Profile Header */}
+              <div className="flex items-center gap-4 p-4 bg-white border-2 border-gray-200 rounded-xl shadow-sm">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary)/0.7)] flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+                  {viewingEmployee.fullName?.charAt(0) || "?"}
+                </div>
+                <div>
+                  <p className="font-bold text-lg text-gray-900">{viewingEmployee.fullName}</p>
+                  <span className={`badge ${getRoleBadge(viewingEmployee.role || "")}`}>
+                    {getRoleLabel(viewingEmployee.role || "")}
+                  </span>
+                </div>
+              </div>
+
+              {/* Info Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-white border-2 border-gray-200 rounded-xl shadow-sm">
+                  <p className="text-label text-gray-500">Phòng ban</p>
+                  <p className="font-semibold text-gray-900">{viewingEmployee.departmentName || "Chưa gán"}</p>
+                </div>
+                <div className="p-3 bg-white border-2 border-gray-200 rounded-xl shadow-sm">
+                  <p className="text-label text-gray-500">Số điện thoại</p>
+                  <p className="font-semibold text-gray-900">{viewingEmployee.phoneNumber || "-"}</p>
+                </div>
+                <div className="p-3 bg-white border-2 border-gray-200 rounded-xl shadow-sm">
+                  <p className="text-label text-gray-500">Chuyên khoa</p>
+                  <p className="font-semibold text-gray-900">{viewingEmployee.specialization || "-"}</p>
+                </div>
+                <div className="p-3 bg-white border-2 border-gray-200 rounded-xl shadow-sm">
+                  <p className="text-label text-gray-500">Trạng thái</p>
+                  <span className={`badge ${viewingEmployee.status === "ACTIVE" ? "bg-green-500 text-white" : "bg-gray-400 text-white"}`}>
+                    {viewingEmployee.status === "ACTIVE" ? "✓ Đang làm" : "Nghỉ việc"}
+                  </span>
+                </div>
+              </div>
+
+              {/* ID */}
+              <div className="p-3 bg-white border-2 border-gray-200 rounded-xl shadow-sm">
+                <p className="text-label text-gray-500">Mã nhân viên</p>
+                <p className="font-mono text-sm text-gray-700">{viewingEmployee.id}</p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-2">
+                <button 
+                  onClick={() => {
+                    setViewingEmployee(null);
+                    setEditingEmployee(viewingEmployee);
+                    setIsFormOpen(true);
+                  }}
+                  className="btn-secondary flex-1"
+                >
+                  <Edit className="w-4 h-4" />
+                  Chỉnh sửa
+                </button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteEmployee} onOpenChange={() => setDeleteEmployee(null)}>

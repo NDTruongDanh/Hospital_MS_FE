@@ -43,7 +43,7 @@ export default function PatientDashboardPage() {
       
       const now = new Date().toISOString();
       const upcoming = response.content.filter(apt => 
-        apt.status === "SCHEDULED" && apt.appointmentTime > now
+        apt.status === "PENDING" || apt.status === "CONFIRMED" && apt.appointmentTime > now
       );
       const completed = response.content.filter(apt => apt.status === "COMPLETED");
 
@@ -234,11 +234,11 @@ export default function PatientDashboardPage() {
                 >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                     apt.status === "COMPLETED" ? "bg-green-100 text-green-600" :
-                    apt.status === "SCHEDULED" ? "bg-blue-100 text-blue-600" :
+                    apt.status === "PENDING" || apt.status === "CONFIRMED" ? "bg-blue-100 text-blue-600" :
                     "bg-gray-100 text-gray-600"
                   }`}>
                     {apt.status === "COMPLETED" ? <CheckCircle className="w-5 h-5" /> :
-                     apt.status === "SCHEDULED" ? <Clock className="w-5 h-5" /> :
+                     apt.status === "PENDING" || apt.status === "CONFIRMED" ? <Clock className="w-5 h-5" /> :
                      <AlertCircle className="w-5 h-5" />}
                   </div>
                   <div className="flex-1">
@@ -249,7 +249,8 @@ export default function PatientDashboardPage() {
                     <p className="font-medium">{formatDate(apt.appointmentTime).split(",")[1]}</p>
                     <p className="text-small">
                       {apt.status === "COMPLETED" ? "Hoàn thành" :
-                       apt.status === "SCHEDULED" ? "Đã đặt" :
+                       apt.status === "PENDING" ? "Chờ xác nhận" :
+                       apt.status === "CONFIRMED" ? "Đã xác nhận" :
                        apt.status === "CANCELLED" ? "Đã hủy" : apt.status}
                     </p>
                   </div>

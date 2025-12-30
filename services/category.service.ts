@@ -63,17 +63,17 @@ export const categoryService = {
     }
 
     const res = await api.get<{ data: CategoryListResponse }>("/medicines/categories", { params: apiParams }); // Controller uses GET / (listCategories) which is RSQL enabled
-    return res.data; // The previous GenericController implementation returned ApiResponse<PageResponse<CategoryResponse>>.
-                     // The Typescript generic <{ data: CategoryListResponse }> implies res.data IS { data: CategoryListResponse } ? 
-                     // No, "api.get<T>" means res.data is T.
-                     // If backend returns ApiResponse, then T should be ApiResponse.
-                     // If backend returns ApiResponse<PageResponse<CategoryResponse>>, then
-                     // res.data.code = 1000
-                     // res.data.data = PageResponse...
-                     // So we must return res.data.data
-                     // BUT, line 65 was: return res.data; 
-                     // And interface CategoryListResponse matches PageResponse structure (content, page, size...).
-                     // So res.data.data IS the CategoryListResponse.
+    // The previous GenericController implementation returned ApiResponse<PageResponse<CategoryResponse>>.
+    // The Typescript generic <{ data: CategoryListResponse }> implies res.data IS { data: CategoryListResponse } ? 
+    // No, "api.get<T>" means res.data is T.
+    // If backend returns ApiResponse, then T should be ApiResponse.
+    // If backend returns ApiResponse<PageResponse<CategoryResponse>>, then
+    // res.data.code = 1000
+    // res.data.data = PageResponse...
+    // So we must return res.data.data
+    // BUT, line 65 was: return res.data; 
+    // And interface CategoryListResponse matches PageResponse structure (content, page, size...).
+    // So res.data.data IS the CategoryListResponse.
     return (res.data as any).data; 
   },
 

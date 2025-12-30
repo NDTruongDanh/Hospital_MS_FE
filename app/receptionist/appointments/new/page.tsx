@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { getPatients } from "@/services/patient.service";
 import { hrService } from "@/services/hr.service";
 import { appointmentService } from "@/services/appointment.service";
+import type { AppointmentType } from "@/interfaces/appointment";
 import { Patient } from "@/interfaces/patient";
 
 interface Doctor {
@@ -47,12 +48,18 @@ export default function ReceptionistNewAppointmentPage() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [timeSlots, setTimeSlots] = useState<{time: string; available: boolean}[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    doctorId: string;
+    appointmentDate: string;
+    appointmentTime: string;
+    reason: string;
+    type: AppointmentType;
+  }>({
     doctorId: "",
     appointmentDate: "",
     appointmentTime: "",
     reason: "",
-    type: "CONSULTATION" as "CONSULTATION" | "FOLLOW_UP",
+    type: "CONSULTATION",
   });
 
   useEffect(() => {

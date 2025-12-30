@@ -195,7 +195,7 @@ export default function PatientMedicalHistoryPage() {
               )}
 
               {selectedExam.followUpDate && (
-                <div className="p-3 rounded-lg border border-[hsl(var(--primary))] bg-[hsl(var(--primary-light))]">
+                <div className="p-4 bg-white border-2 border-gray-200 rounded-xl shadow-sm">
                   <p className="text-label">Ngày tái khám</p>
                   <p className="font-semibold">{formatDate(selectedExam.followUpDate)}</p>
                 </div>
@@ -206,7 +206,7 @@ export default function PatientMedicalHistoryPage() {
                   <p className="text-label">Đơn thuốc</p>
                   <div className="space-y-2">
                     {selectedExam.prescription.items?.map((item, i) => (
-                      <div key={i} className="p-2 rounded bg-[hsl(var(--secondary))] flex justify-between">
+                      <div key={i} className="p-3 bg-white border-2 border-gray-200 rounded-xl shadow-sm flex justify-between">
                         <div>
                           <p className="font-medium">{item.medicine.name}</p>
                           <p className="text-small">{item.dosage}</p>

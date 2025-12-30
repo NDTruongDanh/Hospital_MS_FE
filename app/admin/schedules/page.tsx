@@ -40,15 +40,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+// Schedule interface matching backend ScheduleResponse DTO
 interface Schedule {
   id: string;
   employeeId: string;
   employeeName?: string;
-  dayOfWeek: string;
-  shiftType: string;
-  startTime: string;
-  endTime: string;
-  roomNumber?: string;
+  workDate: string; // YYYY-MM-DD (LocalDate)
+  startTime: string; // HH:mm (LocalTime)
+  endTime: string; // HH:mm (LocalTime)
+  status: "AVAILABLE" | "BOOKED" | "CANCELLED";
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 const DAYS_OF_WEEK = [
@@ -93,7 +96,12 @@ export default function SchedulesPage() {
       const response = await hrService.getSchedules({
         employeeId: selectedEmployee || undefined,
       });
-      setSchedules(response.content || []);
+      // Map to include employeeName from nested employee object
+      const mappedSchedules = (response.content || []).map((s: any) => ({
+        ...s,
+        employeeName: s.employee?.fullName || s.employeeName,
+      }));
+      setSchedules(mappedSchedules);
     } catch (error) {
       console.error("Failed to fetch schedules:", error);
       // Use mock data for demo
@@ -159,12 +167,20 @@ export default function SchedulesPage() {
 
   const weekDates = getWeekDates();
 
-  const getSchedulesForDay = (dayValue: string) => {
-    return schedules.filter((s) => s.dayOfWeek === dayValue);
+  // Get schedules for a specific date by comparing workDate
+  const getSchedulesForDate = (date: Date) => {
+    const dateStr = date.toISOString().split("T")[0]; // YYYY-MM-DD
+    return schedules.filter((s) => s.workDate === dateStr);
   };
 
-  const getShiftStyle = (shiftType: string) => {
-    return SHIFT_TYPES.find((s) => s.value === shiftType)?.color || "bg-gray-100";
+  // Get style based on schedule status
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case "AVAILABLE": return "bg-green-100 text-green-700";
+      case "BOOKED": return "bg-blue-100 text-blue-700";
+      case "CANCELLED": return "bg-gray-100 text-gray-500";
+      default: return "bg-gray-100";
+    }
   };
 
   const navigateWeek = (direction: number) => {
@@ -292,8 +308,9 @@ export default function SchedulesPage() {
           })}
 
           {/* Day Cells */}
-          {DAYS_OF_WEEK.map((day) => {
-            const daySchedules = getSchedulesForDay(day.value);
+          {DAYS_OF_WEEK.map((day, index) => {
+            const date = weekDates[index];
+            const daySchedules = getSchedulesForDate(date);
             
             return (
               <div
@@ -304,7 +321,7 @@ export default function SchedulesPage() {
                   {daySchedules.map((schedule) => (
                     <div
                       key={schedule.id}
-                      className={`p-2 rounded-lg text-xs ${getShiftStyle(schedule.shiftType)} group relative`}
+                      className={`p-2 rounded-lg text-xs ${getStatusStyle(schedule.status)} group relative`}
                     >
                       <div className="flex items-start justify-between">
                         <div>
@@ -312,8 +329,8 @@ export default function SchedulesPage() {
                           <p className="opacity-80">
                             {schedule.startTime} - {schedule.endTime}
                           </p>
-                          {schedule.roomNumber && (
-                            <p className="opacity-60">Phòng {schedule.roomNumber}</p>
+                          {schedule.notes && (
+                            <p className="opacity-60 text-[10px]">{schedule.notes}</p>
                           )}
                         </div>
                         <DropdownMenu>
@@ -359,18 +376,22 @@ export default function SchedulesPage() {
         </div>
       )}
 
-      {/* Shift Legend */}
+      {/* Status Legend */}
       <div className="card-base">
-        <p className="text-card-title mb-3">Chú thích ca làm việc</p>
+        <p className="text-card-title mb-3">Chú thích trạng thái</p>
         <div className="flex flex-wrap gap-4">
-          {SHIFT_TYPES.map((shift) => (
-            <div key={shift.value} className="flex items-center gap-2">
-              <div className={`w-4 h-4 rounded ${shift.color.split(" ")[0]}`} />
-              <span className="text-sm">
-                {shift.label} ({shift.time})
-              </span>
-            </div>
-          ))}
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-green-100" />
+            <span className="text-sm">Có thể đặt lịch</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-blue-100" />
+            <span className="text-sm">Đã đặt</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-gray-100" />
+            <span className="text-sm">Đã hủy</span>
+          </div>
         </div>
       </div>
 
@@ -409,43 +430,97 @@ interface ScheduleFormProps {
 
 function ScheduleForm({ schedule, employees, prefilledDay, onSuccess, onCancel }: ScheduleFormProps) {
   const [loading, setLoading] = useState(false);
+  
+  // Calculate default workDate based on prefilledDay
+  const getDefaultWorkDate = () => {
+    if (!prefilledDay) return "";
+    const today = new Date();
+    const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday...
+    const dayMap: Record<string, number> = {
+      MONDAY: 1, TUESDAY: 2, WEDNESDAY: 3, THURSDAY: 4,
+      FRIDAY: 5, SATURDAY: 6, SUNDAY: 0
+    };
+    const targetDay = dayMap[prefilledDay] ?? 1;
+    const diff = targetDay - currentDay;
+    const targetDate = new Date(today);
+    targetDate.setDate(today.getDate() + diff);
+    return targetDate.toISOString().split("T")[0];
+  };
+
+  // Form state matching backend ScheduleRequest DTO exactly
   const [formData, setFormData] = useState({
     employeeId: schedule?.employeeId || "",
-    dayOfWeek: schedule?.dayOfWeek || prefilledDay || "MONDAY",
-    shiftType: schedule?.shiftType || "MORNING",
-    startTime: schedule?.startTime || "07:00",
-    endTime: schedule?.endTime || "12:00",
-    roomNumber: schedule?.roomNumber || "",
+    workDate: schedule?.workDate || getDefaultWorkDate(), // YYYY-MM-DD format
+    startTime: schedule?.startTime || "07:00", // HH:mm format
+    endTime: schedule?.endTime || "12:00", // HH:mm format
+    status: "AVAILABLE" as "AVAILABLE" | "BOOKED" | "CANCELLED",
+    notes: "",
   });
 
-  // Auto-fill times based on shift type
-  useEffect(() => {
-    const shift = SHIFT_TYPES.find((s) => s.value === formData.shiftType);
-    if (shift) {
-      const [start, end] = shift.time.split(" - ");
-      setFormData((prev) => ({
-        ...prev,
-        startTime: start,
-        endTime: end,
-      }));
-    }
-  }, [formData.shiftType]);
+  // Shift presets for convenience (no overnight - backend requires startTime < endTime)
+  const SHIFT_PRESETS = [
+    { label: "Ca sáng", start: "07:00", end: "12:00" },
+    { label: "Ca chiều", start: "12:00", end: "17:00" },
+    { label: "Ca tối", start: "17:00", end: "22:00" },
+    // Note: Overnight shifts (Ca đêm 22:00-07:00) not supported - backend requires startTime < endTime
+  ];
+
+  const applyShiftPreset = (preset: typeof SHIFT_PRESETS[0]) => {
+    setFormData(prev => ({
+      ...prev,
+      startTime: preset.start,
+      endTime: preset.end,
+    }));
+  };
+
+  // Check if times are valid (start < end)
+  const isTimeValid = () => {
+    if (!formData.startTime || !formData.endTime) return true;
+    return formData.startTime < formData.endTime;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation
+    if (!formData.employeeId || !formData.workDate || !formData.startTime || !formData.endTime) {
+      toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
+      return;
+    }
+
+    // Validate startTime < endTime
+    if (formData.startTime >= formData.endTime) {
+      toast.error("Giờ kết thúc phải sau giờ bắt đầu. Ca đêm qua ngày hiện chưa được hỗ trợ.");
+      return;
+    }
+
     setLoading(true);
 
     try {
+      // Send data matching ScheduleRequest DTO
+      const payload = {
+        employeeId: formData.employeeId,
+        workDate: formData.workDate, // YYYY-MM-DD
+        startTime: formData.startTime, // HH:mm
+        endTime: formData.endTime, // HH:mm
+        status: formData.status,
+        notes: formData.notes || undefined,
+      };
+      
+      console.log("Submitting schedule:", payload);
+      
       if (schedule) {
-        await hrService.updateSchedule(schedule.id, formData);
+        await hrService.updateSchedule(schedule.id, payload);
         toast.success("Đã cập nhật lịch làm việc");
       } else {
-        await hrService.createSchedule(formData);
+        await hrService.createSchedule(payload);
         toast.success("Đã thêm lịch làm việc mới");
       }
       onSuccess();
-    } catch (error) {
-      toast.error(schedule ? "Không thể cập nhật" : "Không thể thêm lịch");
+    } catch (error: any) {
+      console.error("Schedule error:", error);
+      const message = error?.response?.data?.message || "Có lỗi xảy ra";
+      toast.error(schedule ? `Không thể cập nhật: ${message}` : `Không thể thêm: ${message}`);
     } finally {
       setLoading(false);
     }
@@ -471,73 +546,94 @@ function ScheduleForm({ schedule, employees, prefilledDay, onSuccess, onCancel }
         </select>
       </div>
 
+      {/* Work Date */}
+      <div className="space-y-2">
+        <label className="text-label">Ngày làm việc *</label>
+        <input
+          type="date"
+          className="input-base"
+          value={formData.workDate}
+          onChange={(e) => setFormData({ ...formData, workDate: e.target.value })}
+          required
+        />
+      </div>
+
+      {/* Shift Presets */}
+      <div className="space-y-2">
+        <label className="text-label">Chọn nhanh ca làm</label>
+        <div className="flex flex-wrap gap-2">
+          {SHIFT_PRESETS.map((preset) => (
+            <button
+              key={preset.label}
+              type="button"
+              onClick={() => applyShiftPreset(preset)}
+              className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                formData.startTime === preset.start && formData.endTime === preset.end
+                  ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]"
+                  : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary))]"
+              }`}
+            >
+              {preset.label} ({preset.start} - {preset.end})
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
-        {/* Day of Week */}
-        <div className="space-y-2">
-          <label className="text-label">Ngày trong tuần *</label>
-          <select
-            className="input-base"
-            value={formData.dayOfWeek}
-            onChange={(e) => setFormData({ ...formData, dayOfWeek: e.target.value })}
-            required
-          >
-            {DAYS_OF_WEEK.map((day) => (
-              <option key={day.value} value={day.value}>
-                {day.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Shift Type */}
-        <div className="space-y-2">
-          <label className="text-label">Loại ca *</label>
-          <select
-            className="input-base"
-            value={formData.shiftType}
-            onChange={(e) => setFormData({ ...formData, shiftType: e.target.value })}
-            required
-          >
-            {SHIFT_TYPES.map((shift) => (
-              <option key={shift.value} value={shift.value}>
-                {shift.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
         {/* Start Time */}
         <div className="space-y-2">
-          <label className="text-label">Giờ bắt đầu</label>
+          <label className="text-label">Giờ bắt đầu *</label>
           <input
             type="time"
-            className="input-base"
+            className={`input-base ${!isTimeValid() ? "border-red-500" : ""}`}
             value={formData.startTime}
             onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+            required
           />
         </div>
 
         {/* End Time */}
         <div className="space-y-2">
-          <label className="text-label">Giờ kết thúc</label>
+          <label className="text-label">Giờ kết thúc *</label>
           <input
             type="time"
-            className="input-base"
+            className={`input-base ${!isTimeValid() ? "border-red-500" : ""}`}
             value={formData.endTime}
             onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+            required
           />
         </div>
       </div>
 
-      {/* Room Number */}
+      {/* Time Validation Warning */}
+      {!isTimeValid() && (
+        <div className="text-sm text-red-600 bg-red-50 p-2 rounded-lg">
+          ⚠️ Giờ kết thúc phải sau giờ bắt đầu. Ca đêm qua ngày hiện chưa được hỗ trợ.
+        </div>
+      )}
+
+      {/* Status */}
       <div className="space-y-2">
-        <label className="text-label">Số phòng (tùy chọn)</label>
-        <input
-          type="text"
+        <label className="text-label">Trạng thái</label>
+        <select
           className="input-base"
-          placeholder="Ví dụ: 301"
-          value={formData.roomNumber}
-          onChange={(e) => setFormData({ ...formData, roomNumber: e.target.value })}
+          value={formData.status}
+          onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+        >
+          <option value="AVAILABLE">Có thể đặt lịch</option>
+          <option value="BOOKED">Đã đặt</option>
+          <option value="CANCELLED">Đã hủy</option>
+        </select>
+      </div>
+
+      {/* Notes */}
+      <div className="space-y-2">
+        <label className="text-label">Ghi chú (tùy chọn)</label>
+        <textarea
+          className="input-base min-h-[60px] resize-none"
+          placeholder="Ghi chú thêm..."
+          value={formData.notes}
+          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
         />
       </div>
 

@@ -229,7 +229,7 @@ export default function PatientInvoicesPage() {
                 <div className="space-y-2">
                   <p className="text-label">Chi tiết dịch vụ</p>
                   {selectedInvoice.items.map((item, i) => (
-                    <div key={i} className="flex justify-between text-sm p-2 rounded bg-[hsl(var(--secondary))]">
+                    <div key={i} className="flex justify-between text-sm p-3 bg-white border-2 border-gray-200 rounded-xl shadow-sm">
                       <span>{item.description} x{item.quantity}</span>
                       <span className="font-medium">{formatCurrency(item.amount || (item.unitPrice * item.quantity))}</span>
                     </div>

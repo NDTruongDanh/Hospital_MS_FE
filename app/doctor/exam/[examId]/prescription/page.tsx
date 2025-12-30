@@ -49,7 +49,8 @@ export default function DoctorPrescriptionPage() {
       
       // Try to load existing prescription
       try {
-        const existingRx = await medicalExamService.getPrescriptionByExam(examId);
+        const existingRxResponse = await medicalExamService.getPrescriptionByExam(examId);
+        const existingRx = existingRxResponse?.data;
         if (existingRx) {
           setNotes(existingRx.notes || "");
           // Map existing items
@@ -189,7 +190,7 @@ export default function DoctorPrescriptionPage() {
               <button
                 key={med.id}
                 onClick={() => addMedicine(med)}
-                className="w-full p-3 rounded-lg border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))] hover:bg-[hsl(var(--primary-light))] transition-colors text-left"
+                className="w-full p-4 bg-white border-2 border-gray-200 rounded-xl shadow-sm hover:border-[hsl(var(--primary))] hover:shadow-md transition-all text-left"
               >
                 <p className="font-medium">{med.name}</p>
                 <p className="text-small">{med.activeIngredient} • {formatCurrency(med.sellingPrice)}/{med.unit}</p>

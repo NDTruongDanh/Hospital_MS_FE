@@ -10,25 +10,21 @@ import {
   Check,
 } from "lucide-react";
 import { toast } from "sonner";
-import { labTestService, LabTest, LabTestCategory } from "@/services/lab.service";
+import { labTestService } from "@/services/lab.service";
+import { labOrderService } from "@/services/lab.service";
+import type { LabTest, LabTestCategory, OrderPriority, LabOrderCreateRequest } from "@/interfaces/lab";
 
-interface LabOrderItem {
-  labTestId: string;
-  labTestName: string;
-  price: number;
-}
+const CATEGORY_CONFIG: Record<LabTestCategory, { label: string; icon: string }> = {
+  LAB: { label: "Xét nghiệm", icon: "🧪" },
+  IMAGING: { label: "Chẩn đoán hình ảnh", icon: "📷" },
+  PATHOLOGY: { label: "Giải phẫu bệnh", icon: "🔬" },
+};
 
-const CATEGORIES: { value: LabTestCategory; label: string }[] = [
-  { value: "LAB", label: "Xét nghiệm" },
-  { value: "IMAGING", label: "Chẩn đoán hình ảnh" },
-  { value: "PATHOLOGY", label: "Giải phẫu bệnh" },
-];
+const PRIORITY_CONFIG: Partial<Record<OrderPriority, { label: string; color: string }>> = {
+  NORMAL: { label: "Bình thường", color: "text-blue-600" },
+  URGENT: { label: "Khẩn cấp", color: "text-red-600" },
+};
 
-const PRIORITIES = [
-  { value: "NORMAL", label: "Bình thường" },
-  { value: "URGENT", label: "Khẩn" },
-  { value: "STAT", label: "Cấp cứu" },
-];
 
 export default function DoctorLabOrderPage() {
   const params = useParams();
@@ -39,9 +35,9 @@ export default function DoctorLabOrderPage() {
   const [saving, setSaving] = useState(false);
   const [labTests, setLabTests] = useState<LabTest[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<LabTestCategory>("LAB");
-  const [selectedItems, setSelectedItems] = useState<LabOrderItem[]>([]);
-  const [priority, setPriority] = useState("NORMAL");
-  const [notes, setNotes] = useState("");
+  const [selectedTestIds, setSelectedTestIds] = useState<string[]>([]);
+  const [priority, setPriority] = useState<OrderPriority>("NORMAL");
+  const [notes,  setNotes] = useState("");
 
   useEffect(() => {
     fetchLabTests();
@@ -62,52 +58,46 @@ export default function DoctorLabOrderPage() {
 
   const filteredTests = labTests.filter(t => t.category === selectedCategory);
 
-  const toggleTest = (test: LabTest) => {
-    const exists = selectedItems.some(item => item.labTestId === test.id);
-    if (exists) {
-      setSelectedItems(selectedItems.filter(item => item.labTestId !== test.id));
+  const toggleTest = (testId: string) => {
+    if (selectedTestIds.includes(testId)) {
+      setSelectedTestIds(selectedTestIds.filter(id => id !== testId));
     } else {
-      setSelectedItems([...selectedItems, {
-        labTestId: test.id,
-        labTestName: test.name,
-        price: test.price,
-      }]);
+      setSelectedTestIds([...selectedTestIds, testId]);
     }
   };
 
-  const isSelected = (testId: string) => selectedItems.some(item => item.labTestId === testId);
+  const isSelected = (testId: string) => selectedTestIds.includes(testId);
 
   const handleSubmit = async () => {
-    if (selectedItems.length === 0) {
+    if (selectedTestIds.length === 0) {
       toast.error("Vui lòng chọn ít nhất 1 xét nghiệm");
       return;
     }
 
     try {
       setSaving(true);
-      // TODO: Call actual API when endpoint is available
-      // For now, simulate the request
-      const labOrderData = {
+      
+      const orderRequest: LabOrderCreateRequest = {
         medicalExamId: examId,
-        labTestIds: selectedItems.map(item => item.labTestId),
-        priority,
+        labTestIds: selectedTestIds,
+        priority: priority,
         notes: notes || undefined,
       };
       
-      console.log("Creating lab order:", labOrderData);
-      await new Promise(r => setTimeout(r, 500)); // Simulate API call
+      await labOrderService.create(orderRequest);
       
-      toast.success("Đã tạo yêu cầu xét nghiệm!");
+      toast.success("Đã tạo yêu cầu xét nghiệm thành công!");
       router.back();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to create lab order:", error);
-      toast.error("Không thể tạo yêu cầu xét nghiệm");
+      toast.error(error.response?.data?.message || "Không thể tạo yêu cầu xét nghiệm");
     } finally {
       setSaving(false);
     }
   };
 
-  const totalAmount = selectedItems.reduce((sum, item) => sum + item.price, 0);
+  const selectedTests = labTests.filter(t => selectedTestIds.includes(t.id));
+  const totalAmount = selectedTests.reduce((sum, test) => sum + test.price, 0);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(value);
@@ -143,17 +133,17 @@ export default function DoctorLabOrderPage() {
           
           {/* Category Tabs */}
           <div className="flex gap-2 mb-4 flex-wrap">
-            {CATEGORIES.map((cat) => (
+            {Object.entries(CATEGORY_CONFIG).map(([key, config]) => (
               <button
-                key={cat.value}
-                onClick={() => setSelectedCategory(cat.value)}
+                key={key}
+                onClick={() => setSelectedCategory(key as LabTestCategory)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  selectedCategory === cat.value
+                  selectedCategory === key
                     ? "bg-[hsl(var(--primary))] text-white"
                     : "bg-[hsl(var(--secondary))] hover:bg-[hsl(var(--secondary))]/80"
                 }`}
               >
-                {cat.label}
+                {config.icon} {config.label}
               </button>
             ))}
           </div>
@@ -171,11 +161,11 @@ export default function DoctorLabOrderPage() {
               filteredTests.map((test) => (
                 <button
                   key={test.id}
-                  onClick={() => toggleTest(test)}
-                  className={`w-full p-4 rounded-lg border text-left transition-colors flex items-center gap-3 ${
+                  onClick={() => toggleTest(test.id)}
+                  className={`w-full p-4 rounded-xl text-left transition-all flex items-center gap-3 ${
                     isSelected(test.id)
-                      ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary-light))]"
-                      : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary))]"
+                      ? "bg-white border-2 border-[hsl(var(--primary))] shadow-md"
+                      : "bg-white border-2 border-gray-200 shadow-sm hover:border-[hsl(var(--primary))] hover:shadow-md"
                   }`}
                 >
                   <div className={`w-5 h-5 rounded border flex items-center justify-center ${
@@ -187,7 +177,7 @@ export default function DoctorLabOrderPage() {
                   </div>
                   <div className="flex-1">
                     <p className="font-medium">{test.name}</p>
-                    <p className="text-small">{test.code} • {test.description || "Không có mô tả"}</p>
+                    <p className="text-small text-gray-500">{test.code} • {test.description || "Không có mô tả"}</p>
                   </div>
                   <span className="font-semibold text-[hsl(var(--primary))]">
                     {formatCurrency(test.price)}
@@ -208,10 +198,12 @@ export default function DoctorLabOrderPage() {
             <select
               className="input-base mt-1"
               value={priority}
-              onChange={(e) => setPriority(e.target.value)}
+              onChange={(e) => setPriority(e.target.value as OrderPriority)}
             >
-              {PRIORITIES.map((p) => (
-                <option key={p.value} value={p.value}>{p.label}</option>
+              {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
+                <option key={key} value={key}>
+                  {config.label}
+                </option>
               ))}
             </select>
           </div>
@@ -229,17 +221,17 @@ export default function DoctorLabOrderPage() {
 
           {/* Selected Items */}
           <div className="mb-4">
-            <p className="text-label mb-2">Xét nghiệm đã chọn ({selectedItems.length})</p>
-            {selectedItems.length === 0 ? (
+            <p className="text-label mb-2">Xét nghiệm đã chọn ({selectedTests.length})</p>
+            {selectedTests.length === 0 ? (
               <p className="text-[hsl(var(--muted-foreground))] text-sm">
                 Chưa chọn xét nghiệm nào
               </p>
             ) : (
               <div className="space-y-2">
-                {selectedItems.map((item) => (
-                  <div key={item.labTestId} className="flex justify-between text-sm">
-                    <span className="truncate">{item.labTestName}</span>
-                    <span className="font-medium">{formatCurrency(item.price)}</span>
+                {selectedTests.map((test) => (
+                  <div key={test.id} className="flex justify-between text-sm">
+                    <span className="truncate">{test.name}</span>
+                    <span className="font-medium">{formatCurrency(test.price)}</span>
                   </div>
                 ))}
               </div>
@@ -263,7 +255,7 @@ export default function DoctorLabOrderPage() {
             </button>
             <button
               onClick={handleSubmit}
-              disabled={saving || selectedItems.length === 0}
+              disabled={saving || selectedTests.length === 0}
               className="btn-primary flex-1"
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}

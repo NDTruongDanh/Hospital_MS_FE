@@ -847,10 +847,151 @@ export const appointmentService = {
       currentTime,
     );
   },
+
+  // ==================== WALK-IN QUEUE METHODS ====================
+
+  /**
+   * Register a walk-in patient
+   * Creates an immediate appointment with queue number
+   */
+  registerWalkIn: async (data: import("@/interfaces/appointment").WalkInRequest): Promise<Appointment> => {
+    if (!USE_MOCK) {
+      try {
+        const response = await axiosInstance.post(`${BASE_URL}/walk-in`, data);
+        return response.data.data;
+      } catch (error: any) {
+        console.error("[DEBUG] Walk-in Registration Error:", error.response?.data);
+        throw error;
+      }
+    }
+
+    await delay(300);
+    const mockAppointments = getMockAppointments();
+
+    // Generate queue number for today
+    const todayStr = new Date().toISOString().split("T")[0];
+    const todayWalkIns = mockAppointments.filter(
+      (a) => a.doctor.id === data.doctorId && 
+             a.appointmentTime.startsWith(todayStr) &&
+             a.queueNumber !== undefined
+    );
+    const nextQueueNumber = todayWalkIns.length > 0 
+      ? Math.max(...todayWalkIns.map(a => a.queueNumber || 0)) + 1 
+      : 1;
+
+    const newAppointment: Appointment = {
+      id: `walk-in-${Date.now()}`,
+      patient: { id: data.patientId, fullName: `Patient ${data.patientId}` },
+      doctor: { id: data.doctorId, fullName: `Doctor ${data.doctorId}` },
+      appointmentTime: new Date().toISOString(),
+      status: "SCHEDULED",
+      type: data.type || "WALK_IN",
+      reason: data.reason,
+      notes: data.notes,
+      queueNumber: nextQueueNumber,
+      priority: data.priority || 5,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const updatedAppointments = [newAppointment, ...mockAppointments];
+    saveMockAppointments(updatedAppointments);
+    return newAppointment;
+  },
+
+  /**
+   * Get today's queue for a specific doctor
+   * Returns appointments ordered by priority (low first) then queue number
+   */
+  getDoctorQueue: async (doctorId: string): Promise<Appointment[]> => {
+    if (!USE_MOCK) {
+      try {
+        const response = await axiosInstance.get(`${BASE_URL}/queue/doctor/${doctorId}`);
+        return response.data.data;
+      } catch (error: any) {
+        console.error("[DEBUG] Get Doctor Queue Error:", error.response?.data);
+        throw error;
+      }
+    }
+
+    await delay(200);
+    const mockAppointments = getMockAppointments();
+    const todayStr = new Date().toISOString().split("T")[0];
+
+    // Filter today's appointments for this doctor that are in queue
+    const queue = mockAppointments.filter(
+      (a) => a.doctor.id === doctorId &&
+             a.appointmentTime.startsWith(todayStr) &&
+             (a.status === "SCHEDULED" || a.status === "IN_PROGRESS")
+    );
+
+    // Sort by priority (lower first), then queue number
+    queue.sort((a, b) => {
+      const priorityDiff = (a.priority || 5) - (b.priority || 5);
+      if (priorityDiff !== 0) return priorityDiff;
+      return (a.queueNumber || 999) - (b.queueNumber || 999);
+    });
+
+    return queue;
+  },
+
+  /**
+   * Get next patient in queue for a doctor
+   * Returns the first SCHEDULED patient (not yet called)
+   */
+  getNextInQueue: async (doctorId: string): Promise<Appointment | null> => {
+    if (!USE_MOCK) {
+      try {
+        const response = await axiosInstance.get(`${BASE_URL}/queue/next/${doctorId}`);
+        return response.data.data;
+      } catch (error: any) {
+        console.error("[DEBUG] Get Next In Queue Error:", error.response?.data);
+        throw error;
+      }
+    }
+
+    await delay(100);
+    const queue = await appointmentService.getDoctorQueue(doctorId);
+    return queue.find(a => a.status === "SCHEDULED") || null;
+  },
+
+  /**
+   * Call next patient (mark as IN_PROGRESS)
+   * Returns the called patient or null if queue is empty
+   */
+  callNextPatient: async (doctorId: string): Promise<Appointment | null> => {
+    if (!USE_MOCK) {
+      try {
+        const response = await axiosInstance.patch(`${BASE_URL}/queue/call-next/${doctorId}`);
+        return response.data.data;
+      } catch (error: any) {
+        console.error("[DEBUG] Call Next Patient Error:", error.response?.data);
+        throw error;
+      }
+    }
+
+    await delay(200);
+    const mockAppointments = getMockAppointments();
+    const next = await appointmentService.getNextInQueue(doctorId);
+    
+    if (!next) return null;
+
+    const index = mockAppointments.findIndex(a => a.id === next.id);
+    if (index !== -1) {
+      mockAppointments[index] = {
+        ...mockAppointments[index],
+        status: "IN_PROGRESS",
+        updatedAt: new Date().toISOString(),
+      };
+      saveMockAppointments(mockAppointments);
+      return mockAppointments[index];
+    }
+    return null;
+  },
 };
 
 // Re-export types
-export type { Appointment, AppointmentCreateRequest, AppointmentListParams };
+export type { Appointment, AppointmentCreateRequest, AppointmentListParams, WalkInRequest } from "@/interfaces/appointment";
 export type AppointmentStatus =
   import("@/interfaces/appointment").AppointmentStatus;
 export type AppointmentType =

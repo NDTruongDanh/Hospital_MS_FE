@@ -318,7 +318,7 @@ export default function DoctorExamPage() {
             ) : (
               <div className="space-y-4">
                 {prescriptions.map((rx, index) => (
-                  <div key={index} className="p-4 rounded-lg border border-[hsl(var(--border))] space-y-3">
+                  <div key={index} className="p-4 bg-white border-2 border-gray-200 rounded-xl shadow-sm space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="font-medium">Thuốc #{index + 1}</span>
                       <button

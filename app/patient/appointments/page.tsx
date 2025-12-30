@@ -32,7 +32,8 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const STATUS_CONFIG = {
-  SCHEDULED: { label: "Đã đặt", class: "badge-info", icon: Calendar },
+  PENDING: { label: "Chờ xác nhận", class: "badge-warning", icon: Calendar },
+  CONFIRMED: { label: "Đã xác nhận", class: "badge-info", icon: Calendar },
   COMPLETED: { label: "Hoàn thành", class: "badge-success", icon: CheckCircle },
   CANCELLED: { label: "Đã hủy", class: "badge-danger", icon: XCircle },
   NO_SHOW: { label: "Vắng mặt", class: "badge-warning", icon: XCircle },
@@ -75,8 +76,8 @@ export default function PatientAppointmentsPage() {
 
   const now = new Date().toISOString();
   const filteredAppointments = appointments.filter(apt => {
-    if (filter === "upcoming") return apt.appointmentTime >= now && apt.status === "SCHEDULED";
-    if (filter === "past") return apt.appointmentTime < now || apt.status !== "SCHEDULED";
+    if (filter === "upcoming") return apt.appointmentTime >= now && (apt.status === "PENDING" || apt.status === "CONFIRMED");
+    if (filter === "past") return apt.appointmentTime < now || (apt.status !== "PENDING" && apt.status !== "CONFIRMED");
     return true;
   }).sort((a, b) => {
     if (filter === "upcoming") return a.appointmentTime.localeCompare(b.appointmentTime);
@@ -155,9 +156,9 @@ export default function PatientAppointmentsPage() {
           </div>
         ) : (
           filteredAppointments.map((apt) => {
-            const status = STATUS_CONFIG[apt.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.SCHEDULED;
+            const status = STATUS_CONFIG[apt.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.PENDING;
             const StatusIcon = status.icon;
-            const isUpcoming = apt.appointmentTime >= now && apt.status === "SCHEDULED";
+            const isUpcoming = apt.appointmentTime >= now && (apt.status === "PENDING" || apt.status === "CONFIRMED");
             
             return (
               <div
@@ -206,7 +207,7 @@ export default function PatientAppointmentsPage() {
                   </div>
 
                   {/* Actions */}
-                  {apt.status === "SCHEDULED" && (
+                  {(apt.status === "PENDING" || apt.status === "CONFIRMED") && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="btn-icon w-10 h-10">

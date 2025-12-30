@@ -1,103 +1,26 @@
 /**
  * Lab Test Service
- * Handles API calls for lab tests and lab test results
+ * Handles API calls for lab tests, lab test results, and lab orders
  */
 
 import axiosInstance from "@/config/axios";
+import type {
+  LabTest,
+  LabTestCreateRequest,
+  LabTestCategory,
+  DiagnosticImage,
+  LabTestResult,
+  LabTestResultCreateRequest,
+  LabTestResultUpdateRequest,
+  ImageType,
+  LabOrder,
+  LabOrderCreateRequest,
+  LabOrderUpdateRequest,
+} from "@/interfaces/lab";
 
 const BASE_URL_LAB_TESTS = "/exams/lab-tests";
 const BASE_URL_LAB_RESULTS = "/exams/lab-results";
-
-// ============ Types ============
-
-export type LabTestCategory = "LAB" | "IMAGING" | "PATHOLOGY";
-export type ResultStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "CANCELLED";
-export type ImageType = "XRAY" | "CT_SCAN" | "MRI" | "ULTRASOUND" | "ENDOSCOPY" | "PATHOLOGY_SLIDE" | "PHOTO";
-
-export interface LabTest {
-  id: string;
-  code: string;
-  name: string;
-  category: LabTestCategory;
-  description?: string;
-  price: number;
-  unit?: string;
-  normalRange?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface LabTestCreateRequest {
-  code: string;
-  name: string;
-  category: LabTestCategory;
-  description?: string;
-  price: number;
-  unit?: string;
-  normalRange?: string;
-  isActive?: boolean;
-}
-
-export interface DiagnosticImage {
-  id: string;
-  labTestResultId: string;
-  fileName: string;
-  storagePath: string;
-  contentType: string;
-  fileSize: number;
-  thumbnailPath?: string;
-  imageType: ImageType;
-  description?: string;
-  sequenceNumber: number;
-  uploadedBy?: string;
-  createdAt: string;
-  downloadUrl?: string;
-  thumbnailUrl?: string;
-}
-
-export interface LabTestResult {
-  id: string;
-  medicalExamId: string;
-  labTestId: string;
-  patientId: string;
-  patientName: string;
-  labTestCode: string;
-  labTestName: string;
-  labTestCategory: LabTestCategory;
-  resultValue?: string;
-  status: ResultStatus;
-  isAbnormal: boolean;
-  interpretation?: string;
-  notes?: string;
-  performedBy?: string;
-  interpretedBy?: string;
-  performedAt?: string;
-  completedAt?: string;
-  images: DiagnosticImage[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface LabTestResultCreateRequest {
-  medicalExamId: string;
-  labTestId: string;
-  resultValue?: string;
-  isAbnormal?: boolean;
-  interpretation?: string;
-  notes?: string;
-  performedBy?: string;
-}
-
-export interface LabTestResultUpdateRequest {
-  resultValue?: string;
-  status?: ResultStatus;
-  isAbnormal?: boolean;
-  interpretation?: string;
-  notes?: string;
-  performedBy?: string;
-  interpretedBy?: string;
-}
+const BASE_URL_LAB_ORDERS = "/exams/lab-orders";
 
 // ============ Lab Tests API ============
 
@@ -131,6 +54,14 @@ export const labTestService = {
    */
   async getById(id: string): Promise<LabTest> {
     const response = await axiosInstance.get(`${BASE_URL_LAB_TESTS}/${id}`);
+    return response.data.data;
+  },
+
+  /**
+   * Get lab test by code
+   */
+  async getByCode(code: string): Promise<LabTest> {
+    const response = await axiosInstance.get(`${BASE_URL_LAB_TESTS}/code/${code}`);
     return response.data.data;
   },
 
@@ -251,6 +182,87 @@ export const labResultService = {
   async deleteImage(imageId: string): Promise<void> {
     await axiosInstance.delete(`${BASE_URL_LAB_RESULTS}/images/${imageId}`);
   },
+
+  /**
+   * Download an image (proxy through API Gateway)
+   */
+  async downloadImage(imageId: string): Promise<Blob> {
+    const response = await axiosInstance.get(
+      `${BASE_URL_LAB_RESULTS}/images/${imageId}/download`,
+      {
+        responseType: "blob",
+      }
+    );
+    return response.data;
+  },
 };
 
-export default { labTestService, labResultService };
+// ============ Lab Orders API ============
+
+export const labOrderService = {
+  /**
+   * Get all lab orders (paginated)
+   */
+  async getAll(params?: { page?: number; size?: number }) {
+    const response = await axiosInstance.get(`${BASE_URL_LAB_ORDERS}/all`, { params });
+    return response.data.data;
+  },
+
+  /**
+   * Get lab order by ID
+   */
+  async getById(id: string): Promise<LabOrder> {
+    const response = await axiosInstance.get(`${BASE_URL_LAB_ORDERS}/${id}`);
+    return response.data.data;
+  },
+
+  /**
+   * Get orders for a medical exam
+   */
+  async getByExam(examId: string): Promise<LabOrder[]> {
+    const response = await axiosInstance.get(`${BASE_URL_LAB_ORDERS}/exam/${examId}`);
+    return response.data.data;
+  },
+
+  /**
+   * Get orders for a patient
+   */
+  async getByPatient(patientId: string): Promise<LabOrder[]> {
+    const response = await axiosInstance.get(`${BASE_URL_LAB_ORDERS}/patient/${patientId}`);
+    return response.data.data;
+  },
+
+  /**
+   * Create a new lab order with multiple tests
+   */
+  async create(data: LabOrderCreateRequest): Promise<LabOrder> {
+    const response = await axiosInstance.post(BASE_URL_LAB_ORDERS, data);
+    return response.data.data;
+  },
+
+  /**
+   * Update lab order status/priority
+   */
+  async update(id: string, data: LabOrderUpdateRequest): Promise<LabOrder> {
+    const response = await axiosInstance.put(`${BASE_URL_LAB_ORDERS}/${id}`, data);
+    return response.data.data;
+  },
+
+  /**
+   * Cancel a lab order
+   */
+  async cancel(id: string): Promise<void> {
+    await axiosInstance.delete(`${BASE_URL_LAB_ORDERS}/${id}`);
+  },
+
+  /**
+   * Auto-group existing ungrouped results into orders
+   * Useful for migrating existing data
+   */
+  async autoGroup(): Promise<number> {
+    const response = await axiosInstance.post(`${BASE_URL_LAB_ORDERS}/auto-group`);
+    return response.data.data; // Returns count of orders created
+  },
+};
+
+export default { labTestService, labResultService, labOrderService };

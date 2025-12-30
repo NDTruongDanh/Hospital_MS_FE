@@ -1,11 +1,14 @@
-// Appointment Types - Based on fe-spec-appointment-service.md
+// Appointment Types - Based on backend AppointmentStatus enum
 
 export type AppointmentStatus =
-  | "SCHEDULED"
+  | "PENDING"       // Chờ xác nhận
+  | "CONFIRMED"     // Đã xác nhận
+  | "SCHEDULED"     // Đã lên lịch
+  | "IN_PROGRESS"   // Đang khám (walk-in queue)
   | "COMPLETED"
   | "CANCELLED"
   | "NO_SHOW";
-export type AppointmentType = "CONSULTATION" | "FOLLOW_UP" | "EMERGENCY";
+export type AppointmentType = "CONSULTATION" | "FOLLOW_UP" | "EMERGENCY" | "WALK_IN";
 
 export interface PatientSummary {
   id: string;
@@ -33,6 +36,8 @@ export interface Appointment {
   cancelledAt?: string;
   cancelReason?: string;
   medicalExamId?: string;
+  queueNumber?: number;     // Queue position for walk-ins
+  priority?: number;        // Priority level (lower = higher priority)
   createdAt: string;
   updatedAt: string;
   updatedBy?: string;
@@ -100,4 +105,14 @@ export interface DoctorOption {
   label: string; // employee.fullName
   subLabel?: string; // department.name + specialization
   departmentId?: string;
+}
+
+// Walk-in registration request
+export interface WalkInRequest {
+  patientId: string;
+  doctorId: string;
+  type: AppointmentType;
+  reason: string;
+  priority?: number;  // Default 5 (normal), 1-2 (high priority/emergency)
+  notes?: string;
 }

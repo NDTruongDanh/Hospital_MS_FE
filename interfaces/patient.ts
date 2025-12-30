@@ -68,7 +68,7 @@ export interface CreatePatientRequest {
   identificationNumber?: string;
   healthInsuranceNumber?: string;
   bloodType?: BloodType;
-  allergies?: string;
+  allergies?: string; // Comma-separated values (e.g., "Penicillin, Aspirin") - backend expects string
   relativeFullName?: string;
   relativePhoneNumber?: string;
   relativeRelationship?: RelationshipType;

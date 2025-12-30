@@ -36,7 +36,8 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const STATUS_CONFIG = {
-  SCHEDULED: { label: "Đã đặt", class: "badge-info", icon: Calendar },
+  PENDING: { label: "Chờ xác nhận", class: "badge-warning", icon: Calendar },
+  CONFIRMED: { label: "Đã xác nhận", class: "badge-info", icon: Calendar },
   COMPLETED: { label: "Hoàn thành", class: "badge-success", icon: CheckCircle },
   CANCELLED: { label: "Đã hủy", class: "badge-danger", icon: XCircle },
   NO_SHOW: { label: "Vắng mặt", class: "badge-warning", icon: XCircle },
@@ -155,7 +156,8 @@ export default function AdminAppointmentsPage() {
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="">Tất cả trạng thái</option>
-              <option value="SCHEDULED">Đã đặt</option>
+              <option value="PENDING">Chờ xác nhận</option>
+              <option value="CONFIRMED">Đã xác nhận</option>
               <option value="COMPLETED">Hoàn thành</option>
               <option value="CANCELLED">Đã hủy</option>
               <option value="NO_SHOW">Vắng mặt</option>
@@ -196,7 +198,7 @@ export default function AdminAppointmentsPage() {
               </tr>
             ) : (
               appointments.map((apt) => {
-                const status = STATUS_CONFIG[apt.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.SCHEDULED;
+                const status = STATUS_CONFIG[apt.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.PENDING;
                 const StatusIcon = status.icon;
                 return (
                   <tr key={apt.id}>
@@ -262,7 +264,7 @@ export default function AdminAppointmentsPage() {
                               Xem chi tiết
                             </Link>
                           </DropdownMenuItem>
-                          {apt.status === "SCHEDULED" && (
+                          {(apt.status === "PENDING" || apt.status === "CONFIRMED") && (
                             <DropdownMenuItem
                               className="text-red-600"
                               onClick={() => setCancelItem(apt)}

@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { 
   User,
   Phone,
@@ -15,6 +18,27 @@ import {
   Search,
 } from "lucide-react";
 import { toast } from "sonner";
+
+// Zod validation schema
+const patientSchema = z.object({
+  fullName: z.string().min(1, "Vui lòng nhập họ tên").max(100, "Họ tên không quá 100 ký tự"),
+  phoneNumber: z.string()
+    .regex(/^(0|\+84)(\d{9})$/, "Số điện thoại phải có 10 số, bắt đầu bằng 0 (VD: 0987654321)"),
+  email: z.string().email("Email không hợp lệ").optional().or(z.literal("")),
+  dateOfBirth: z.string().min(1, "Vui lòng chọn ngày sinh"),
+  gender: z.enum(["MALE", "FEMALE"], { message: "Vui lòng chọn giới tính" }),
+  address: z.string().optional(),
+  // Medical info (optional)
+  bloodType: z.string().optional(),
+  healthInsuranceNumber: z.string().max(20, "Số BHYT không quá 20 ký tự").optional(),
+  allergies: z.string().max(100, "Dị ứng không quá 100 ký tự").optional(),
+  // Emergency contact (optional)
+  relativeFullName: z.string().max(100).optional(),
+  relativePhoneNumber: z.string().regex(/^(0|\+84)(\d{9})$/, "Số điện thoại không hợp lệ").optional().or(z.literal("")),
+  relativeRelationship: z.string().max(100).optional(),
+});
+
+type PatientFormData = z.infer<typeof patientSchema>;
 import { getPatients, createPatient } from "@/services/patient.service";
 import { hrService } from "@/services/hr.service";
 import { appointmentService } from "@/services/appointment.service";
@@ -49,7 +73,16 @@ export default function WalkInPage() {
     dateOfBirth: "",
     gender: "MALE" as "MALE" | "FEMALE",
     address: "",
+    // Medical info
+    bloodType: "",
+    healthInsuranceNumber: "",
+    allergies: "",
+    // Emergency contact
+    relativeFullName: "",
+    relativePhoneNumber: "",
+    relativeRelationship: "",
   });
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   // Appointment form
   const [appointmentForm, setAppointmentForm] = useState({
@@ -161,14 +194,68 @@ export default function WalkInPage() {
   };
 
   const handleCreatePatient = async () => {
-    if (!patientForm.fullName || !patientForm.phoneNumber) {
-      toast.error("Vui lòng nhập họ tên và số điện thoại");
+    // Validate with zod
+    const result = patientSchema.safeParse(patientForm);
+    
+    if (!result.success) {
+      // Extract and set validation errors
+      const errors: Record<string, string> = {};
+      result.error.issues.forEach((err: any) => {
+        if (err.path[0]) {
+          errors[err.path[0] as string] = err.message;
+        }
+      });
+      setValidationErrors(errors);
+      toast.error("Vui lòng kiểm tra lại thông tin");
       return;
     }
 
+    // Clear validation errors
+    setValidationErrors({});
+
     try {
       setLoading(true);
-      const newPatient = await createPatient(patientForm);
+      // Clean data before sending to backend
+      const cleanedData: any = {
+        fullName: patientForm.fullName.trim(),
+        phoneNumber: patientForm.phoneNumber.trim(),
+        dateOfBirth: patientForm.dateOfBirth,
+        gender: patientForm.gender,
+      };
+
+      // Only add email if it's valid
+      if (patientForm.email && patientForm.email.includes('@')) {
+        cleanedData.email = patientForm.email.trim();
+      }
+
+      // Only add address if not empty
+      if (patientForm.address) {
+        cleanedData.address = patientForm.address.trim();
+      }
+
+      // Medical info (optional)
+      if (patientForm.bloodType) {
+        cleanedData.bloodType = patientForm.bloodType;
+      }
+      if (patientForm.healthInsuranceNumber) {
+        cleanedData.healthInsuranceNumber = patientForm.healthInsuranceNumber.trim();
+      }
+      if (patientForm.allergies) {
+        cleanedData.allergies = patientForm.allergies.trim();
+      }
+
+      // Emergency contact (optional)
+      if (patientForm.relativeFullName) {
+        cleanedData.relativeFullName = patientForm.relativeFullName.trim();
+      }
+      if (patientForm.relativePhoneNumber) {
+        cleanedData.relativePhoneNumber = patientForm.relativePhoneNumber.trim();
+      }
+      if (patientForm.relativeRelationship) {
+        cleanedData.relativeRelationship = patientForm.relativeRelationship.trim();
+      }
+
+      const newPatient = await createPatient(cleanedData);
       setSelectedPatient(newPatient);
       setIsNewPatient(false);
       toast.success("Đã tạo hồ sơ bệnh nhân mới");
@@ -306,46 +393,69 @@ export default function WalkInPage() {
                 <label className="text-label">Họ và tên *</label>
                 <input
                   type="text"
-                  className="input-base"
+                  className={`input-base ${validationErrors.fullName ? 'border-red-500' : ''}`}
                   value={patientForm.fullName}
                   onChange={(e) => setPatientForm({ ...patientForm, fullName: e.target.value })}
                   required
                 />
+                {validationErrors.fullName && (
+                  <p className="text-xs text-red-600 mt-1">{validationErrors.fullName}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-label">Số điện thoại *</label>
                 <input
                   type="tel"
-                  className="input-base"
+                  className={`input-base ${validationErrors.phoneNumber ? 'border-red-500' : ''}`}
+                  placeholder="VD: 0987654321"
+                  pattern="^(0|\+84)(\d{9})$"
+                  title="Số điện thoại phải có 10 số, bắt đầu bằng 0 (VD: 0987654321)"
                   value={patientForm.phoneNumber}
                   onChange={(e) => setPatientForm({ ...patientForm, phoneNumber: e.target.value })}
                   required
                 />
+                {validationErrors.phoneNumber ? (
+                  <p className="text-xs text-red-600 mt-1">{validationErrors.phoneNumber}</p>
+                ) : (
+                  <p className="text-xs text-gray-500">10 số, bắt đầu bằng 0</p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-label">Email</label>
                 <input
                   type="email"
-                  className="input-base"
+                  className={`input-base ${validationErrors.email ? 'border-red-500' : ''}`}
+                  placeholder="VD: nguyen@gmail.com"
                   value={patientForm.email}
                   onChange={(e) => setPatientForm({ ...patientForm, email: e.target.value })}
                 />
+                {validationErrors.email ? (
+                  <p className="text-xs text-red-600 mt-1">{validationErrors.email}</p>
+                ) : (
+                  <p className="text-xs text-gray-500">Để trống nếu không có</p>
+                )}
               </div>
               <div className="space-y-2">
-                <label className="text-label">Ngày sinh</label>
+                <label className="text-label">Ngày sinh *</label>
                 <input
                   type="date"
-                  className="input-base"
+                  className={`input-base ${validationErrors.dateOfBirth ? 'border-red-500' : ''}`}
+                  max={new Date().toISOString().split('T')[0]}
                   value={patientForm.dateOfBirth}
                   onChange={(e) => setPatientForm({ ...patientForm, dateOfBirth: e.target.value })}
+                  required
                 />
+                {validationErrors.dateOfBirth && (
+                  <p className="text-xs text-red-600 mt-1">{validationErrors.dateOfBirth}</p>
+                )}
               </div>
               <div className="space-y-2">
-                <label className="text-label">Giới tính</label>
+                <label className="text-label">Giới tính *</label>
                 <select
                   className="input-base"
                   value={patientForm.gender}
                   onChange={(e) => setPatientForm({ ...patientForm, gender: e.target.value as "MALE" | "FEMALE" })}
+                  required
                 >
                   <option value="MALE">Nam</option>
                   <option value="FEMALE">Nữ</option>
@@ -359,6 +469,109 @@ export default function WalkInPage() {
                   value={patientForm.address}
                   onChange={(e) => setPatientForm({ ...patientForm, address: e.target.value })}
                 />
+              </div>
+
+              {/* Medical Info Section */}
+              <div className="col-span-2 mt-4">
+                <div className="bg-gradient-to-br from-red-50 to-white border-2 border-red-200 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    <h4 className="font-semibold text-red-900">Thông tin y tế (không bắt buộc)</h4>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-label">Nhóm máu</label>
+                      <select
+                        className="input-base"
+                        value={patientForm.bloodType}
+                        onChange={(e) => setPatientForm({ ...patientForm, bloodType: e.target.value })}
+                      >
+                        <option value="">-- Chọn --</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-label">Số BHYT</label>
+                      <input
+                        type="text"
+                        className="input-base"
+                        placeholder="VD: HS123456789"
+                        maxLength={20}
+                        value={patientForm.healthInsuranceNumber}
+                        onChange={(e) => setPatientForm({ ...patientForm, healthInsuranceNumber: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-label">Dị ứng</label>
+                      <input
+                        type="text"
+                        className="input-base"
+                        placeholder="VD: Penicillin, hải sản..."
+                        maxLength={100}
+                        value={patientForm.allergies}
+                        onChange={(e) => setPatientForm({ ...patientForm, allergies: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Emergency Contact Section */}
+              <div className="col-span-2 mt-2">
+                <div className="bg-gradient-to-br from-amber-50 to-white border-2 border-amber-200 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <h4 className="font-semibold text-amber-900">Người liên hệ khẩn cấp (không bắt buộc)</h4>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-label">Họ tên người thân</label>
+                      <input
+                        type="text"
+                        className="input-base"
+                        placeholder="Nguyễn Văn A"
+                        maxLength={100}
+                        value={patientForm.relativeFullName}
+                        onChange={(e) => setPatientForm({ ...patientForm, relativeFullName: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-label">SĐT người thân</label>
+                      <input
+                        type="tel"
+                        className={`input-base ${validationErrors.relativePhoneNumber ? 'border-red-500' : ''}`}
+                        placeholder="0987654321"
+                        value={patientForm.relativePhoneNumber}
+                        onChange={(e) => setPatientForm({ ...patientForm, relativePhoneNumber: e.target.value })}
+                      />
+                      {validationErrors.relativePhoneNumber && (
+                        <p className="text-xs text-red-600 mt-1">{validationErrors.relativePhoneNumber}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-label">Mối quan hệ</label>
+                      <input
+                        type="text"
+                        className="input-base"
+                        placeholder="VD: Cha, Mẹ, Vợ, Chồng..."
+                        maxLength={100}
+                        value={patientForm.relativeRelationship}
+                        onChange={(e) => setPatientForm({ ...patientForm, relativeRelationship: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           ) : (

@@ -319,7 +319,7 @@ export default function DoctorLabResultsPage() {
 
               {/* Interpretation */}
               {selectedResult.interpretation && (
-                <div className="p-4 rounded-lg border border-[hsl(var(--border))]">
+                <div className="p-4 bg-white border-2 border-gray-200 rounded-xl shadow-sm">
                   <p className="text-label mb-2">Nhận định của bác sĩ</p>
                   <p>{selectedResult.interpretation}</p>
                   {selectedResult.interpretedBy && (
@@ -333,8 +333,8 @@ export default function DoctorLabResultsPage() {
                 <div>
                   <p className="text-label mb-2">Hình ảnh ({selectedResult.images.length})</p>
                   <div className="grid grid-cols-3 gap-2">
-                    {selectedResult.images.map((img) => (
-                      <div key={img.id} className="aspect-square rounded-lg bg-[hsl(var(--secondary))] flex items-center justify-center">
+                    {selectedResult.images.map((img, index) => (
+                      <div key={index} className="p-4 bg-white border-2 border-gray-200 rounded-xl shadow-sm space-y-3">
                         <Image className="w-8 h-8 text-[hsl(var(--muted-foreground))]" />
                       </div>
                     ))}
@@ -396,7 +396,7 @@ function InterpretationForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="p-3 rounded-lg bg-[hsl(var(--secondary))]">
+      <div className="p-4 bg-white border-2 border-gray-200 rounded-xl shadow-sm">
         <p className="font-medium">{result.labTestName}</p>
         <p className="text-small">Bệnh nhân: {result.patientName}</p>
         <p className={`font-bold mt-2 ${result.isAbnormal ? "text-red-600" : ""}`}>
