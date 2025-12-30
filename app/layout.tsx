@@ -1,37 +1,33 @@
+"use client";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
+import { MockServiceProvider } from "@/components/mock-service-provider";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { Toaster } from "@/components/ui/sonner";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useMemo } from "react";
 
-const inter = Inter({
-  subsets: ["latin", "vietnamese"],
-  variable: "--font-inter",
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-poppins",
 });
-
-export const metadata: Metadata = {
-  title: "HMS - Hospital Management System",
-  description: "Modern Healthcare Management Platform - CarePoint Design",
-  keywords: ["hospital", "healthcare", "management", "medical", "patients"],
-};
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const queryClient = useMemo(() => new QueryClient(), []);
   return (
-    <html lang="vi" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
-        <AuthProvider>
-          {children}
-          <Toaster 
-            position="top-right"
-            toastOptions={{
-              className: "rounded-xl shadow-lg",
-            }}
-          />
-        </AuthProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${poppins.variable} font-sans text-[16px] antialiased`}>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <MockServiceProvider />
+            {children}
+          </AuthProvider>
+        </QueryClientProvider>
       </body>
     </html>
   );
