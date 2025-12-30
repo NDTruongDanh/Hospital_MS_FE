@@ -28,6 +28,13 @@ interface Doctor {
   departmentId?: string;
 }
 
+const TYPE_LABELS: Record<string, string> = {
+  CONSULTATION: "Khám bệnh",
+  FOLLOW_UP: "Tái khám",
+  EMERGENCY: "Cấp cứu",
+  WALK_IN: "Walk-in",
+};
+
 export default function AdminNewAppointmentPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -37,9 +44,11 @@ export default function AdminNewAppointmentPage() {
   const [step, setStep] = useState<1 | 2 | 3>(preselectedPatientId ? 2 : 1);
   
   // Step 1: Patient
+  const [allPatients, setAllPatients] = useState<Patient[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [patientSearch, setPatientSearch] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [loadingPatients, setLoadingPatients] = useState(false);
   
   // Step 2: Doctor & Time
   const [departments, setDepartments] = useState<{id: string; name: string}[]>([]);
@@ -53,22 +62,39 @@ export default function AdminNewAppointmentPage() {
     appointmentDate: string;
     appointmentTime: string;
     reason: string;
+    notes: string;
     type: AppointmentType;
   }>({
     doctorId: "",
     appointmentDate: "",
     appointmentTime: "",
     reason: "",
+    notes: "",
     type: "CONSULTATION",
   });
 
   useEffect(() => {
     fetchDepartments();
     fetchDoctors();
+    fetchAllPatients(); // Load all patients on mount
     if (preselectedPatientId) {
       fetchPatientById(preselectedPatientId);
     }
   }, []);
+
+  // Filter patients client-side when search changes
+  useEffect(() => {
+    if (!patientSearch.trim()) {
+      setPatients(allPatients);
+    } else {
+      const searchLower = patientSearch.toLowerCase().trim();
+      const filtered = allPatients.filter(p => 
+        p.fullName.toLowerCase().includes(searchLower) ||
+        (p.phoneNumber && p.phoneNumber.includes(patientSearch.trim()))
+      );
+      setPatients(filtered);
+    }
+  }, [patientSearch, allPatients]);
 
   // Filter doctors when department changes
   useEffect(() => {
@@ -81,6 +107,21 @@ export default function AdminNewAppointmentPage() {
     setFormData(prev => ({ ...prev, doctorId: "" }));
   }, [selectedDepartment, allDoctors]);
 
+  // Fetch all patients for client-side filtering
+  const fetchAllPatients = async () => {
+    try {
+      setLoadingPatients(true);
+      const response = await getPatients({ size: 1000 }); // Fetch all (or max reasonable)
+      setAllPatients(response.content);
+      setPatients(response.content);
+    } catch (error) {
+      console.error("Failed to fetch patients:", error);
+      toast.error("Không thể tải danh sách bệnh nhân");
+    } finally {
+      setLoadingPatients(false);
+    }
+  };
+
   const fetchPatientById = async (id: string) => {
     try {
       // Use getPatient single fetch instead of list search
@@ -92,18 +133,7 @@ export default function AdminNewAppointmentPage() {
     }
   };
 
-  const searchPatients = async () => {
-    if (!patientSearch.trim()) return;
-    try {
-      // Use 'search' param instead of 'filter' - patient service handles RSQL conversion
-      const response = await getPatients({
-        search: patientSearch.trim(),
-      });
-      setPatients(response.content);
-    } catch (error) {
-      toast.error("Không thể tìm bệnh nhân");
-    }
-  };
+  // searchPatients is no longer needed - filtering happens client-side
 
   const fetchDepartments = async () => {
     try {
@@ -143,10 +173,30 @@ export default function AdminNewAppointmentPage() {
 
       try {
         setLoadingSlots(true);
-        const slots = await appointmentService.getAvailableSlots(
+        let slots = await appointmentService.getAvailableSlots(
           formData.doctorId,
           formData.appointmentDate
         );
+        
+        // Filter out past time slots if the selected date is today
+        const today = new Date().toISOString().split("T")[0];
+        if (formData.appointmentDate === today) {
+          const now = new Date();
+          const currentHour = now.getHours();
+          const currentMinute = now.getMinutes();
+          
+          slots = slots.map(slot => {
+            const [slotHour, slotMinute] = slot.time.split(":").map(Number);
+            // Mark as unavailable if the time has passed
+            const isPast = slotHour < currentHour || 
+              (slotHour === currentHour && slotMinute <= currentMinute);
+            return {
+              ...slot,
+              available: slot.available && !isPast
+            };
+          });
+        }
+        
         setTimeSlots(slots);
       } catch (error) {
         console.error("Failed to fetch time slots:", error);
@@ -177,6 +227,7 @@ export default function AdminNewAppointmentPage() {
         appointmentTime,
         type: formData.type,
         reason: formData.reason || "Khám tổng quát",
+        notes: formData.notes || undefined,
       });
 
       toast.success("Đặt lịch hẹn thành công!");
@@ -224,32 +275,35 @@ export default function AdminNewAppointmentPage() {
         <div className="card-base space-y-4">
           <h3 className="text-section">Bước 1: Chọn bệnh nhân</h3>
           
-          <div className="flex gap-2">
-            <div className="flex-1 search-input">
-              <Search className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-              <input
-                type="text"
-                placeholder="Tìm theo tên hoặc SĐT..."
-                value={patientSearch}
-                onChange={(e) => setPatientSearch(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && searchPatients()}
-              />
-            </div>
-            <button onClick={searchPatients} className="btn-primary">
-              Tìm
-            </button>
+          <div className="search-input w-full">
+            <Search className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+            <input
+              type="text"
+              placeholder="Gõ để lọc theo tên hoặc SĐT..."
+              value={patientSearch}
+              onChange={(e) => setPatientSearch(e.target.value)}
+              autoFocus
+            />
           </div>
 
-          {patients.length > 0 && (
-            <div className="space-y-2">
-              {patients.map((patient) => (
+          {loadingPatients ? (
+            <div className="text-center py-8">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto text-[hsl(var(--primary))]" />
+              <p className="text-small mt-2">Đang tải danh sách bệnh nhân...</p>
+            </div>
+          ) : patients.length > 0 ? (
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              <p className="text-small text-[hsl(var(--muted-foreground))]">
+                {patientSearch ? `Tìm thấy ${patients.length} bệnh nhân` : `Tất cả ${patients.length} bệnh nhân`}
+              </p>
+              {patients.slice(0, 20).map((patient) => (
                 <button
                   key={patient.id}
                   onClick={() => {
                     setSelectedPatient(patient);
                     setStep(2);
                   }}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))] text-left"
+                  className="w-full flex items-center gap-4 p-4 rounded-xl border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))] hover:bg-[hsl(var(--primary-light))] text-left transition-colors"
                 >
                   <div className="avatar">{patient.fullName.charAt(0)}</div>
                   <div>
@@ -258,6 +312,16 @@ export default function AdminNewAppointmentPage() {
                   </div>
                 </button>
               ))}
+              {patients.length > 20 && (
+                <p className="text-small text-center text-[hsl(var(--muted-foreground))]">
+                  Còn {patients.length - 20} bệnh nhân nữa, hãy nhập thêm để lọc...
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-[hsl(var(--muted-foreground))]">
+              <User className="w-12 h-12 mx-auto opacity-50" />
+              <p className="mt-2">Không tìm thấy bệnh nhân nào</p>
             </div>
           )}
         </div>
@@ -336,6 +400,20 @@ export default function AdminNewAppointmentPage() {
             </div>
           </div>
 
+          {/* Loại khám */}
+          <div className="space-y-2">
+            <label className="text-label">Loại khám *</label>
+            <select
+              className="dropdown w-full"
+              value={formData.type}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value as AppointmentType })}
+            >
+              <option value="CONSULTATION">Khám bệnh</option>
+              <option value="FOLLOW_UP">Tái khám</option>
+              <option value="EMERGENCY">Cấp cứu</option>
+            </select>
+          </div>
+
           <div className="flex gap-3 pt-4 border-t border-[hsl(var(--border))]">
             <button onClick={() => setStep(1)} className="btn-secondary flex-1">
               Quay lại
@@ -371,6 +449,10 @@ export default function AdminNewAppointmentPage() {
               <p className="text-label">Thời gian</p>
               <p className="font-semibold">{formData.appointmentDate} lúc {formData.appointmentTime}</p>
             </div>
+            <div className="p-4 rounded-xl bg-[hsl(var(--secondary))]">
+              <p className="text-label">Loại khám</p>
+              <p className="font-semibold">{TYPE_LABELS[formData.type]}</p>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -380,6 +462,16 @@ export default function AdminNewAppointmentPage() {
               placeholder="Nhập lý do khám (tuỳ chọn)..."
               value={formData.reason}
               onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-label">Ghi chú</label>
+            <textarea
+              className="input-base min-h-[60px] resize-none"
+              placeholder="Ghi chú thêm cho cuộc hẹn (tuỳ chọn)..."
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             />
           </div>
 

@@ -98,12 +98,20 @@ export default function PatientAppointmentsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
+      {/* Background gradient */}
+      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-purple-50 via-pink-50/30 to-blue-50/40" />
+      
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-display">Lịch hẹn của tôi</h1>
-          <p className="text-[hsl(var(--muted-foreground))] mt-1">
+          <h1 className="text-display flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 shadow-lg">
+              <Calendar className="w-6 h-6 text-white" />
+            </div>
+            Lịch hẹn của tôi
+          </h1>
+          <p className="text-[hsl(var(--muted-foreground))] mt-2">
             Quản lý các lịch hẹn khám bệnh
           </p>
         </div>
@@ -114,20 +122,20 @@ export default function PatientAppointmentsPage() {
       </div>
 
       {/* Filters */}
-      <div className="card-base">
+      <div className="backdrop-blur-lg bg-white/70 border border-white/50 rounded-2xl p-5 shadow-xl">
         <div className="flex gap-2">
           {[
-            { value: "upcoming", label: "Sắp tới" },
-            { value: "past", label: "Đã qua" },
-            { value: "all", label: "Tất cả" },
+            { value: "upcoming", label: "Sắp tới", gradient: "from-blue-500 to-cyan-600" },
+            { value: "past", label: "Đã qua", gradient: "from-gray-500 to-slate-600" },
+            { value: "all", label: "Tất cả", gradient: "from-purple-500 to-pink-600" },
           ].map((f) => (
             <button
               key={f.value}
               onClick={() => setFilter(f.value as any)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 filter === f.value
-                  ? "bg-[hsl(var(--primary))] text-white"
-                  : "bg-[hsl(var(--secondary))] hover:bg-[hsl(var(--secondary))]/80"
+                  ? `bg-gradient-to-r ${f.gradient} text-white shadow-lg`
+                  : "bg-white/60 text-gray-700 hover:bg-white/80"
               }`}
             >
               {f.label}
@@ -161,15 +169,20 @@ export default function PatientAppointmentsPage() {
             const isUpcoming = apt.appointmentTime >= now && (apt.status === "PENDING" || apt.status === "CONFIRMED");
             
             return (
-              <div
+              <Link
                 key={apt.id}
-                className={`card-base ${isUpcoming ? "border-l-4 border-l-[hsl(var(--primary))]" : ""}`}
+                href={`/patient/appointments/${apt.id}`}
+                className={`block backdrop-blur-lg bg-white/70 border border-white/50 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all ${
+                  isUpcoming ? "border-l-4 border-l-blue-500" : ""
+                }`}
               >
                 <div className="flex flex-col md:flex-row md:items-center gap-4">
                   {/* Date */}
                   <div className="flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center ${
-                      isUpcoming ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--secondary))]"
+                    <div className={`w-16 h-16 rounded-xl flex flex-col items-center justify-center shadow-lg ${
+                      isUpcoming 
+                        ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white" 
+                        : "bg-gradient-to-br from-gray-400 to-slate-500 text-white"
                     }`}>
                       <span className="text-2xl font-bold">
                         {new Date(apt.appointmentTime).getDate()}
@@ -187,46 +200,40 @@ export default function PatientAppointmentsPage() {
                         <StatusIcon className="w-3 h-3" />
                         {status.label}
                       </span>
-                      <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                      <span className="text-sm text-gray-600">
                         {formatDate(apt.appointmentTime)}
                       </span>
                     </div>
                     <div className="flex items-center gap-4 mt-2">
-                      <span className="flex items-center gap-1 text-sm font-medium">
-                        <Clock className="w-4 h-4 text-[hsl(var(--primary))]" />
+                      <span className="flex items-center gap-1 text-sm font-medium text-gray-800">
+                        <Clock className="w-4 h-4 text-blue-600" />
                         {formatTime(apt.appointmentTime)}
                       </span>
-                      <span className="flex items-center gap-1 text-sm">
-                        <Stethoscope className="w-4 h-4" />
+                      <span className="flex items-center gap-1 text-sm text-gray-700">
+                        <Stethoscope className="w-4 h-4 text-green-600" />
                         BS. {apt.doctor.fullName}
                       </span>
                     </div>
                     {apt.reason && (
-                      <p className="text-small mt-2">Lý do: {apt.reason}</p>
+                      <p className="text-sm text-gray-600 mt-2">Lý do: {apt.reason}</p>
                     )}
                   </div>
 
-                  {/* Actions */}
+                  {/* Quick Cancel */}
                   {(apt.status === "PENDING" || apt.status === "CONFIRMED") && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button className="btn-icon w-10 h-10">
-                          <MoreHorizontal className="w-5 h-5" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          className="text-red-600"
-                          onClick={() => setCancelItem(apt)}
-                        >
-                          <XCircle className="w-4 h-4 mr-2" />
-                          Hủy lịch hẹn
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCancelItem(apt);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-red-500 to-rose-600 text-white text-sm font-medium hover:shadow-lg transition-all"
+                    >
+                      <XCircle className="w-4 h-4 inline mr-1" />
+                      Hủy
+                    </button>
                   )}
                 </div>
-              </div>
+              </Link>
             );
           })
         )}

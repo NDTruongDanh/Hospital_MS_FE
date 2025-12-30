@@ -879,17 +879,26 @@ export const appointmentService = {
       ? Math.max(...todayWalkIns.map(a => a.queueNumber || 0)) + 1 
       : 1;
 
+    // Map priorityReason to priority number for queue ordering
+    const priorityMap: Record<string, number> = {
+      EMERGENCY: 10,
+      ELDERLY: 50,
+      PREGNANT: 50,
+      DISABILITY: 50,
+    };
+    const priority = data.priorityReason ? (priorityMap[data.priorityReason] || 100) : 100;
+
     const newAppointment: Appointment = {
       id: `walk-in-${Date.now()}`,
       patient: { id: data.patientId, fullName: `Patient ${data.patientId}` },
       doctor: { id: data.doctorId, fullName: `Doctor ${data.doctorId}` },
       appointmentTime: new Date().toISOString(),
       status: "SCHEDULED",
-      type: data.type || "WALK_IN",
-      reason: data.reason,
-      notes: data.notes,
+      type: "WALK_IN",
+      reason: data.reason || "Walk-in consultation",
       queueNumber: nextQueueNumber,
-      priority: data.priority || 5,
+      priority: priority,
+      priorityReason: data.priorityReason,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -988,10 +997,98 @@ export const appointmentService = {
     }
     return null;
   },
+
+  // ==================== ADDITIONAL API METHODS ====================
+
+  /**
+   * Get appointments for a specific patient
+   * Used by patient detail page to show only that patient's appointments
+   */
+  getByPatient: async (
+    patientId: string,
+    page: number = 0,
+    size: number = 10
+  ): Promise<PaginatedResponse<Appointment>> => {
+    if (!USE_MOCK) {
+      try {
+        const response = await axiosInstance.get(`${BASE_URL}/by-patient/${patientId}`, {
+          params: { page, size }
+        });
+        return response.data.data;
+      } catch (error: any) {
+        console.error("[DEBUG] Get By Patient Error:", error.response?.data);
+        throw error;
+      }
+    }
+
+    await delay(200);
+    const mockAppointments = getMockAppointments();
+    const filtered = mockAppointments.filter(a => a.patient.id === patientId);
+    const start = page * size;
+    const content = filtered.slice(start, start + size);
+
+    return {
+      content,
+      page,
+      size,
+      totalElements: filtered.length,
+      totalPages: Math.ceil(filtered.length / size),
+      last: start + size >= filtered.length,
+    };
+  },
+
+  /**
+   * Get appointment statistics for reporting
+   * Pre-aggregated data for report-service consumption
+   */
+  getStats: async (
+    startDate: string,
+    endDate: string
+  ): Promise<import("@/interfaces/appointment").AppointmentStatsResponse> => {
+    if (!USE_MOCK) {
+      try {
+        const response = await axiosInstance.get(`${BASE_URL}/stats`, {
+          params: { startDate, endDate }
+        });
+        return response.data.data;
+      } catch (error: any) {
+        console.error("[DEBUG] Get Stats Error:", error.response?.data);
+        throw error;
+      }
+    }
+
+    // Mock implementation
+    await delay(300);
+    const mockAppointments = getMockAppointments();
+    const filtered = mockAppointments.filter(a => {
+      const date = a.appointmentTime.split('T')[0];
+      return date >= startDate && date <= endDate;
+    });
+
+    const statusCounts: Record<string, number> = {};
+    const typeCounts: Record<string, number> = {};
+    filtered.forEach(a => {
+      statusCounts[a.status] = (statusCounts[a.status] || 0) + 1;
+      typeCounts[a.type] = (typeCounts[a.type] || 0) + 1;
+    });
+
+    return {
+      startDate,
+      endDate,
+      totalAppointments: filtered.length,
+      appointmentsByStatus: statusCounts,
+      appointmentsByType: typeCounts,
+      appointmentsByDepartment: [],
+      appointmentsByDoctor: [],
+      dailyTrend: [],
+      averagePerDay: filtered.length / 30,
+      generatedAt: new Date().toISOString(),
+    };
+  },
 };
 
 // Re-export types
-export type { Appointment, AppointmentCreateRequest, AppointmentListParams, WalkInRequest } from "@/interfaces/appointment";
+export type { Appointment, AppointmentCreateRequest, AppointmentListParams, WalkInRequest, AppointmentStatsResponse } from "@/interfaces/appointment";
 export type AppointmentStatus =
   import("@/interfaces/appointment").AppointmentStatus;
 export type AppointmentType =

@@ -34,6 +34,7 @@ import {
   initPayment,
   cancelInvoice,
 } from "@/services/billing.service";
+import { authService } from "@/services/auth.service";
 import {
   Invoice,
   InvoiceItem,
@@ -107,6 +108,9 @@ export default function InvoiceDetailPage() {
   // Cancel modal
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  
+  // Canceller info
+  const [cancellerEmail, setCancellerEmail] = useState<string | null>(null);
 
   useEffect(() => {
     if (invoiceId) {
@@ -121,9 +125,20 @@ export default function InvoiceDetailPage() {
         getInvoiceById(invoiceId),
         getPaymentsByInvoice(invoiceId).catch(() => null),
       ]);
-      setInvoice(invoiceRes.data.data);
+      const invoiceData = invoiceRes.data.data;
+      setInvoice(invoiceData);
       if (paymentsRes) {
         setPaymentData(paymentsRes.data.data);
+      }
+      
+      // Fetch canceller email if cancelled
+      if (invoiceData.cancellation?.cancelledBy) {
+        try {
+          const canceller = await authService.getAccount(invoiceData.cancellation.cancelledBy);
+          setCancellerEmail(canceller.email);
+        } catch {
+          setCancellerEmail(null);
+        }
       }
     } catch (error) {
       console.error("Failed to fetch invoice:", error);
@@ -287,55 +302,61 @@ export default function InvoiceDetailPage() {
           {/* Patient & Appointment Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Patient Info */}
-            <div className="backdrop-blur-sm bg-white/60 border border-blue-200/50 rounded-2xl p-5 shadow-lg shadow-blue-100/50 hover:shadow-xl hover:shadow-blue-100/60 transition-all duration-300">
-              <div className="flex items-center gap-2 text-blue-600 mb-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-                  <User className="w-4 h-4" />
+            <Link 
+              href={invoice.patient?.id ? `/receptionist/patients/${invoice.patient.id}` : "#"}
+              className="backdrop-blur-sm bg-white/60 border border-blue-200/50 rounded-2xl p-5 shadow-lg shadow-blue-100/50 hover:shadow-xl hover:shadow-blue-100/60 hover:border-blue-300 transition-all duration-300 block group"
+            >
+              <div className="flex items-center justify-between text-blue-600 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                    <User className="w-4 h-4" />
+                  </div>
+                  <span className="font-semibold">Thông tin bệnh nhân</span>
                 </div>
-                <span className="font-semibold">Thông tin bệnh nhân</span>
+                {invoice.patient?.id && (
+                  <span className="text-xs text-blue-500 group-hover:underline">Xem chi tiết →</span>
+                )}
               </div>
               <div className="space-y-2 text-sm">
                 <p className="font-bold text-lg text-gray-900">
                   {invoice.patient?.fullName || invoice.patientName || "N/A"}
                 </p>
-                <p className="text-gray-600">
-                  <span className="font-medium">Mã BN:</span> {invoice.patient?.id || invoice.patientId || "N/A"}
-                </p>
               </div>
-            </div>
+            </Link>
 
             {/* Appointment Info */}
-            <div className="backdrop-blur-sm bg-white/60 border border-green-200/50 rounded-2xl p-5 shadow-lg shadow-green-100/50 hover:shadow-xl hover:shadow-green-100/60 transition-all duration-300">
-              <div className="flex items-center gap-2 text-green-600 mb-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white">
-                  <Calendar className="w-4 h-4" />
+            <Link 
+              href={invoice.appointment?.id ? `/receptionist/appointments/${invoice.appointment.id}` : (invoice.appointmentId ? `/receptionist/appointments/${invoice.appointmentId}` : "#")}
+              className="backdrop-blur-sm bg-white/60 border border-green-200/50 rounded-2xl p-5 shadow-lg shadow-green-100/50 hover:shadow-xl hover:shadow-green-100/60 hover:border-green-300 transition-all duration-300 block group"
+            >
+              <div className="flex items-center justify-between text-green-600 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  <span className="font-semibold">Thông tin lịch hẹn</span>
                 </div>
-                <span className="font-semibold">Thông tin lịch hẹn</span>
+                {(invoice.appointment?.id || invoice.appointmentId) && (
+                  <span className="text-xs text-green-500 group-hover:underline">Xem chi tiết →</span>
+                )}
               </div>
               <div className="space-y-2 text-sm">
                 {invoice.appointment ? (
                   <>
-                    <p className="text-gray-600">
-                      <span className="font-medium">Mã LH:</span> {invoice.appointment.id}
-                    </p>
                     {invoice.appointment.appointmentTime && (
-                      <p className="text-gray-600">
-                        <span className="font-medium">Thời gian:</span> {formatDate(invoice.appointment.appointmentTime)}
+                      <p className="text-gray-700 flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5 text-green-500" />
+                        <span className="font-medium">{formatDate(invoice.appointment.appointmentTime)}</span>
                       </p>
                     )}
                   </>
                 ) : (
                   <p className="text-gray-500">
-                    {invoice.appointmentId ? `Mã: ${invoice.appointmentId}` : "Không có thông tin"}
-                  </p>
-                )}
-                {invoice.medicalExam && (
-                  <p className="text-gray-600">
-                    <span className="font-medium">Mã khám:</span> {invoice.medicalExam.id}
+                    {invoice.appointmentId ? "Có liên kết lịch hẹn" : "Không có thông tin"}
                   </p>
                 )}
               </div>
-            </div>
+            </Link>
           </div>
 
           {/* Invoice Items */}
@@ -480,7 +501,7 @@ export default function InvoiceDetailPage() {
               <div className="space-y-2 text-sm">
                 <p><span className="font-medium">Lý do:</span> {invoice.cancellation.reason}</p>
                 <p><span className="font-medium">Thời gian:</span> {formatDate(invoice.cancellation.cancelledAt)}</p>
-                <p><span className="font-medium">Người hủy:</span> {invoice.cancellation.cancelledBy}</p>
+                <p><span className="font-medium">Người hủy:</span> {cancellerEmail || invoice.cancellation.cancelledBy}</p>
               </div>
             </div>
           )}

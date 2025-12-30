@@ -90,6 +90,8 @@ export default function WalkInPage() {
     reason: "",
     appointmentDate: new Date().toISOString().split("T")[0],
     appointmentTime: "",
+    priority: 5, // Default normal priority (1-2 = high, 5 = normal)
+    notes: "",
   });
   const [timeSlots, setTimeSlots] = useState<{time: string; available: boolean}[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -275,20 +277,33 @@ export default function WalkInPage() {
 
     try {
       setLoading(true);
-      // Format datetime with local timezone offset (Asia/Ho_Chi_Minh = +07:00)
-      const appointmentTime = `${appointmentForm.appointmentDate}T${appointmentForm.appointmentTime}:00+07:00`;
       
-      await appointmentService.create({
+      // Map priority number to priorityReason string for backend
+      const priorityReasonMap: Record<number, string | undefined> = {
+        1: "EMERGENCY",
+        2: "EMERGENCY",
+        3: "ELDERLY",
+        4: undefined, // Normal priority, no reason
+        5: undefined,
+      };
+      
+      // Use registerWalkIn API for walk-in patients
+      const result = await appointmentService.registerWalkIn({
         patientId: selectedPatient.id,
         doctorId: appointmentForm.doctorId,
-        appointmentTime,
         reason: appointmentForm.reason || "Khám tổng quát",
-        type: "CONSULTATION",
+        priorityReason: priorityReasonMap[appointmentForm.priority],
       });
-      toast.success("Đã tiếp nhận bệnh nhân thành công!");
-      router.push("/receptionist/queue");
+      
+      // Show queue number in success message
+      const queueMsg = result.queueNumber 
+        ? `Số thứ tự: #${result.queueNumber}` 
+        : "";
+      toast.success(`Đã tiếp nhận bệnh nhân thành công! ${queueMsg}`);
+      router.push("/receptionist/dashboard");
     } catch (error) {
-      toast.error("Không thể tạo lịch hẹn");
+      console.error("Walk-in registration error:", error);
+      toast.error("Không thể đăng ký bệnh nhân walk-in");
     } finally {
       setLoading(false);
     }

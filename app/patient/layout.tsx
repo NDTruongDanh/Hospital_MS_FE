@@ -23,7 +23,7 @@ const navItems = [
   { title: "Tổng quan", href: "/patient/dashboard", icon: Home },
   { title: "Lịch hẹn", href: "/patient/appointments", icon: Calendar },
   { title: "Hồ sơ y tế", href: "/patient/medical-history", icon: FileText },
-  { title: "Hóa đơn", href: "/patient/invoices", icon: Receipt },
+  { title: "Hóa đơn", href: "/patient/billing", icon: Receipt },
 ];
 
 export default function PatientLayout({ children }: { children: ReactNode }) {

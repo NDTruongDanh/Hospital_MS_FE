@@ -38,8 +38,10 @@ export interface Appointment {
   medicalExamId?: string;
   queueNumber?: number;     // Queue position for walk-ins
   priority?: number;        // Priority level (lower = higher priority)
+  priorityReason?: string;  // EMERGENCY, ELDERLY, PREGNANT, etc.
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
   updatedBy?: string;
 }
 
@@ -107,12 +109,43 @@ export interface DoctorOption {
   departmentId?: string;
 }
 
-// Walk-in registration request
+// Walk-in registration request - matches backend WalkInRequest DTO
 export interface WalkInRequest {
   patientId: string;
   doctorId: string;
-  type: AppointmentType;
-  reason: string;
-  priority?: number;  // Default 5 (normal), 1-2 (high priority/emergency)
-  notes?: string;
+  reason?: string;
+  priorityReason?: string;  // EMERGENCY, ELDERLY, PREGNANT, DISABILITY, etc.
+}
+
+// ==================== Stats Response Interfaces ====================
+
+export interface AppointmentStatsResponse {
+  startDate: string;
+  endDate: string;
+  totalAppointments: number;
+  appointmentsByStatus: Record<string, number>;
+  appointmentsByType: Record<string, number>;
+  appointmentsByDepartment: DepartmentStats[];
+  appointmentsByDoctor: DoctorStats[];
+  dailyTrend: DailyCount[];
+  averagePerDay: number;
+  generatedAt: string;
+}
+
+export interface DepartmentStats {
+  departmentName: string;
+  count: number;
+  percentage: number;
+}
+
+export interface DoctorStats {
+  doctorId: string;
+  doctorName: string;
+  departmentName: string;
+  count: number;
+}
+
+export interface DailyCount {
+  date: string;
+  count: number;
 }
