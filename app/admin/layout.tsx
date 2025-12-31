@@ -11,6 +11,7 @@ import { useMemo } from "react";
 import {
   Home,
   Calendar,
+  CalendarDays,
   Users,
   FileText,
   Building2,
@@ -48,6 +49,7 @@ import axiosInstance from "@/config/axios";
 
 const navItems = [
   { title: "Dashboard", href: "/admin/dashboard", icon: Home },
+  { title: "Lịch tổng hợp", href: "/admin/calendar", icon: CalendarDays },
   { title: "Lịch hẹn", href: "/admin/appointments", icon: Calendar },
   { title: "Tiếp nhận BN", href: "/admin/walk-in", icon: UserCircle },
   { title: "Bệnh nhân", href: "/admin/patients", icon: Users },
