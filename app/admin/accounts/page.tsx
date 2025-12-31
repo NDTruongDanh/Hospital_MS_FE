@@ -21,7 +21,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { toast } from "sonner";
-import { authService, Account } from "@/services/auth.service";
+import { authService, Account, AccountUpdateRequest } from "@/services/auth.service";
 import { getPatientByAccountId } from "@/services/patient.service";
 import { hrService } from "@/services/hr.service";
 import { Patient } from "@/interfaces/patient";
@@ -68,7 +68,6 @@ export default function AccountsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [deleteAccount, setDeleteAccount] = useState<Account | null>(null);
-  const [resetPasswordAccount, setResetPasswordAccount] = useState<Account | null>(null);
   
   // Detail view states
   const [viewingAccount, setViewingAccount] = useState<Account | null>(null);
@@ -300,12 +299,6 @@ export default function AccountsPage() {
                             Chỉnh sửa
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => setResetPasswordAccount(account)}
-                          >
-                            <Key className="w-4 h-4 mr-2" />
-                            Đặt lại mật khẩu
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
                             className="text-red-600"
                             onClick={() => setDeleteAccount(account)}
                           >
@@ -344,28 +337,6 @@ export default function AccountsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Reset Password Modal - Real implementation */}
-      <Dialog open={!!resetPasswordAccount} onOpenChange={() => setResetPasswordAccount(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Key className="w-5 h-5" />
-              Đặt lại mật khẩu
-            </DialogTitle>
-          </DialogHeader>
-          {resetPasswordAccount && (
-            <ResetPasswordForm 
-              account={resetPasswordAccount}
-              onSuccess={() => {
-                setResetPasswordAccount(null);
-                fetchAccounts();
-              }}
-              onCancel={() => setResetPasswordAccount(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* Account Detail Modal */}
       <Dialog open={!!viewingAccount} onOpenChange={() => setViewingAccount(null)}>
@@ -563,20 +534,15 @@ function AccountForm({ account, onSuccess, onCancel }: AccountFormProps) {
 
     try {
       if (account) {
-        // Update - only send changed fields, but always include email (required)
-        const updateData: any = { email: formData.email };
-        if (formData.role !== account.role) updateData.role = formData.role;
-        if (formData.password) updateData.password = formData.password;
-        
-        // Check if there are any actual changes
-        const hasChanges = formData.email !== account.email || 
-                           formData.role !== account.role || 
-                           formData.password;
-        
-        if (!hasChanges) {
-          toast.info("Không có thay đổi nào để cập nhật");
-          setLoading(false);
-          return;
+        // Update - send email and role, only add password if provided
+        // Match OLD-Frontend behavior exactly
+        const updateData: AccountUpdateRequest = { 
+          email: formData.email,
+          role: formData.role as AccountUpdateRequest['role']
+        };
+        // Only add password if it's not empty (like OLD-Frontend account-form.tsx line 68-73)
+        if (formData.password) {
+          updateData.password = formData.password;
         }
         
         await authService.updateAccount(account.id, updateData);
@@ -685,124 +651,6 @@ function AccountForm({ account, onSuccess, onCancel }: AccountFormProps) {
         <button type="submit" disabled={loading} className="btn-primary">
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           {account ? "Cập nhật" : "Tạo tài khoản"}
-        </button>
-      </div>
-    </form>
-  );
-}
-
-// Reset Password Form Component
-interface ResetPasswordFormProps {
-  account: Account;
-  onSuccess: () => void;
-  onCancel: () => void;
-}
-
-function ResetPasswordForm({ account, onSuccess, onCancel }: ResetPasswordFormProps) {
-  const [loading, setLoading] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (newPassword.length < 8) {
-      toast.error("Mật khẩu phải có ít nhất 8 ký tự");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      toast.error("Mật khẩu xác nhận không khớp");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await authService.updateAccount(account.id, {
-        email: account.email, // Required by backend
-        password: newPassword,
-      });
-      toast.success(`Đã đặt lại mật khẩu cho tài khoản ${account.email}`);
-      onSuccess();
-    } catch (error) {
-      console.error("Failed to reset password:", error);
-      toast.error("Không thể đặt lại mật khẩu. Vui lòng thử lại.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Account Info */}
-      <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
-        <p className="text-sm">
-          <span className="text-gray-500">Tài khoản:</span>{" "}
-          <span className="font-medium">{account.email}</span>
-        </p>
-      </div>
-
-      {/* New Password */}
-      <div className="space-y-2">
-        <label className="text-label">Mật khẩu mới *</label>
-        <div className="relative">
-          <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-          <input
-            type={showPassword ? "text" : "password"}
-            className="input-base pl-10 pr-10"
-            placeholder="Nhập mật khẩu mới"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
-            minLength={8}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            {showPassword ? (
-              <XCircle className="w-4 h-4" />
-            ) : (
-              <Eye className="w-4 h-4" />
-            )}
-          </button>
-        </div>
-        <p className="text-xs text-gray-500">Tối thiểu 8 ký tự</p>
-      </div>
-
-      {/* Confirm Password */}
-      <div className="space-y-2">
-        <label className="text-label">Xác nhận mật khẩu *</label>
-        <div className="relative">
-          <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-          <input
-            type={showPassword ? "text" : "password"}
-            className="input-base pl-10"
-            placeholder="Nhập lại mật khẩu mới"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
-        </div>
-        {confirmPassword && newPassword !== confirmPassword && (
-          <p className="text-xs text-red-500">Mật khẩu không khớp</p>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-[hsl(var(--border))]">
-        <button type="button" onClick={onCancel} className="btn-secondary">
-          Hủy
-        </button>
-        <button 
-          type="submit" 
-          disabled={loading || !newPassword || !confirmPassword || newPassword !== confirmPassword} 
-          className="btn-primary"
-        >
-          {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-          Đặt lại mật khẩu
         </button>
       </div>
     </form>

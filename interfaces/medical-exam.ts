@@ -132,14 +132,24 @@ export interface Prescription {
   medicalExam: { id: string };
   patient: PatientSummary;
   doctor: DoctorSummary;
+  status: PrescriptionStatus;
   prescribedAt: string;
   notes?: string;
   items: PrescriptionItem[];
-  status: PrescriptionStatus;
-  dispensedAt?: string;
-  dispensedBy?: string;
+  itemCount?: number;
+  // Nested dispense info (when status=DISPENSED)
+  dispense?: {
+    dispensedAt?: string;
+    dispensedBy?: string;
+  };
+  // Nested cancellation info (when status=CANCELLED)
+  cancellation?: {
+    cancelledAt?: string;
+    cancelledBy?: string;
+    reason?: string;
+  };
   createdAt: string;
-  updatedAt: string;
+  createdBy?: string;
 }
 
 export interface PrescriptionListItem {

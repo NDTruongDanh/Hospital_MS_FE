@@ -16,6 +16,8 @@ import {
   CheckCircle,
   Loader2,
   AlertTriangle,
+  ExternalLink,
+  ClipboardPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { appointmentService, Appointment } from "@/services/appointment.service";
@@ -213,6 +215,13 @@ export default function AppointmentDetailPage() {
                 )}
               </div>
             </div>
+            <Link 
+              href={`/admin/patients/${appointment.patient.id}`}
+              className="mt-3 inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Xem hồ sơ bệnh nhân
+              <ExternalLink className="w-3 h-3" />
+            </Link>
           </div>
         </div>
 
@@ -320,6 +329,41 @@ export default function AppointmentDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Medical Exam Card - show when COMPLETED */}
+      {appointment.status === "COMPLETED" && (
+        <div className="rounded-2xl border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-green-400 to-emerald-500 shadow-lg">
+              <FileText className="w-5 h-5 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-green-800">Phiếu khám bệnh</h3>
+          </div>
+          {appointment.medicalExamId ? (
+            <div className="flex items-center gap-4">
+              <p className="text-green-700">Phiếu khám đã được tạo</p>
+              <Link
+                href={`/admin/exams/${appointment.medicalExamId}`}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition-colors"
+              >
+                <FileText className="w-4 h-4" />
+                Xem phiếu khám
+              </Link>
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <p className="text-green-700">Chưa có phiếu khám cho cuộc hẹn này</p>
+              <Link
+                href={`/admin/exams/new?appointmentId=${appointment.id}&patientId=${appointment.patient.id}`}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition-colors"
+              >
+                <ClipboardPlus className="w-4 h-4" />
+                Tạo phiếu khám
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex flex-wrap gap-3">

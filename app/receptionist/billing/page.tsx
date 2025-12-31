@@ -376,28 +376,28 @@ export default function ReceptionistBillingPage() {
         <table className="table-base">
           <thead>
             <tr>
-              <th onClick={() => handleSort("invoiceNumber")} className="cursor-pointer hover:bg-gray-50">
+              <th onClick={() => handleSort("invoiceNumber")} className="cursor-pointer hover:bg-gray-50 w-[180px]">
                 <div className="flex items-center gap-1">
                   Mã hóa đơn
                   <SortIcon field="invoiceNumber" />
                 </div>
               </th>
-              <th onClick={() => handleSort("invoiceDate")} className="cursor-pointer hover:bg-gray-50">
+              <th onClick={() => handleSort("invoiceDate")} className="cursor-pointer hover:bg-gray-50 w-[140px]">
                 <div className="flex items-center gap-1">
                   Ngày tạo
                   <SortIcon field="invoiceDate" />
                 </div>
               </th>
-              <th onClick={() => handleSort("totalAmount")} className="text-right cursor-pointer hover:bg-gray-50">
+              <th onClick={() => handleSort("totalAmount")} className="text-right cursor-pointer hover:bg-gray-50 w-[120px]">
                 <div className="flex items-center justify-end gap-1">
                   Tổng tiền
                   <SortIcon field="totalAmount" />
                 </div>
               </th>
-              <th className="text-right">Giảm giá</th>
-              <th className="text-right">Đã thanh toán</th>
-              <th className="text-right">Còn nợ</th>
-              <th onClick={() => handleSort("status")} className="cursor-pointer hover:bg-gray-50">
+              <th className="text-right w-[100px]">Giảm giá</th>
+              <th className="text-right w-[120px]">Đã thanh toán</th>
+              <th className="text-right w-[110px]">Còn nợ</th>
+              <th onClick={() => handleSort("status")} className="cursor-pointer hover:bg-gray-50 w-[140px]">
                 <div className="flex items-center gap-1">
                   Trạng thái
                   <SortIcon field="status" />

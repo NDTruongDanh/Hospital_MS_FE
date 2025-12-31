@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { 
   Search,
   TestTube,
@@ -28,6 +29,7 @@ const STATUS_CONFIG: Record<ResultStatus, { label: string; class: string; icon: 
 };
 
 export default function AdminLabResultsPage() {
+  const router = useRouter();
   const [results, setResults] = useState<LabTestResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -208,7 +210,7 @@ export default function AdminLabResultsPage() {
                     <td>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => setSelectedResult(result)}
+                          onClick={() => router.push(`/admin/lab-results/${result.id}`)}
                           className="btn-icon"
                           title="Xem chi tiết"
                         >

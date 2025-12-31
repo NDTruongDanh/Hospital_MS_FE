@@ -91,9 +91,11 @@ export default function AdminAppointmentsPage() {
 
   const fetchDoctors = async () => {
     try {
-      const response = await fetch("/api/hr/employees?role=DOCTOR&status=ACTIVE");
-      const data = await response.json();
-      setDoctors(data.data || []);
+      const { default: axiosInstance } = await import("@/config/axios");
+      const response = await axiosInstance.get("/hr/employees/all", { 
+        params: { filter: "role==DOCTOR;status==ACTIVE" } 
+      });
+      setDoctors(response.data.data?.content || []);
     } catch (error) {
       console.error("Failed to fetch doctors:", error);
     }
