@@ -178,7 +178,7 @@ export default function DoctorPatientDetailPage() {
 
   const appointments = appointmentsData?.content || [];
   const exams = examsData?.data?.content || [];
-  const invoices = invoicesData?.data?.content || [];
+  const invoices = (invoicesData?.data as any) || [];
   const age = calculateAge(patient.dateOfBirth);
 
   // Extract prescriptions from exams

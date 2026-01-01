@@ -22,6 +22,7 @@ import type { LucideIcon } from "lucide-react";
 
 export const APPOINTMENT_STATUS = {
   SCHEDULED: "SCHEDULED",
+  IN_PROGRESS: "IN_PROGRESS",
   COMPLETED: "COMPLETED",
   CANCELLED: "CANCELLED",
   NO_SHOW: "NO_SHOW",
@@ -52,6 +53,11 @@ export const APPOINTMENT_STATUS_CONFIG: Record<
   SCHEDULED: {
     variant: "info",
     label: "Đã lên lịch",
+    icon: Clock,
+  },
+  IN_PROGRESS: {
+    variant: "purple",
+    label: "Đang khám",
     icon: Clock,
   },
   COMPLETED: {

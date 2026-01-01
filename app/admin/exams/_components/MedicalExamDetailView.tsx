@@ -25,6 +25,7 @@ import {
   Pill,
   Receipt,
   ExternalLink,
+  FlaskConical,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
@@ -33,6 +34,8 @@ import { useAppointment } from "@/hooks/queries/useAppointment";
 import { Badge } from "@/components/ui/badge";
 import { StatsSummaryBar } from "@/components/ui/stats-summary-bar";
 import { InfoItem, InfoGrid } from "@/components/ui/info-item";
+import { LabOrdersSection } from "@/components/lab/LabOrdersSection";
+import { OrderLabOrderDialog } from "@/components/lab/OrderLabOrderDialog";
 
 interface MedicalExamDetailViewProps {
   medicalExam: MedicalExam;
@@ -299,6 +302,29 @@ export function MedicalExamDetailView({
               </CardContent>
             </Card>
           )}
+
+          {/* Lab Orders Section */}
+          <Card className="border-2 border-slate-200 shadow-md rounded-xl">
+            <CardHeader className="bg-slate-50 border-b flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <FlaskConical className="h-5 w-5 text-teal-600" />
+                Lab Orders
+              </CardTitle>
+              {(userRole === "ADMIN" || userRole === "DOCTOR") && (
+                <OrderLabOrderDialog
+                  medicalExamId={medicalExam.id}
+                  patientId={medicalExam.patient.id}
+                  patientName={medicalExam.patient.fullName}
+                />
+              )}
+            </CardHeader>
+            <CardContent className="p-0">
+              <LabOrdersSection 
+                medicalExamId={medicalExam.id} 
+                basePath="/admin/lab-orders"
+              />
+            </CardContent>
+          </Card>
 
           {/* Prescription */}
           <Card className="border-2 border-slate-200 shadow-md rounded-xl">

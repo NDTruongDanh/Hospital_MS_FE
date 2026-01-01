@@ -45,6 +45,11 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   {
+    title: "Hàng đợi",
+    href: "/doctor/queue",
+    icon: Users,
+  },
+  {
     title: "My Appointments",
     href: "/doctor/appointments",
     icon: CalendarDays,

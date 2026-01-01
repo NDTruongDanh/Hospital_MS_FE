@@ -6,7 +6,7 @@ export type AppointmentStatus =
   | "COMPLETED"
   | "CANCELLED"
   | "NO_SHOW";
-export type AppointmentType = "CONSULTATION" | "FOLLOW_UP" | "EMERGENCY";
+export type AppointmentType = "CONSULTATION" | "FOLLOW_UP" | "EMERGENCY" | "WALK_IN";
 
 export interface PatientSummary {
   id: string;

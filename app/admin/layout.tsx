@@ -41,6 +41,18 @@ const allNavItems = [
     roles: ["ADMIN", "DOCTOR", "NURSE"],
   },
   {
+    title: "Hàng đợi",
+    href: "/admin/queue",
+    icon: NAV_ICONS.appointments,
+    roles: ["ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST"],
+  },
+  {
+    title: "Tiếp nhận BN",
+    href: "/admin/walk-in",
+    icon: NAV_ICONS.patients,
+    roles: ["ADMIN", "RECEPTIONIST"],
+  },
+  {
     title: "Appointments",
     href: "/admin/appointments",
     icon: NAV_ICONS.appointments,
@@ -62,6 +74,12 @@ const allNavItems = [
     title: "Lab Results",
     href: "/admin/lab-results",
     icon: NAV_ICONS.labResults,
+    roles: ["ADMIN", "DOCTOR", "NURSE"],
+  },
+  {
+    title: "Phiếu Xét nghiệm",
+    href: "/admin/lab-orders",
+    icon: NAV_ICONS.labTests,
     roles: ["ADMIN", "DOCTOR", "NURSE"],
   },
   {

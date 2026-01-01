@@ -63,7 +63,7 @@ export default function PatientHistoryPage() {
 
         const apptContent = apptRes?.content || [];
         const examContent = examRes?.data?.content || [];
-        const invoiceContent = invoiceRes?.data?.data || [];
+        const invoiceContent = (invoiceRes?.data?.data as any[]) || [];
 
         const mapped: TimelineEvent[] = [
           ...apptContent.map((a: any) => ({

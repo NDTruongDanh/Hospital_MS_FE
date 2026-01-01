@@ -77,12 +77,14 @@ function EditAppointmentForm() {
   useEffect(() => {
     if (appointment) {
       const appointmentDateTime = parseISO(appointment.appointmentTime);
+      // WALK_IN appointments shouldn't be edited via this form, default to CONSULTATION if encountered
+      const appointmentType = appointment.type === "WALK_IN" ? "CONSULTATION" : appointment.type;
       form.reset({
         patientId: appointment.patient.id,
         doctorId: appointment.doctor.id,
         appointmentDate: appointmentDateTime,
         appointmentTime: format(appointmentDateTime, "HH:mm"),
-        type: appointment.type,
+        type: appointmentType as "CONSULTATION" | "FOLLOW_UP" | "EMERGENCY",
         reason: appointment.reason,
         notes: appointment.notes || "",
       });
