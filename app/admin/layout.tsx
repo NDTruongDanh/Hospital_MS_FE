@@ -41,13 +41,13 @@ const allNavItems = [
     roles: ["ADMIN", "DOCTOR", "NURSE"],
   },
   {
-    title: "Hàng đợi",
+    title: "Queue",
     href: "/admin/queue",
     icon: NAV_ICONS.appointments,
     roles: ["ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST"],
   },
   {
-    title: "Tiếp nhận BN",
+    title: "Patient reception",
     href: "/admin/walk-in",
     icon: NAV_ICONS.patients,
     roles: ["ADMIN", "RECEPTIONIST"],
@@ -77,7 +77,7 @@ const allNavItems = [
     roles: ["ADMIN", "DOCTOR", "NURSE"],
   },
   {
-    title: "Phiếu Xét nghiệm",
+    title: "Lab orders",
     href: "/admin/lab-orders",
     icon: NAV_ICONS.labTests,
     roles: ["ADMIN", "DOCTOR", "NURSE"],
@@ -155,13 +155,10 @@ export default function AdminLayout({
     <RoleGuard allowedRoles={["ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST"]}>
       <SidebarProvider>
         <div className="bg-slate-50 text-foreground flex min-h-screen w-screen">
-          <Sidebar
-            className="border-r-0"
-            collapsible="icon"
-          >
+          <Sidebar className="border-r-0" collapsible="icon">
             {/* Sidebar with gradient background */}
             <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900" />
-            
+
             <SidebarHeader className="relative z-10 gap-3 px-4 py-5 border-b border-white/10">
               <div className="flex items-center gap-3">
                 <div className="bg-gradient-to-br from-sky-400 to-teal-500 text-white grid h-10 w-10 place-items-center rounded-xl text-sm font-bold shadow-lg shadow-sky-500/20">
@@ -175,7 +172,7 @@ export default function AdminLayout({
                 </div>
               </div>
             </SidebarHeader>
-            
+
             <SidebarContent className="relative z-10">
               <SidebarGroup>
                 <SidebarGroupLabel className="text-slate-400 text-xs uppercase tracking-wider px-4 mb-2">
@@ -203,10 +200,12 @@ export default function AdminLayout({
                             )}
                           >
                             <Link href={item.href}>
-                              <Icon className={cn(
-                                "size-4 transition-colors",
-                                isActive ? "text-sky-400" : "text-slate-400"
-                              )} />
+                              <Icon
+                                className={cn(
+                                  "size-4 transition-colors",
+                                  isActive ? "text-sky-400" : "text-slate-400"
+                                )}
+                              />
                               <span>{item.title}</span>
                             </Link>
                           </SidebarMenuButton>
@@ -217,13 +216,15 @@ export default function AdminLayout({
                 </SidebarGroupContent>
               </SidebarGroup>
             </SidebarContent>
-            
+
             <SidebarFooter className="relative z-10 px-3 pb-4 border-t border-white/10 pt-4">
               <div className="space-y-3">
                 {/* User profile card */}
                 <div className="flex items-center gap-3 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 px-3 py-2.5 group-data-[collapsible=icon]:justify-center">
                   <div className="h-9 w-9 rounded-full bg-gradient-to-br from-sky-400 to-teal-500 flex items-center justify-center text-white font-semibold text-sm shadow-md">
-                    {(user?.fullName || user?.email || "U").charAt(0).toUpperCase()}
+                    {(user?.fullName || user?.email || "U")
+                      .charAt(0)
+                      .toUpperCase()}
                   </div>
                   <div className="group-data-[collapsible=icon]:hidden">
                     <p className="text-sm font-medium text-white truncate max-w-[120px]">
@@ -232,7 +233,7 @@ export default function AdminLayout({
                     <p className="text-xs text-slate-400">{user?.role}</p>
                   </div>
                 </div>
-                
+
                 {/* Logout button */}
                 <Button
                   onClick={logout}
@@ -241,7 +242,9 @@ export default function AdminLayout({
                   className="w-full justify-start text-slate-300 hover:text-white hover:bg-white/10 group-data-[collapsible=icon]:justify-center"
                 >
                   <LogOut className="size-4 mr-2 group-data-[collapsible=icon]:mr-0" />
-                  <span className="group-data-[collapsible=icon]:hidden">Logout</span>
+                  <span className="group-data-[collapsible=icon]:hidden">
+                    Logout
+                  </span>
                 </Button>
               </div>
             </SidebarFooter>
@@ -270,20 +273,30 @@ export default function AdminLayout({
                                 </span>
                               )}
                             </BreadcrumbItem>
-                            {!item.isLast && <BreadcrumbSeparator className="text-slate-300" />}
+                            {!item.isLast && (
+                              <BreadcrumbSeparator className="text-slate-300" />
+                            )}
                           </React.Fragment>
                         ))}
                       </BreadcrumbList>
                     </Breadcrumb>
                   </div>
                 </div>
-                
+
                 {/* Header actions */}
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon" className="text-slate-500 hover:text-slate-900 hover:bg-slate-100">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                  >
                     <Search className="size-5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 relative">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 relative"
+                  >
                     <Bell className="size-5" />
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-sky-500 rounded-full" />
                   </Button>
@@ -303,4 +316,3 @@ export default function AdminLayout({
     </RoleGuard>
   );
 }
-

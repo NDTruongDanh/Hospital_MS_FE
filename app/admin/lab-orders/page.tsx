@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import {
   FlaskConical,
   Search,
@@ -17,7 +17,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
@@ -55,13 +61,12 @@ export default function LabOrdersPage() {
     page,
     size: 20,
   });
-
   const labOrders = data?.content || [];
   const totalPages = data?.totalPages || 0;
 
-  // Filter locally (could be moved to API for better performance)
   const filteredOrders = labOrders.filter((order) => {
-    const matchesStatus = statusFilter === "ALL" || order.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "ALL" || order.status === statusFilter;
     const matchesSearch =
       search === "" ||
       order.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
@@ -69,10 +74,8 @@ export default function LabOrdersPage() {
     return matchesStatus && matchesSearch;
   });
 
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: vi });
-  };
-
+  const formatDate = (dateString: string) =>
+    format(new Date(dateString), "MM/dd/yyyy HH:mm", { locale: enUS });
   const getProgressPercent = (completed: number, total: number) => {
     if (total === 0) return 0;
     return Math.round((completed / total) * 100);
@@ -80,27 +83,26 @@ export default function LabOrdersPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="page-header">
           <h1>
             <FlaskConical className="h-6 w-6 text-teal-500" />
-            Phiếu Xét nghiệm
+            Lab Orders
           </h1>
-          <p>Quản lý các phiếu yêu cầu xét nghiệm</p>
+          <p>Manage lab test orders</p>
         </div>
-
         <Button
           variant="outline"
           onClick={() => refetch()}
           disabled={isFetching}
         >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
-          Làm mới
+          <RefreshCw
+            className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`}
+          />
+          Refresh
         </Button>
       </div>
 
-      {/* Filters */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-wrap gap-4">
@@ -108,7 +110,7 @@ export default function LabOrdersPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Tìm theo mã phiếu, tên bệnh nhân..."
+                  placeholder="Search by order number, patient name..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9"
@@ -118,27 +120,24 @@ export default function LabOrdersPage() {
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[180px]">
                 <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Trạng thái" />
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">Tất cả</SelectItem>
-                <SelectItem value="ORDERED">Đã yêu cầu</SelectItem>
-                <SelectItem value="IN_PROGRESS">Đang thực hiện</SelectItem>
-                <SelectItem value="COMPLETED">Hoàn thành</SelectItem>
-                <SelectItem value="CANCELLED">Đã hủy</SelectItem>
+                <SelectItem value="ALL">All</SelectItem>
+                <SelectItem value="ORDERED">Ordered</SelectItem>
+                <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                <SelectItem value="COMPLETED">Completed</SelectItem>
+                <SelectItem value="CANCELLED">Cancelled</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Danh sách phiếu xét nghiệm</CardTitle>
-          <CardDescription>
-            {data?.totalElements || 0} phiếu
-          </CardDescription>
+          <CardTitle>Lab Orders List</CardTitle>
+          <CardDescription>{data?.totalElements || 0} orders</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -150,19 +149,19 @@ export default function LabOrdersPage() {
           ) : filteredOrders.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <FlaskConical className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>Không có phiếu xét nghiệm nào</p>
+              <p>No lab orders found</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Mã phiếu</TableHead>
-                  <TableHead>Bệnh nhân</TableHead>
-                  <TableHead>Bác sĩ chỉ định</TableHead>
-                  <TableHead>Ngày tạo</TableHead>
-                  <TableHead>Tiến độ</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead>Ưu tiên</TableHead>
+                  <TableHead>Order No.</TableHead>
+                  <TableHead>Patient</TableHead>
+                  <TableHead>Ordering Doctor</TableHead>
+                  <TableHead>Created Date</TableHead>
+                  <TableHead>Progress</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Priority</TableHead>
                   <TableHead className="w-[100px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -178,7 +177,10 @@ export default function LabOrdersPage() {
                     <TableCell>
                       <div className="flex items-center gap-2 min-w-[120px]">
                         <Progress
-                          value={getProgressPercent(order.completedTests, order.totalTests)}
+                          value={getProgressPercent(
+                            order.completedTests,
+                            order.totalTests
+                          )}
                           className="h-2 flex-1"
                         />
                         <span className="text-sm text-muted-foreground whitespace-nowrap">
@@ -188,9 +190,15 @@ export default function LabOrdersPage() {
                     </TableCell>
                     <TableCell>
                       <Badge className={getOrderStatusColor(order.status)}>
-                        {order.status === "COMPLETED" && <CheckCircle className="h-3 w-3 mr-1" />}
-                        {order.status === "IN_PROGRESS" && <Clock className="h-3 w-3 mr-1" />}
-                        {order.status === "CANCELLED" && <AlertTriangle className="h-3 w-3 mr-1" />}
+                        {order.status === "COMPLETED" && (
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                        )}
+                        {order.status === "IN_PROGRESS" && (
+                          <Clock className="h-3 w-3 mr-1" />
+                        )}
+                        {order.status === "CANCELLED" && (
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                        )}
                         {getOrderStatusLabel(order.status)}
                       </Badge>
                     </TableCell>
@@ -203,7 +211,7 @@ export default function LabOrdersPage() {
                       <Link href={`/admin/lab-orders/${order.id}`}>
                         <Button variant="ghost" size="sm">
                           <Eye className="h-4 w-4 mr-1" />
-                          Xem
+                          View
                         </Button>
                       </Link>
                     </TableCell>
@@ -213,7 +221,6 @@ export default function LabOrdersPage() {
             </Table>
           )}
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center gap-2 mt-6">
               <Button
@@ -222,10 +229,10 @@ export default function LabOrdersPage() {
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
                 disabled={page === 0}
               >
-                Trước
+                Previous
               </Button>
               <span className="flex items-center px-4 text-sm">
-                Trang {page + 1} / {totalPages}
+                Page {page + 1} / {totalPages}
               </span>
               <Button
                 variant="outline"
@@ -233,7 +240,7 @@ export default function LabOrdersPage() {
                 onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
               >
-                Sau
+                Next
               </Button>
             </div>
           )}

@@ -10,15 +10,12 @@ export default function AdminLabResultsPage() {
       <div className="page-header">
         <h1>
           <FileText className="h-6 w-6 text-teal-500" />
-          Quản lý Kết quả Xét nghiệm
+          Lab Results Management
         </h1>
-        <p>Xem và quản lý tất cả kết quả xét nghiệm trong hệ thống</p>
+        <p>View and manage all lab results in the system</p>
       </div>
 
-      <LabResultsList
-        basePath="/admin/lab-results"
-        showPatientColumn={true}
-      />
+      <LabResultsList basePath="/admin/lab-results" showPatientColumn={true} />
     </div>
   );
 }

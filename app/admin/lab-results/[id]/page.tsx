@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import {
   ArrowLeft,
   FileText,
@@ -19,7 +19,13 @@ import {
   ZoomIn,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -49,14 +55,37 @@ import {
   useUploadLabImages,
   useDeleteLabImage,
 } from "@/hooks/queries/useLab";
-import { ResultStatus, ImageType, DiagnosticImage } from "@/services/lab.service";
+import {
+  ResultStatus,
+  ImageType,
+  DiagnosticImage,
+} from "@/services/lab.service";
 import { useDropzone } from "react-dropzone";
 
-const statusConfig: Record<ResultStatus, { label: string; icon: React.ElementType; color: string }> = {
-  PENDING: { label: "Chờ xử lý", icon: Clock, color: "bg-yellow-100 text-yellow-800" },
-  PROCESSING: { label: "Đang thực hiện", icon: Clock, color: "bg-blue-100 text-blue-800" },
-  COMPLETED: { label: "Hoàn thành", icon: CheckCircle, color: "bg-green-100 text-green-800" },
-  CANCELLED: { label: "Đã hủy", icon: AlertTriangle, color: "bg-red-100 text-red-800" },
+const statusConfig: Record<
+  ResultStatus,
+  { label: string; icon: React.ElementType; color: string }
+> = {
+  PENDING: {
+    label: "Pending",
+    icon: Clock,
+    color: "bg-yellow-100 text-yellow-800",
+  },
+  PROCESSING: {
+    label: "Processing",
+    icon: Clock,
+    color: "bg-blue-100 text-blue-800",
+  },
+  COMPLETED: {
+    label: "Completed",
+    icon: CheckCircle,
+    color: "bg-green-100 text-green-800",
+  },
+  CANCELLED: {
+    label: "Cancelled",
+    icon: AlertTriangle,
+    color: "bg-red-100 text-red-800",
+  },
 };
 
 export default function AdminLabResultDetailPage() {
@@ -69,7 +98,6 @@ export default function AdminLabResultDetailPage() {
   const uploadMutation = useUploadLabImages();
   const deleteMutation = useDeleteLabImage();
 
-  // Form state
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     resultValue: "",
@@ -78,30 +106,23 @@ export default function AdminLabResultDetailPage() {
     interpretation: "",
     notes: "",
   });
-
-  // Image upload state
   const [uploadOpen, setUploadOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imageType, setImageType] = useState<ImageType>("PHOTO");
   const [imageDescription, setImageDescription] = useState("");
+  const [viewingImage, setViewingImage] = useState<DiagnosticImage | null>(
+    null
+  );
 
-  // Image viewer state
-  const [viewingImage, setViewingImage] = useState<DiagnosticImage | null>(null);
-
-  // Dropzone config
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setSelectedFiles((prev) => [...prev, ...acceptedFiles]);
   }, []);
-
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: {
-      "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"],
-    },
-    maxSize: 10 * 1024 * 1024, // 10MB
+    accept: { "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] },
+    maxSize: 10 * 1024 * 1024,
   });
 
-  // Initialize form when data loads
   const initializeForm = useCallback(() => {
     if (result) {
       setFormData({
@@ -118,18 +139,13 @@ export default function AdminLabResultDetailPage() {
     initializeForm();
     setIsEditing(true);
   };
-
   const handleCancel = () => {
     setIsEditing(false);
     initializeForm();
   };
-
   const handleSave = async () => {
     try {
-      await updateMutation.mutateAsync({
-        id: resultId,
-        data: formData,
-      });
+      await updateMutation.mutateAsync({ id: resultId, data: formData });
       setIsEditing(false);
     } catch (error) {
       console.error("Failed to update:", error);
@@ -138,7 +154,6 @@ export default function AdminLabResultDetailPage() {
 
   const handleUploadImages = async () => {
     if (selectedFiles.length === 0) return;
-
     try {
       await uploadMutation.mutateAsync({
         resultId,
@@ -181,12 +196,14 @@ export default function AdminLabResultDetailPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold">Không tìm thấy kết quả</h3>
-            <p className="text-muted-foreground">Kết quả xét nghiệm không tồn tại hoặc đã bị xóa</p>
+            <h3 className="text-lg font-semibold">Result not found</h3>
+            <p className="text-muted-foreground">
+              The test result does not exist or has been deleted
+            </p>
             <Link href="/admin/lab-results">
               <Button className="mt-4">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Quay lại danh sách
+                Back to list
               </Button>
             </Link>
           </CardContent>
@@ -199,7 +216,6 @@ export default function AdminLabResultDetailPage() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/admin/lab-results">
@@ -208,9 +224,9 @@ export default function AdminLabResultDetailPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold">Chi tiết kết quả xét nghiệm</h1>
+            <h1 className="text-2xl font-bold">Lab Result Details</h1>
             <p className="text-muted-foreground">
-              {result.labTestName || "Xét nghiệm"}
+              {result.labTestName || "Test"}
             </p>
           </div>
         </div>
@@ -220,84 +236,87 @@ export default function AdminLabResultDetailPage() {
         </Badge>
       </div>
 
-      {/* Info Cards */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Patient & Exam Info */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Thông tin bệnh nhân</CardTitle>
+            <CardTitle className="text-lg">Patient Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Họ tên:</span>
+              <span className="text-muted-foreground">Name:</span>
               <span className="font-medium">{result.patientName || "N/A"}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Mã phiếu khám:</span>
-              <Link href={`/admin/exams/${result.medicalExamId}`} className="text-blue-600 hover:underline">
+              <span className="text-muted-foreground">Exam ID:</span>
+              <Link
+                href={`/admin/exams/${result.medicalExamId}`}
+                className="text-blue-600 hover:underline"
+              >
                 {result.medicalExamId?.slice(0, 8)}...
               </Link>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Ngày yêu cầu:</span>
+              <span className="text-muted-foreground">Request Date:</span>
               <span>
                 {result.createdAt
-                  ? format(new Date(result.createdAt), "dd/MM/yyyy HH:mm", { locale: vi })
+                  ? format(new Date(result.createdAt), "MM/dd/yyyy HH:mm", {
+                      locale: enUS,
+                    })
                   : "N/A"}
               </span>
             </div>
             {result.performedAt && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Ngày thực hiện:</span>
+                <span className="text-muted-foreground">Performed Date:</span>
                 <span>
-                  {format(new Date(result.performedAt), "dd/MM/yyyy HH:mm", { locale: vi })}
+                  {format(new Date(result.performedAt), "MM/dd/yyyy HH:mm", {
+                    locale: enUS,
+                  })}
                 </span>
               </div>
             )}
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Thông tin xét nghiệm</CardTitle>
+            <CardTitle className="text-lg">Test Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Tên xét nghiệm:</span>
+              <span className="text-muted-foreground">Test Name:</span>
               <span className="font-medium">{result.labTestName || "N/A"}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Mã xét nghiệm:</span>
+              <span className="text-muted-foreground">Test Code:</span>
               <span>{result.labTestCode || "N/A"}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Loại xét nghiệm:</span>
+              <span className="text-muted-foreground">Category:</span>
               <span>{result.labTestCategory || "N/A"}</span>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Result Section */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-lg">Kết quả xét nghiệm</CardTitle>
-            <CardDescription>Nhập và quản lý kết quả xét nghiệm</CardDescription>
+            <CardTitle className="text-lg">Test Results</CardTitle>
+            <CardDescription>Enter and manage test results</CardDescription>
           </div>
           {!isEditing ? (
             <Button onClick={handleEdit} variant="outline">
-              Chỉnh sửa
+              Edit
             </Button>
           ) : (
             <div className="flex gap-2">
               <Button onClick={handleCancel} variant="outline">
                 <X className="mr-2 h-4 w-4" />
-                Hủy
+                Cancel
               </Button>
               <Button onClick={handleSave} disabled={updateMutation.isPending}>
                 <Save className="mr-2 h-4 w-4" />
-                {updateMutation.isPending ? "Đang lưu..." : "Lưu"}
+                {updateMutation.isPending ? "Saving..." : "Save"}
               </Button>
             </div>
           )}
@@ -307,53 +326,63 @@ export default function AdminLabResultDetailPage() {
             <>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Giá trị kết quả</Label>
+                  <Label>Result Value</Label>
                   <Input
                     value={formData.resultValue}
-                    onChange={(e) => setFormData({ ...formData, resultValue: e.target.value })}
-                    placeholder="Nhập giá trị kết quả"
+                    onChange={(e) =>
+                      setFormData({ ...formData, resultValue: e.target.value })
+                    }
+                    placeholder="Enter result value"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Trạng thái</Label>
+                  <Label>Status</Label>
                   <Select
                     value={formData.status}
-                    onValueChange={(value: ResultStatus) => setFormData({ ...formData, status: value })}
+                    onValueChange={(value: ResultStatus) =>
+                      setFormData({ ...formData, status: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="PENDING">Chờ xử lý</SelectItem>
-                      <SelectItem value="PROCESSING">Đang thực hiện</SelectItem>
-                      <SelectItem value="COMPLETED">Hoàn thành</SelectItem>
-                      <SelectItem value="CANCELLED">Đã hủy</SelectItem>
+                      <SelectItem value="PENDING">Pending</SelectItem>
+                      <SelectItem value="PROCESSING">Processing</SelectItem>
+                      <SelectItem value="COMPLETED">Completed</SelectItem>
+                      <SelectItem value="CANCELLED">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <Label>Kết quả bất thường</Label>
+                <Label>Abnormal Result</Label>
                 <Switch
                   checked={formData.isAbnormal}
-                  onCheckedChange={(checked) => setFormData({ ...formData, isAbnormal: checked })}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, isAbnormal: checked })
+                  }
                 />
               </div>
               <div className="space-y-2">
-                <Label>Diễn giải kết quả</Label>
+                <Label>Interpretation</Label>
                 <Textarea
                   value={formData.interpretation}
-                  onChange={(e) => setFormData({ ...formData, interpretation: e.target.value })}
-                  placeholder="Nhập diễn giải kết quả"
+                  onChange={(e) =>
+                    setFormData({ ...formData, interpretation: e.target.value })
+                  }
+                  placeholder="Enter result interpretation"
                   rows={3}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Ghi chú</Label>
+                <Label>Notes</Label>
                 <Textarea
                   value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Ghi chú thêm"
+                  onChange={(e) =>
+                    setFormData({ ...formData, notes: e.target.value })
+                  }
+                  placeholder="Additional notes"
                   rows={2}
                 />
               </div>
@@ -362,22 +391,28 @@ export default function AdminLabResultDetailPage() {
             <>
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <span className="text-muted-foreground">Giá trị kết quả:</span>
-                  <p className={`font-medium ${result.isAbnormal ? "text-red-600" : ""}`}>
-                    {result.resultValue || "Chưa có kết quả"}
-                    {result.isAbnormal && <Badge variant="destructive" className="ml-2">Bất thường</Badge>}
+                  <span className="text-muted-foreground">Result Value:</span>
+                  <p
+                    className={`font-medium ${result.isAbnormal ? "text-red-600" : ""}`}
+                  >
+                    {result.resultValue || "No result yet"}
+                    {result.isAbnormal && (
+                      <Badge variant="destructive" className="ml-2">
+                        Abnormal
+                      </Badge>
+                    )}
                   </p>
                 </div>
               </div>
               {result.interpretation && (
                 <div>
-                  <span className="text-muted-foreground">Diễn giải:</span>
+                  <span className="text-muted-foreground">Interpretation:</span>
                   <p className="mt-1">{result.interpretation}</p>
                 </div>
               )}
               {result.notes && (
                 <div>
-                  <span className="text-muted-foreground">Ghi chú:</span>
+                  <span className="text-muted-foreground">Notes:</span>
                   <p className="mt-1">{result.notes}</p>
                 </div>
               )}
@@ -386,16 +421,17 @@ export default function AdminLabResultDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Images Section */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-lg">Hình ảnh chẩn đoán</CardTitle>
-            <CardDescription>Quản lý hình ảnh liên quan đến kết quả xét nghiệm</CardDescription>
+            <CardTitle className="text-lg">Diagnostic Images</CardTitle>
+            <CardDescription>
+              Manage images related to test results
+            </CardDescription>
           </div>
           <Button onClick={() => setUploadOpen(true)}>
             <Upload className="mr-2 h-4 w-4" />
-            Tải lên hình ảnh
+            Upload Images
           </Button>
         </CardHeader>
         <CardContent>
@@ -408,7 +444,7 @@ export default function AdminLabResultDetailPage() {
                 >
                   <img
                     src={image.downloadUrl}
-                    alt={image.description || "Hình ảnh xét nghiệm"}
+                    alt={image.description || "Test image"}
                     className="w-full h-32 object-cover"
                   />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
@@ -421,7 +457,11 @@ export default function AdminLabResultDetailPage() {
                       <ZoomIn className="h-5 w-5" />
                     </Button>
                     <a href={image.downloadUrl} download>
-                      <Button size="icon" variant="ghost" className="text-white">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="text-white"
+                      >
                         <Download className="h-5 w-5" />
                       </Button>
                     </a>
@@ -441,43 +481,46 @@ export default function AdminLabResultDetailPage() {
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>Chưa có hình ảnh nào</p>
+              <p>No images yet</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Upload Dialog */}
       <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Tải lên hình ảnh</DialogTitle>
-            <DialogDescription>Chọn hình ảnh để tải lên cho kết quả xét nghiệm</DialogDescription>
+            <DialogTitle>Upload Images</DialogTitle>
+            <DialogDescription>
+              Select images to upload for test results
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div
               {...getRootProps()}
-              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25"
-              }`}
+              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25"}`}
             >
               <input {...getInputProps()} />
               <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
               {isDragActive ? (
-                <p>Thả file vào đây...</p>
+                <p>Drop files here...</p>
               ) : (
-                <p>Kéo thả hoặc click để chọn file</p>
+                <p>Drag and drop or click to select files</p>
               )}
             </div>
             {selectedFiles.length > 0 && (
               <div className="space-y-2">
-                <Label>Đã chọn ({selectedFiles.length} file)</Label>
+                <Label>Selected ({selectedFiles.length} files)</Label>
                 <div className="flex flex-wrap gap-2">
                   {selectedFiles.map((file, index) => (
                     <Badge key={index} variant="secondary">
                       {file.name}
                       <button
-                        onClick={() => setSelectedFiles(selectedFiles.filter((_, i) => i !== index))}
+                        onClick={() =>
+                          setSelectedFiles(
+                            selectedFiles.filter((_, i) => i !== index)
+                          )
+                        }
                         className="ml-1"
                       >
                         <X className="h-3 w-3" />
@@ -489,55 +532,59 @@ export default function AdminLabResultDetailPage() {
             )}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Loại hình ảnh</Label>
-                <Select value={imageType} onValueChange={(v: ImageType) => setImageType(v)}>
+                <Label>Image Type</Label>
+                <Select
+                  value={imageType}
+                  onValueChange={(v: ImageType) => setImageType(v)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="PHOTO">Ảnh chụp</SelectItem>
-                    <SelectItem value="XRAY">X-quang</SelectItem>
+                    <SelectItem value="PHOTO">Photo</SelectItem>
+                    <SelectItem value="XRAY">X-ray</SelectItem>
                     <SelectItem value="CT">CT Scan</SelectItem>
                     <SelectItem value="MRI">MRI</SelectItem>
-                    <SelectItem value="ULTRASOUND">Siêu âm</SelectItem>
-                    <SelectItem value="OTHER">Khác</SelectItem>
+                    <SelectItem value="ULTRASOUND">Ultrasound</SelectItem>
+                    <SelectItem value="OTHER">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Mô tả</Label>
+                <Label>Description</Label>
                 <Input
                   value={imageDescription}
                   onChange={(e) => setImageDescription(e.target.value)}
-                  placeholder="Mô tả hình ảnh"
+                  placeholder="Image description"
                 />
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setUploadOpen(false)}>
-              Hủy
+              Cancel
             </Button>
             <Button
               onClick={handleUploadImages}
               disabled={selectedFiles.length === 0 || uploadMutation.isPending}
             >
-              {uploadMutation.isPending ? "Đang tải..." : "Tải lên"}
+              {uploadMutation.isPending ? "Uploading..." : "Upload"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Image Viewer Dialog */}
       <Dialog open={!!viewingImage} onOpenChange={() => setViewingImage(null)}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>{viewingImage?.description || "Hình ảnh xét nghiệm"}</DialogTitle>
+            <DialogTitle>
+              {viewingImage?.description || "Test image"}
+            </DialogTitle>
           </DialogHeader>
           {viewingImage && (
             <img
               src={viewingImage.downloadUrl}
-              alt={viewingImage.description || "Hình ảnh"}
+              alt={viewingImage.description || "Image"}
               className="w-full max-h-[70vh] object-contain"
             />
           )}
