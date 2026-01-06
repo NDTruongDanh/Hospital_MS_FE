@@ -190,7 +190,7 @@ export default function AdminLayout({
     <RoleGuard allowedRoles={["ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST"]}>
       <SidebarProvider>
         <div className="bg-slate-50 text-foreground flex min-h-screen w-screen">
-          <Sidebar className="border-r-0" collapsible="icon">
+          <Sidebar className="border-r-0" collapsible="offcanvas">
             {/* Sidebar with gradient background */}
             <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900" />
 
@@ -285,7 +285,6 @@ export default function AdminLayout({
                 </Button>
               </div>
             </SidebarFooter>
-            <SidebarRail className="bg-white/5 hover:bg-white/10" />
           </Sidebar>
 
           <div className="flex-1 min-w-0 w-full">
