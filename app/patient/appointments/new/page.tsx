@@ -118,7 +118,14 @@ export default function PatientBookingPage() {
   const doctors = useMemo(() => doctorsData?.content || [], [doctorsData]);
 
   const isoDate = useMemo(
-    () => (date ? date.toISOString().split("T")[0] : ""),
+    () => {
+      if (!date) return "";
+      // Use local date format to avoid timezone conversion issues
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    },
     [date],
   );
   const { data: slots, isLoading: isLoadingSlots } = useTimeSlots(
@@ -166,10 +173,17 @@ export default function PatientBookingPage() {
 
   const createMutation = useCreateAppointment();
   const submitBooking = async () => {
+    // Construct Date object with selected date and time slot (local time)
+    // Then convert to ISO string (UTC) for backend
+    const appointmentDate = new Date(date!);
+    const [hours, minutes] = slot.split(":").map(Number);
+    appointmentDate.setHours(hours, minutes, 0, 0);
+    const appointmentTimeISO = appointmentDate.toISOString();
+
     const payload: AppointmentCreateRequest = {
       patientId,
       doctorId,
-      appointmentTime: `${isoDate}T${slot}:00Z`, // Full ISO-8601 format with seconds and UTC timezone
+      appointmentTime: appointmentTimeISO,
       type,
       reason,
     };

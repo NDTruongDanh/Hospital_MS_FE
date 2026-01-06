@@ -1,0 +1,29 @@
+services:
+  # Frontend Application
+  frontend:
+    image: hms-frontend:latest  # Custom image name
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Use localhost because browser runs on host machine, not in Docker
+        NEXT_PUBLIC_BE_BASE_URL: http://localhost:8080/api
+    container_name: hms-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - hms-network
+
+networks:
+  hms-network:
+    external: true
+    name: pro_app-network  # Connect to backend network

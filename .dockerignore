@@ -1,0 +1,35 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build artifacts (we rebuild in Docker)
+.next
+out
+build
+
+# Development files
+.env.local
+.env*.local
+*.log
+
+# IDE
+.vscode
+.idea
+
+# Testing
+test-results
+playwright-report
+coverage
+
+# Git
+.git
+.gitignore
+
+# Documentation (not needed in image)
+DOCS
+*.md
+!README.md
+
+# Misc
+.DS_Store
+Thumbs.db

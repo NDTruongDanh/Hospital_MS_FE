@@ -275,10 +275,12 @@ export const appointmentService = {
         filters.push(`appointmentTime=le=${params.endDate}T23:59:59Z`);
       }
 
-      // Add search filter for patientName
+      // Add search filter - for patients searching by doctor name, for others by patient name
       if (params.search) {
-        // RSQL uses ==*value* for LIKE queries (not =like=)
-        filters.push(`patientName==*${params.search}*`);
+        // If patientId is set, user is a patient searching by doctor name
+        // Otherwise, admin/staff searching by patient name
+        const searchField = params.patientId ? "doctorName" : "patientName";
+        filters.push(`${searchField}==*${params.search}*`);
       }
 
       const apiParams: Record<string, any> = {

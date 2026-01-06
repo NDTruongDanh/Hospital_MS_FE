@@ -462,7 +462,7 @@ export const calculateAge = (dateOfBirth: string | null): number => {
   return age;
 };
 
-// POST /api/patients/:id/profile-image - Upload profile image
+// POST /api/patients/:id/profile-image - Upload profile image (admin)
 export const uploadProfileImage = async (
   patientId: string,
   file: File
@@ -482,7 +482,7 @@ export const uploadProfileImage = async (
   return response.data.data;
 };
 
-// DELETE /api/patients/:id/profile-image - Delete profile image
+// DELETE /api/patients/:id/profile-image - Delete profile image (admin)
 export const deleteProfileImage = async (
   patientId: string
 ): Promise<Patient> => {
@@ -491,3 +491,29 @@ export const deleteProfileImage = async (
   );
   return response.data.data;
 };
+
+// POST /api/patients/me/profile-image - Upload own profile image (patient self-service)
+export const uploadMyProfileImage = async (file: File): Promise<Patient> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await axiosInstance.post<{ data: Patient }>(
+    "/patients/me/profile-image",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+  return response.data.data;
+};
+
+// DELETE /api/patients/me/profile-image - Delete own profile image (patient self-service)
+export const deleteMyProfileImage = async (): Promise<Patient> => {
+  const response = await axiosInstance.delete<{ data: Patient }>(
+    "/patients/me/profile-image"
+  );
+  return response.data.data;
+};
+

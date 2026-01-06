@@ -7,7 +7,6 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft, Printer, Pill, FileText } from "lucide-react";
 import { useMedicalExam } from "@/hooks/queries/useMedicalExam";
 import { MedicalExamDetailView } from "@/app/admin/exams/_components/MedicalExamDetailView";
-import { LabResultsSection } from "@/components/lab/LabResultsSection";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import Link from "next/link";
@@ -85,19 +84,13 @@ export default function PatientMedicalRecordDetailPage({
       </div>
 
       {/* Medical Exam Detail - Patient view only, no edit capabilities */}
+      {/* LabSection is already included inside MedicalExamDetailView */}
       <MedicalExamDetailView
         medicalExam={medicalExam}
         userRole="PATIENT"
         patientProfileBaseHref="/patient/profile"
         examBaseHref="/patient/medical-records"
         appointmentBaseHref="/patient/appointments"
-      />
-
-      {/* Lab Test Results Section - Patient can view their lab results */}
-      <LabResultsSection
-        medicalExamId={id}
-        patientName={medicalExam.patient?.fullName}
-        basePath="/patient/lab-results"
       />
     </div>
   );

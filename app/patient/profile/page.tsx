@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMyProfile } from "@/hooks/queries/usePatient";
+import { uploadMyProfileImage, deleteMyProfileImage } from "@/services/patient.service";
 import api from "@/config/axios";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,14 +38,70 @@ import {
   Stethoscope,
   FileText,
   Users,
+  Camera,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 
 export default function PatientProfilePage() {
   const [activeTab, setActiveTab] = useState("info");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
 
   const { data: patient, isLoading, error } = useMyProfile();
+
+  // Upload profile image mutation
+  const uploadImageMutation = useMutation({
+    mutationFn: uploadMyProfileImage,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      toast.success("Đã cập nhật ảnh đại diện");
+    },
+    onError: (error: Error) => {
+      toast.error(`Lỗi upload ảnh: ${error.message}`);
+    },
+  });
+
+  // Delete profile image mutation
+  const deleteImageMutation = useMutation({
+    mutationFn: deleteMyProfileImage,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      toast.success("Đã xóa ảnh đại diện");
+    },
+    onError: (error: Error) => {
+      toast.error(`Lỗi xóa ảnh: ${error.message}`);
+    },
+  });
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Kích thước file tối đa 2MB");
+        return;
+      }
+      // Validate file type
+      if (!file.type.match(/^image\/(jpeg|png|webp)$/)) {
+        toast.error("Chỉ chấp nhận file JPEG, PNG hoặc WebP");
+        return;
+      }
+      uploadImageMutation.mutate(file);
+    }
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDeleteImage = () => {
+    if (confirm("Bạn có chắc muốn xóa ảnh đại diện?")) {
+      deleteImageMutation.mutate();
+    }
+  };
   
   // Get patientId from profile for data fetching
   const patientId = patient?.id;
@@ -207,17 +265,59 @@ export default function PatientProfilePage() {
         ]}
         statusBadge={patient.bloodType && <BloodTypeBadge bloodType={patient.bloodType as any} />}
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            asChild
-            className="bg-white/10 border-white/30 text-white hover:bg-white/20"
-          >
-            <Link href="/patient/profile/edit">
-              <Edit className="h-4 w-4 mr-2" />
-              Chỉnh sửa
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Hidden file input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+            />
+            {/* Upload/Change image button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadImageMutation.isPending}
+              className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+            >
+              {uploadImageMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Camera className="h-4 w-4 mr-2" />
+              )}
+              {patient.profileImageUrl ? "Đổi ảnh" : "Thêm ảnh"}
+            </Button>
+            {/* Delete image button */}
+            {patient.profileImageUrl && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDeleteImage}
+                disabled={deleteImageMutation.isPending}
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+              >
+                {deleteImageMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+              </Button>
+            )}
+            {/* Edit profile button */}
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+            >
+              <Link href="/patient/profile/edit">
+                <Edit className="h-4 w-4 mr-2" />
+                Chỉnh sửa
+              </Link>
+            </Button>
+          </div>
         }
       />
 

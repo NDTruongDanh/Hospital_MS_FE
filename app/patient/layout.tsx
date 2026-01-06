@@ -39,6 +39,7 @@ import {
   Bell,
   Search,
   FlaskConical,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -62,9 +63,9 @@ const navigationGroups = [
         icon: FileText,
       },
       {
-        title: "Lab Results",
-        href: "/patient/lab-results",
-        icon: FlaskConical,
+        title: "Lab Orders",
+        href: "/patient/lab-orders",
+        icon: ClipboardList,
       },
     ],
   },
