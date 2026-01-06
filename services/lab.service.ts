@@ -12,7 +12,14 @@ const BASE_URL_LAB_RESULTS = "/exams/lab-results";
 
 export type LabTestCategory = "LAB" | "IMAGING" | "PATHOLOGY";
 export type ResultStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "CANCELLED";
-export type ImageType = "XRAY" | "CT_SCAN" | "MRI" | "ULTRASOUND" | "ENDOSCOPY" | "PATHOLOGY_SLIDE" | "PHOTO";
+export type ImageType =
+  | "XRAY"
+  | "CT_SCAN"
+  | "MRI"
+  | "ULTRASOUND"
+  | "ENDOSCOPY"
+  | "PATHOLOGY_SLIDE"
+  | "PHOTO";
 
 export interface LabTest {
   id: string;
@@ -106,7 +113,9 @@ export const labTestService = {
    * Get all lab tests (paginated)
    */
   async getAll(params?: { page?: number; size?: number; filter?: string }) {
-    const response = await axiosInstance.get(`${BASE_URL_LAB_TESTS}/all`, { params });
+    const response = await axiosInstance.get(`${BASE_URL_LAB_TESTS}/all`, {
+      params,
+    });
     return response.data.data;
   },
 
@@ -122,7 +131,9 @@ export const labTestService = {
    * Get lab tests by category
    */
   async getByCategory(category: LabTestCategory): Promise<LabTest[]> {
-    const response = await axiosInstance.get(`${BASE_URL_LAB_TESTS}/category/${category}`);
+    const response = await axiosInstance.get(
+      `${BASE_URL_LAB_TESTS}/category/${category}`
+    );
     return response.data.data;
   },
 
@@ -145,8 +156,14 @@ export const labTestService = {
   /**
    * Update lab test (ADMIN only)
    */
-  async update(id: string, data: Partial<LabTestCreateRequest>): Promise<LabTest> {
-    const response = await axiosInstance.put(`${BASE_URL_LAB_TESTS}/${id}`, data);
+  async update(
+    id: string,
+    data: Partial<LabTestCreateRequest>
+  ): Promise<LabTest> {
+    const response = await axiosInstance.put(
+      `${BASE_URL_LAB_TESTS}/${id}`,
+      data
+    );
     return response.data.data;
   },
 
@@ -165,7 +182,9 @@ export const labResultService = {
    * Get all lab results (paginated)
    */
   async getAll(params?: { page?: number; size?: number }) {
-    const response = await axiosInstance.get(`${BASE_URL_LAB_RESULTS}/all`, { params });
+    const response = await axiosInstance.get(`${BASE_URL_LAB_RESULTS}/all`, {
+      params,
+    });
     return response.data.data;
   },
 
@@ -181,7 +200,9 @@ export const labResultService = {
    * Get results for a medical exam
    */
   async getByExam(examId: string): Promise<LabTestResult[]> {
-    const response = await axiosInstance.get(`${BASE_URL_LAB_RESULTS}/exam/${examId}`);
+    const response = await axiosInstance.get(
+      `${BASE_URL_LAB_RESULTS}/exam/${examId}`
+    );
     return response.data.data;
   },
 
@@ -189,7 +210,9 @@ export const labResultService = {
    * Get results for a patient
    */
   async getByPatient(patientId: string): Promise<LabTestResult[]> {
-    const response = await axiosInstance.get(`${BASE_URL_LAB_RESULTS}/patient/${patientId}`);
+    const response = await axiosInstance.get(
+      `${BASE_URL_LAB_RESULTS}/patient/${patientId}`
+    );
     return response.data.data;
   },
 
@@ -204,8 +227,14 @@ export const labResultService = {
   /**
    * Update lab result
    */
-  async update(id: string, data: LabTestResultUpdateRequest): Promise<LabTestResult> {
-    const response = await axiosInstance.put(`${BASE_URL_LAB_RESULTS}/${id}`, data);
+  async update(
+    id: string,
+    data: LabTestResultUpdateRequest
+  ): Promise<LabTestResult> {
+    const response = await axiosInstance.put(
+      `${BASE_URL_LAB_RESULTS}/${id}`,
+      data
+    );
     return response.data.data;
   },
 
@@ -241,7 +270,9 @@ export const labResultService = {
    * Get images for a lab result
    */
   async getImages(resultId: string): Promise<DiagnosticImage[]> {
-    const response = await axiosInstance.get(`${BASE_URL_LAB_RESULTS}/${resultId}/images`);
+    const response = await axiosInstance.get(
+      `${BASE_URL_LAB_RESULTS}/${resultId}/images`
+    );
     return response.data.data;
   },
 

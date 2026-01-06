@@ -7,10 +7,8 @@ export const patientFormSchema = z.object({
     .min(1, "Full name is required")
     .max(100, "Full name cannot exceed 100 characters"), // Backend: @NotBlank, @Size(max = 100)
   email: z
-    .string()
-    .email("Invalid email format")
-    .optional()
-    .or(z.literal("")), // Backend: @Email (optional)
+    .union([z.string().email("Invalid email format"), z.literal("")])
+    .optional(), // Backend: @Email (optional) - restored logic to match backend
   phoneNumber: z
     .string()
     .min(1, "Phone number is required")
@@ -25,20 +23,23 @@ export const patientFormSchema = z.object({
       (val) => {
         if (!val) return false;
         const d = new Date(val);
-        return d < new Date();
+        return !isNaN(d.getTime()) && d < new Date();
       },
-      { message: "Date of birth must be in the past" } // Backend: @Past
+      { message: "Date of birth must be valid and in the past" } // Backend: @Past
     ),
-  gender: z.enum(["MALE", "FEMALE", "OTHER"]), // Backend: @NotNull - REQUIRED
+  gender: z.enum(["MALE", "FEMALE", "OTHER"], {
+    required_error: "Gender is required",
+  }), // Backend: @NotNull - REQUIRED
   address: z
     .string()
     .max(255, "Address cannot exceed 255 characters")
     .optional(),
   identificationNumber: z
-    .string()
-    .regex(/^\d{12}$/, "ID number must be exactly 12 digits")
-    .optional()
-    .or(z.literal("")), // Backend: @Pattern(regexp = "^\\d{12}$")
+    .union([
+      z.string().regex(/^\d{12}$/, "ID number must be exactly 12 digits"),
+      z.literal(""),
+    ])
+    .optional(), // Backend: @Pattern(regexp = "^\\d{12}$")
   healthInsuranceNumber: z
     .string()
     .max(20, "Health insurance number cannot exceed 20 characters")
@@ -52,13 +53,16 @@ export const patientFormSchema = z.object({
     .max(100, "Contact name cannot exceed 100 characters")
     .optional(), // Backend: @Size(max = 100)
   relativePhoneNumber: z
-    .string()
-    .regex(
-      /^(0|\+84)\d{9}$/,
-      "Contact phone must start with 0 or +84 followed by 9 digits"
-    )
-    .optional()
-    .or(z.literal("")), // Backend: @Pattern(regexp = "^(0|\\+84)(\\d{9})$")
+    .union([
+      z
+        .string()
+        .regex(
+          /^(0|\+84)\d{9}$/,
+          "Contact phone must start with 0 or +84 followed by 9 digits"
+        ),
+      z.literal(""),
+    ])
+    .optional(), // Backend: @Pattern(regexp = "^(0|\\+84)(\\d{9})$")
   relativeRelationship: z
     .enum(["SPOUSE", "PARENT", "CHILD", "SIBLING", "FRIEND", "OTHER"])
     .optional(),

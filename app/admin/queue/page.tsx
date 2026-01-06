@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { format, formatDistanceToNow } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import {
   Users,
   Clock,
@@ -17,7 +17,13 @@ import {
   Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -29,7 +35,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAllQueues, useDoctorQueue, useCallNextPatient, useCompleteAppointment } from "@/hooks/queries/useQueue";
+import {
+  useAllQueues,
+  useDoctorQueue,
+  useCallNextPatient,
+  useCompleteAppointment,
+} from "@/hooks/queries/useQueue";
 import { useEmployees } from "@/hooks/queries/useHr";
 import {
   getPriorityLabel,
@@ -53,7 +64,10 @@ export default function QueuePage() {
 
   // Fetch doctors list for selection (filter by role=DOCTOR)
   const { data: doctorsData } = useEmployees({ role: "DOCTOR" });
-  const doctors = (doctorsData?.content || []) as Array<{ id: string; fullName: string }>;
+  const doctors = (doctorsData?.content || []) as Array<{
+    id: string;
+    fullName: string;
+  }>;
 
   // Fetch all queues for receptionist view
   const {
@@ -80,7 +94,8 @@ export default function QueuePage() {
   }, [selectedDoctorId, allQueues, doctorQueue]);
 
   const isLoading = selectedDoctorId === "all" ? isLoadingAll : isLoadingDoctor;
-  const isFetching = selectedDoctorId === "all" ? isFetchingAll : isFetchingDoctor;
+  const isFetching =
+    selectedDoctorId === "all" ? isFetchingAll : isFetchingDoctor;
   const refetch = selectedDoctorId === "all" ? refetchAll : refetchDoctor;
 
   // Mutations
@@ -93,19 +108,22 @@ export default function QueuePage() {
   const waitingPatients = queue?.filter((q) => q.status === "SCHEDULED") || [];
 
   // Check if user can call patients (only Doctor/Nurse, not Receptionist)
-  const canCallPatient = user?.role === "DOCTOR" || user?.role === "NURSE" || user?.role === "ADMIN";
+  const canCallPatient =
+    user?.role === "DOCTOR" || user?.role === "NURSE" || user?.role === "ADMIN";
 
   const handleCallNext = async () => {
     if (!selectedDoctorId) return;
     try {
       const called = await callNextMutation.mutateAsync(selectedDoctorId);
       if (called) {
-        toast.success(`Đã gọi bệnh nhân: ${called.patient?.fullName || "Bệnh nhân"}`);
+        toast.success(
+          `Called patient: ${called.patient?.fullName || "Patient"}`
+        );
       } else {
-        toast.info("Không còn bệnh nhân trong hàng đợi");
+        toast.info("No patients in queue");
       }
     } catch {
-      toast.error("Không thể gọi bệnh nhân tiếp theo");
+      toast.error("Cannot call next patient");
     }
   };
 
@@ -117,14 +135,17 @@ export default function QueuePage() {
   const handleComplete = async (appointmentId: string) => {
     try {
       await completeMutation.mutateAsync(appointmentId);
-      toast.success("Đã hoàn thành khám bệnh");
+      toast.success("Examination completed");
     } catch {
-      toast.error("Không thể hoàn thành");
+      toast.error("Cannot complete");
     }
   };
 
   const formatWaitTime = (dateString: string) => {
-    return formatDistanceToNow(new Date(dateString), { locale: vi, addSuffix: false });
+    return formatDistanceToNow(new Date(dateString), {
+      locale: enUS,
+      addSuffix: false,
+    });
   };
 
   return (
@@ -134,21 +155,24 @@ export default function QueuePage() {
         <div className="page-header">
           <h1>
             <Users className="h-6 w-6 text-sky-500" />
-            Hàng đợi Bệnh nhân
+            Patient Queue
           </h1>
-          <p>Quản lý và gọi bệnh nhân theo thứ tự ưu tiên</p>
+          <p>Manage and call patients by priority order</p>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Doctor selector */}
           {user?.role !== "DOCTOR" && (
-            <Select value={selectedDoctorId} onValueChange={setSelectedDoctorId}>
+            <Select
+              value={selectedDoctorId}
+              onValueChange={setSelectedDoctorId}
+            >
               <SelectTrigger className="w-[250px]">
-                <SelectValue placeholder="Chọn bác sĩ..." />
+                <SelectValue placeholder="Select doctor..." />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">
-                  <span className="font-medium">Tất cả bác sĩ</span>
+                  <span className="font-medium">All doctors</span>
                 </SelectItem>
                 {doctors.map((doc) => (
                   <SelectItem key={doc.id} value={doc.id}>
@@ -164,8 +188,10 @@ export default function QueuePage() {
             onClick={() => refetch()}
             disabled={isFetching || !selectedDoctorId}
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
-            Làm mới
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`}
+            />
+            Refresh
           </Button>
         </div>
       </div>
@@ -173,9 +199,11 @@ export default function QueuePage() {
       {!selectedDoctorId ? (
         <Card className="p-12 text-center">
           <Stethoscope className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-          <h2 className="text-xl font-semibold mb-2">Chọn bác sĩ để xem hàng đợi</h2>
+          <h2 className="text-xl font-semibold mb-2">
+            Select a doctor to view queue
+          </h2>
           <p className="text-muted-foreground">
-            Vui lòng chọn bác sĩ từ danh sách phía trên để xem hàng đợi bệnh nhân
+            Please select a doctor from the list above to view the patient queue
           </p>
         </Card>
       ) : isLoading ? (
@@ -192,7 +220,7 @@ export default function QueuePage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <UserCheck className="h-5 w-5 text-sky-600" />
-                  Đang khám
+                  In Examination
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -203,16 +231,23 @@ export default function QueuePage() {
                         {currentPatient.queueNumber}
                       </div>
                       <div>
-                        <p className="text-xl font-semibold">{currentPatient.patient?.fullName || currentPatient.patientName || `Bệnh nhân #${currentPatient.queueNumber}`}</p>
+                        <p className="text-xl font-semibold">
+                          {currentPatient.patient?.fullName ||
+                            currentPatient.patientName ||
+                            `Patient #${currentPatient.queueNumber}`}
+                        </p>
                         <p className="text-sm text-muted-foreground">
-                          Đợi: {formatWaitTime(currentPatient.appointmentTime)}
+                          Waited:{" "}
+                          {formatWaitTime(currentPatient.appointmentTime)}
                         </p>
                       </div>
                     </div>
 
                     {currentPatient.reason && (
                       <div className="bg-white p-3 rounded-lg border">
-                        <p className="text-sm text-muted-foreground">Lý do khám:</p>
+                        <p className="text-sm text-muted-foreground">
+                          Visit reason:
+                        </p>
                         <p className="text-sm">{currentPatient.reason}</p>
                       </div>
                     )}
@@ -223,7 +258,7 @@ export default function QueuePage() {
                         onClick={() => handleStartExam(currentPatient)}
                       >
                         <Play className="h-4 w-4 mr-2" />
-                        Bắt đầu khám
+                        Start Exam
                       </Button>
                       <Button
                         variant="outline"
@@ -231,20 +266,22 @@ export default function QueuePage() {
                         disabled={completeMutation.isPending}
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />
-                        Hoàn thành
+                        Complete
                       </Button>
                     </div>
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <UserCheck className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>Chưa có bệnh nhân đang khám</p>
-                    {waitingPatients.length > 0 && canCallPatient && selectedDoctorId !== "all" && (
-                      <Button className="mt-4" onClick={handleCallNext}>
-                        <Phone className="h-4 w-4 mr-2" />
-                        Gọi bệnh nhân tiếp
-                      </Button>
-                    )}
+                    <p>No patient currently in examination</p>
+                    {waitingPatients.length > 0 &&
+                      canCallPatient &&
+                      selectedDoctorId !== "all" && (
+                        <Button className="mt-4" onClick={handleCallNext}>
+                          <Phone className="h-4 w-4 mr-2" />
+                          Call next patient
+                        </Button>
+                      )}
                   </div>
                 )}
               </CardContent>
@@ -258,7 +295,7 @@ export default function QueuePage() {
                     <p className="text-3xl font-bold text-sky-600">
                       {waitingPatients.length}
                     </p>
-                    <p className="text-sm text-muted-foreground">Đang chờ</p>
+                    <p className="text-sm text-muted-foreground">Waiting</p>
                   </div>
                 </CardContent>
               </Card>
@@ -266,9 +303,10 @@ export default function QueuePage() {
                 <CardContent className="pt-4">
                   <div className="text-center">
                     <p className="text-3xl font-bold text-emerald-600">
-                      {queue?.filter((q) => q.status === "COMPLETED").length || 0}
+                      {queue?.filter((q) => q.status === "COMPLETED").length ||
+                        0}
                     </p>
-                    <p className="text-sm text-muted-foreground">Đã khám</p>
+                    <p className="text-sm text-muted-foreground">Completed</p>
                   </div>
                 </CardContent>
               </Card>
@@ -280,23 +318,29 @@ export default function QueuePage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle>Danh sách chờ</CardTitle>
+                  <CardTitle>Waiting List</CardTitle>
                   <CardDescription>
-                    Sắp xếp theo mức ưu tiên và số thứ tự
+                    Sorted by priority and queue number
                   </CardDescription>
                 </div>
-                {waitingPatients.length > 0 && !currentPatient && canCallPatient && selectedDoctorId !== "all" && (
-                  <Button onClick={handleCallNext} disabled={callNextMutation.isPending}>
-                    <Phone className="h-4 w-4 mr-2" />
-                    Gọi bệnh nhân tiếp
-                  </Button>
-                )}
+                {waitingPatients.length > 0 &&
+                  !currentPatient &&
+                  canCallPatient &&
+                  selectedDoctorId !== "all" && (
+                    <Button
+                      onClick={handleCallNext}
+                      disabled={callNextMutation.isPending}
+                    >
+                      <Phone className="h-4 w-4 mr-2" />
+                      Call next patient
+                    </Button>
+                  )}
               </CardHeader>
               <CardContent>
                 {waitingPatients.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>Không có bệnh nhân trong hàng đợi</p>
+                    <p>No patients in queue</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -325,50 +369,65 @@ export default function QueuePage() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-semibold text-base">
-                                {patient.patient?.fullName || patient.patientName || `Bệnh nhân #${patient.queueNumber}`}
+                                {patient.patient?.fullName ||
+                                  patient.patientName ||
+                                  `Patient #${patient.queueNumber}`}
                               </span>
                               {patient.priorityReason && (
-                                <Badge className={getPriorityColor(patient.priority)}>
-                                  {getPriorityReasonLabel(patient.priorityReason)}
+                                <Badge
+                                  className={getPriorityColor(patient.priority)}
+                                >
+                                  {getPriorityReasonLabel(
+                                    patient.priorityReason
+                                  )}
                                 </Badge>
                               )}
                               {patient.type === "EMERGENCY" && (
                                 <Badge variant="destructive">
                                   <AlertTriangle className="h-3 w-3 mr-1" />
-                                  Cấp cứu
+                                  Emergency
                                 </Badge>
                               )}
                             </div>
-                            
+
                             {/* Doctor info - always show */}
                             <div className="flex items-center gap-1 text-sm text-violet-600 mt-1">
                               <Stethoscope className="h-3 w-3" />
-                              <span>BS. {patient.doctor?.fullName || patient.doctorName || "Chưa xác định"}</span>
+                              <span>
+                                Dr.{" "}
+                                {patient.doctor?.fullName ||
+                                  patient.doctorName ||
+                                  "Not assigned"}
+                              </span>
                             </div>
-                            
+
                             <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
                               <span className="flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
-                                Đợi: {formatWaitTime(patient.appointmentTime)}
+                                Wait: {formatWaitTime(patient.appointmentTime)}
                               </span>
                             </div>
-                            
+
                             {/* Reason */}
                             {patient.reason && (
                               <div className="mt-2 text-sm bg-slate-50 p-2 rounded text-slate-600">
-                                <span className="font-medium">Lý do:</span> {patient.reason}
+                                <span className="font-medium">Reason:</span>{" "}
+                                {patient.reason}
                               </div>
                             )}
                           </div>
                         </div>
 
                         {/* Actions - only show for Doctor/Nurse, not Receptionist */}
-                        {index === 0 && !currentPatient && canCallPatient && selectedDoctorId !== "all" && (
-                          <Button size="sm" onClick={handleCallNext}>
-                            Gọi
-                            <ArrowRight className="h-4 w-4 ml-2" />
-                          </Button>
-                        )}
+                        {index === 0 &&
+                          !currentPatient &&
+                          canCallPatient &&
+                          selectedDoctorId !== "all" && (
+                            <Button size="sm" onClick={handleCallNext}>
+                              Call
+                              <ArrowRight className="h-4 w-4 ml-2" />
+                            </Button>
+                          )}
                       </div>
                     ))}
                   </div>

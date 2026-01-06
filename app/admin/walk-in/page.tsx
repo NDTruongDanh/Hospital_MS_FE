@@ -16,7 +16,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -32,11 +38,11 @@ import { useRegisterWalkIn, PriorityReason } from "@/hooks/queries/useQueue";
 import { toast } from "sonner";
 
 const priorityReasons = [
-  { value: "", label: "Bình thường (không ưu tiên)" },
-  { value: "ELDERLY", label: "Người cao tuổi (trên 60)" },
-  { value: "PREGNANT", label: "Phụ nữ mang thai" },
-  { value: "DISABILITY", label: "Người khuyết tật" },
-  { value: "CHILD", label: "Trẻ em dưới 6 tuổi" },
+  { value: "", label: "Normal (no priority)" },
+  { value: "ELDERLY", label: "Elderly (over 60)" },
+  { value: "PREGNANT", label: "Pregnant woman" },
+  { value: "DISABILITY", label: "Person with disability" },
+  { value: "CHILD", label: "Child under 6 years" },
 ];
 
 export default function WalkInRegistrationPage() {
@@ -73,11 +79,11 @@ export default function WalkInRegistrationPage() {
 
   const handleSubmit = async () => {
     if (!selectedPatientId) {
-      toast.error("Vui lòng chọn bệnh nhân");
+      toast.error("Please select a patient");
       return;
     }
     if (!selectedDoctorId) {
-      toast.error("Vui lòng chọn bác sĩ");
+      toast.error("Please select a doctor");
       return;
     }
 
@@ -90,9 +96,9 @@ export default function WalkInRegistrationPage() {
       });
 
       toast.success(
-        `Đăng ký thành công! Số thứ tự: ${result.queueNumber}`,
+        `Registration successful! Queue number: ${result.queueNumber}`,
         {
-          description: `Bệnh nhân: ${selectedPatient?.fullName || result.patientName || "N/A"}`,
+          description: `Patient: ${selectedPatient?.fullName || result.patientName || "N/A"}`,
           duration: 5000,
         }
       );
@@ -103,10 +109,9 @@ export default function WalkInRegistrationPage() {
       setReason("");
       setPriorityReason("");
       setPatientSearch("");
-
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message || "Không thể đăng ký. Vui lòng thử lại."
+        error?.response?.data?.message || "Cannot register. Please try again."
       );
     }
   };
@@ -117,9 +122,9 @@ export default function WalkInRegistrationPage() {
       <div className="page-header">
         <h1>
           <UserPlus className="h-6 w-6 text-sky-500" />
-          Tiếp nhận Bệnh nhân (Walk-in)
+          Patient Registration (Walk-in)
         </h1>
-        <p>Đăng ký bệnh nhân vào hàng đợi khám bệnh</p>
+        <p>Register patients to the examination queue</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -130,15 +135,17 @@ export default function WalkInRegistrationPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5 text-sky-500" />
-                1. Chọn Bệnh nhân
+                1. Select Patient
               </CardTitle>
-              <CardDescription>Tìm kiếm và chọn bệnh nhân đã có trong hệ thống</CardDescription>
+              <CardDescription>
+                Search and select an existing patient in the system
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Tìm theo tên, số điện thoại, CCCD..."
+                  placeholder="Search by name, phone, ID..."
                   value={patientSearch}
                   onChange={(e) => setPatientSearch(e.target.value)}
                   className="pl-9"
@@ -148,7 +155,7 @@ export default function WalkInRegistrationPage() {
               {isLoadingPatients ? (
                 <div className="flex items-center gap-2 text-muted-foreground p-4">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Đang tìm kiếm...
+                  Searching...
                 </div>
               ) : patients.length > 0 ? (
                 <div className="space-y-2 max-h-[200px] overflow-y-auto">
@@ -170,7 +177,6 @@ export default function WalkInRegistrationPage() {
                         <p className="text-sm text-muted-foreground">
                           {patient.phoneNumber || patient.email}
                         </p>
-
                       </div>
                       {selectedPatientId === patient.id && (
                         <CheckCircle className="h-5 w-5 text-sky-500" />
@@ -180,14 +186,18 @@ export default function WalkInRegistrationPage() {
                 </div>
               ) : patientSearch ? (
                 <div className="text-center py-4 text-muted-foreground">
-                  <p>Không tìm thấy bệnh nhân</p>
-                  <Button variant="link" className="text-sky-500" onClick={() => router.push("/admin/patients/new")}>
-                    + Thêm bệnh nhân mới
+                  <p>Patient not found</p>
+                  <Button
+                    variant="link"
+                    className="text-sky-500"
+                    onClick={() => router.push("/admin/patients/new")}
+                  >
+                    + Add new patient
                   </Button>
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-4">
-                  Nhập từ khóa để tìm kiếm bệnh nhân
+                  Enter keywords to search for patients
                 </p>
               )}
             </CardContent>
@@ -198,14 +208,17 @@ export default function WalkInRegistrationPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Stethoscope className="h-5 w-5 text-violet-500" />
-                2. Chọn Bác sĩ
+                2. Select Doctor
               </CardTitle>
-              <CardDescription>Chọn bác sĩ tiếp nhận khám</CardDescription>
+              <CardDescription>Select the doctor to examine</CardDescription>
             </CardHeader>
             <CardContent>
-              <Select value={selectedDoctorId} onValueChange={setSelectedDoctorId}>
+              <Select
+                value={selectedDoctorId}
+                onValueChange={setSelectedDoctorId}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Chọn bác sĩ..." />
+                  <SelectValue placeholder="Select doctor..." />
                 </SelectTrigger>
                 <SelectContent>
                   {doctors.map((doctor) => (
@@ -230,14 +243,14 @@ export default function WalkInRegistrationPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5 text-amber-500" />
-                3. Thông tin bổ sung
+                3. Additional Information
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Lý do khám</Label>
+                <Label>Visit Reason</Label>
                 <Textarea
-                  placeholder="Nhập triệu chứng hoặc lý do khám bệnh..."
+                  placeholder="Enter symptoms or reason for visit..."
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   rows={2}
@@ -245,12 +258,24 @@ export default function WalkInRegistrationPage() {
               </div>
 
               <div className="space-y-3">
-                <Label>Mức ưu tiên</Label>
-                <RadioGroup value={priorityReason} onValueChange={setPriorityReason}>
+                <Label>Priority Level</Label>
+                <RadioGroup
+                  value={priorityReason}
+                  onValueChange={setPriorityReason}
+                >
                   {priorityReasons.map((option) => (
-                    <div key={option.value} className="flex items-center space-x-2">
-                      <RadioGroupItem value={option.value} id={option.value || "normal"} />
-                      <Label htmlFor={option.value || "normal"} className="font-normal cursor-pointer">
+                    <div
+                      key={option.value}
+                      className="flex items-center space-x-2"
+                    >
+                      <RadioGroupItem
+                        value={option.value}
+                        id={option.value || "normal"}
+                      />
+                      <Label
+                        htmlFor={option.value || "normal"}
+                        className="font-normal cursor-pointer"
+                      >
                         {option.label}
                       </Label>
                     </div>
@@ -265,15 +290,15 @@ export default function WalkInRegistrationPage() {
         <div>
           <Card className="sticky top-6">
             <CardHeader className="bg-gradient-to-r from-sky-500 to-cyan-500 text-white rounded-t-lg">
-              <CardTitle>Xác nhận đăng ký</CardTitle>
+              <CardTitle>Confirm Registration</CardTitle>
               <CardDescription className="text-white/80">
-                Kiểm tra thông tin trước khi đăng ký
+                Review information before registering
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
               {/* Patient Summary */}
               <div className="space-y-2">
-                <Label className="text-muted-foreground">Bệnh nhân</Label>
+                <Label className="text-muted-foreground">Patient</Label>
                 {selectedPatient ? (
                   <div className="flex items-center gap-3 p-3 bg-sky-50 rounded-lg">
                     <div className="h-12 w-12 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold text-lg">
@@ -287,13 +312,17 @@ export default function WalkInRegistrationPage() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-muted-foreground italic">Chưa chọn bệnh nhân</p>
+                  <p className="text-muted-foreground italic">
+                    No patient selected
+                  </p>
                 )}
               </div>
 
               {/* Doctor Summary */}
               <div className="space-y-2">
-                <Label className="text-muted-foreground">Bác sĩ khám</Label>
+                <Label className="text-muted-foreground">
+                  Examining Doctor
+                </Label>
                 {selectedDoctor ? (
                   <div className="flex items-center gap-3 p-3 bg-violet-50 rounded-lg">
                     <div className="h-12 w-12 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 font-bold text-lg">
@@ -309,17 +338,22 @@ export default function WalkInRegistrationPage() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-muted-foreground italic">Chưa chọn bác sĩ</p>
+                  <p className="text-muted-foreground italic">
+                    No doctor selected
+                  </p>
                 )}
               </div>
 
               {/* Priority */}
               {priorityReason && (
                 <div className="space-y-2">
-                  <Label className="text-muted-foreground">Ưu tiên</Label>
+                  <Label className="text-muted-foreground">Priority</Label>
                   <Badge className="bg-amber-100 text-amber-800">
                     <AlertTriangle className="h-3 w-3 mr-1" />
-                    {priorityReasons.find((p) => p.value === priorityReason)?.label}
+                    {
+                      priorityReasons.find((p) => p.value === priorityReason)
+                        ?.label
+                    }
                   </Badge>
                 </div>
               )}
@@ -327,7 +361,7 @@ export default function WalkInRegistrationPage() {
               {/* Reason */}
               {reason && (
                 <div className="space-y-2">
-                  <Label className="text-muted-foreground">Lý do khám</Label>
+                  <Label className="text-muted-foreground">Visit Reason</Label>
                   <p className="text-sm bg-muted p-2 rounded">{reason}</p>
                 </div>
               )}
@@ -336,17 +370,21 @@ export default function WalkInRegistrationPage() {
                 className="w-full mt-4"
                 size="lg"
                 onClick={handleSubmit}
-                disabled={!selectedPatientId || !selectedDoctorId || registerMutation.isPending}
+                disabled={
+                  !selectedPatientId ||
+                  !selectedDoctorId ||
+                  registerMutation.isPending
+                }
               >
                 {registerMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang xử lý...
+                    Processing...
                   </>
                 ) : (
                   <>
                     <UserPlus className="mr-2 h-5 w-5" />
-                    Đăng ký vào hàng đợi
+                    Register to Queue
                   </>
                 )}
               </Button>

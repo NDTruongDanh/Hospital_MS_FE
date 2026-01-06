@@ -84,6 +84,27 @@ export const useUpdatePatient = (id: string) => {
       toast.success("Patient updated successfully");
     },
     onError: (error: any) => {
+      console.error("Update patient failed:", error);
+      console.error("Server response:", error?.response?.data);
+
+      // Handle "Validation Error" with "errors" map
+      if (error?.response?.data?.errors) {
+        const fieldErrors = error.response.data.errors;
+        const messages = Object.entries(fieldErrors)
+          .map(([field, msg]) => `${field}: ${msg}`)
+          .join(", ");
+        if (messages) {
+          toast.error(`Validation Failed: ${messages}`);
+          // Don't return, allow specific code checks to run if needed, though usually validation stops here
+        }
+      }
+
+      if (error?.response?.data?.error) {
+        toast.error(
+          `Error: ${error.response.data.error.message || "Unknown server error"}`
+        );
+      }
+
       const code = error?.response?.data?.error?.code;
       if (code === "PATIENT_NOT_FOUND") {
         toast.error("Patient not found");

@@ -43,53 +43,59 @@ let patientData: Patient[] = loadPatientData();
 
 // GET /api/patients - List patients with pagination and filters
 export const getPatients = async (
-  params: PatientListParams,
+  params: PatientListParams
 ): Promise<PatientListResponse> => {
   if (!USE_MOCK) {
     // Build RSQL filter string from params
     const filterParts: string[] = [];
-    
+
     // Search filter - search across fullName, phoneNumber, email
     if (params.search) {
       const searchTerm = params.search.trim();
       if (searchTerm) {
         // RSQL pattern matching with wildcard
-        filterParts.push(`fullName==*${searchTerm}*,phoneNumber==*${searchTerm}*,email==*${searchTerm}*`);
+        filterParts.push(
+          `fullName==*${searchTerm}*,phoneNumber==*${searchTerm}*,email==*${searchTerm}*`
+        );
       }
     }
-    
+
     // Gender filter
     if (params.gender) {
       filterParts.push(`gender==${params.gender}`);
     }
-    
+
     // Blood type filter
     if (params.bloodType) {
       filterParts.push(`bloodType==${params.bloodType}`);
     }
-    
+
     // Combine filters with AND (;) - use parentheses for OR (,) groups
-    const filterString = filterParts.length > 0 
-      ? filterParts.map(f => f.includes(',') ? `(${f})` : f).join(';')
-      : undefined;
-    
+    const filterString =
+      filterParts.length > 0
+        ? filterParts.map((f) => (f.includes(",") ? `(${f})` : f)).join(";")
+        : undefined;
+
     // Build API params with 0-based pagination
     const apiParams: Record<string, unknown> = {
       page: params.page ?? 0,
       size: params.size ?? 10,
     };
-    
+
     if (filterString) {
       apiParams.filter = filterString;
     }
-    
+
     if (params.sort) {
       apiParams.sort = params.sort;
     }
-    
-    const response = await axiosInstance.get<{ data: PatientListResponse }>("/patients/all", {
-      params: apiParams,
-    });
+
+    const response = await axiosInstance.get<{ data: PatientListResponse }>(
+      "/patients/all",
+      {
+        params: apiParams,
+      }
+    );
     return response.data.data; // Extract from ApiResponse wrapper
   }
 
@@ -105,7 +111,7 @@ export const getPatients = async (
         p.fullName.toLowerCase().includes(term) ||
         p.phoneNumber.includes(term) ||
         p.email?.toLowerCase().includes(term) ||
-        p.identificationNumber?.includes(term),
+        p.identificationNumber?.includes(term)
     );
   }
 
@@ -154,7 +160,9 @@ export const getPatients = async (
 export const getPatient = async (id: string): Promise<Patient> => {
   if (!USE_MOCK) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response = await axiosInstance.get<{ data: Patient }>(`/patients/${id}`);
+    const response = await axiosInstance.get<{ data: Patient }>(
+      `/patients/${id}`
+    );
     return response.data.data; // Extract from ApiResponse wrapper
   }
 
@@ -186,11 +194,14 @@ export const getMyProfile = async (): Promise<Patient> => {
 
 // POST /api/patients - Create new patient
 export const createPatient = async (
-  data: CreatePatientRequest,
+  data: CreatePatientRequest
 ): Promise<Patient> => {
   if (!USE_MOCK) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response = await axiosInstance.post<{ data: Patient }>("/patients", data);
+    const response = await axiosInstance.post<{ data: Patient }>(
+      "/patients",
+      data
+    );
     return response.data.data; // Extract from ApiResponse wrapper
   }
 
@@ -251,17 +262,29 @@ export const createPatient = async (
 // PUT /api/patients/:id - Update patient
 export const updatePatient = async (
   id: string,
-  data: UpdatePatientRequest,
+  data: UpdatePatientRequest
 ): Promise<Patient> => {
   if (!USE_MOCK) {
-    // Backend uses PATCH for partial updates typically, or PUT for full. 
-    // GenericController update logic usually maps to PUT or PATCH depending on implementation.
-    // Given updateMyProfile uses PATCH, let's assume PATCH for consistency if partial.
-    // However, GenericController in backend usually provides PUT for full update and PATCH for partial.
-    // UpdatePatientRequest implies partial? It imports definitions. 
-    // GenericController uses @PutMapping("/{id}") for updates
-    const response = await axiosInstance.put<{ data: Patient }>(`/patients/${id}`, data);
-    return response.data.data; // Extract from ApiResponse wrapper
+    try {
+      const response = await axiosInstance.put<{ data: Patient }>(
+        `/patients/${id}`,
+        data
+      );
+      return response.data.data;
+    } catch (error: any) {
+      console.error("[PatientService] Update failed:", error);
+      if (error.response) {
+        console.error(
+          "[PatientService] Response status:",
+          error.response.status
+        );
+        console.error(
+          "[PatientService] Response data:",
+          JSON.stringify(error.response.data, null, 2)
+        );
+      }
+      throw error;
+    }
   }
 
   await delay(300);
@@ -307,10 +330,13 @@ export const updatePatient = async (
 
 // PATCH /api/patients/me - Update own profile (patient self-service)
 export const updateMyProfile = async (
-  data: UpdateMyProfileRequest,
+  data: UpdateMyProfileRequest
 ): Promise<Patient> => {
   if (!USE_MOCK) {
-    const response = await axiosInstance.patch<{ data: Patient }>("/patients/me", data);
+    const response = await axiosInstance.patch<{ data: Patient }>(
+      "/patients/me",
+      data
+    );
     return response.data.data; // Extract from ApiResponse wrapper
   }
 
@@ -328,11 +354,11 @@ export const updateMyProfile = async (
 
 // DELETE /api/patients/:id - Soft delete patient
 export const deletePatient = async (
-  id: string,
+  id: string
 ): Promise<DeletePatientResponse> => {
   if (!USE_MOCK) {
     const response = await axiosInstance.delete<DeletePatientResponse>(
-      `/patients/${id}`,
+      `/patients/${id}`
     );
     return response.data;
   }
@@ -402,7 +428,7 @@ export const apiToFormValues = (patient: Patient): PatientFormValues => {
 };
 
 export const formValuesToRequest = (
-  values: PatientFormValues,
+  values: PatientFormValues
 ): CreatePatientRequest => {
   return {
     fullName: values.fullName.trim(),
@@ -457,7 +483,9 @@ export const uploadProfileImage = async (
 };
 
 // DELETE /api/patients/:id/profile-image - Delete profile image
-export const deleteProfileImage = async (patientId: string): Promise<Patient> => {
+export const deleteProfileImage = async (
+  patientId: string
+): Promise<Patient> => {
   const response = await axiosInstance.delete<{ data: Patient }>(
     `/patients/${patientId}/profile-image`
   );

@@ -5,7 +5,10 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePatient, useDeletePatient } from "@/hooks/queries/usePatient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { uploadProfileImage, deleteProfileImage } from "@/services/patient.service";
+import {
+  uploadProfileImage,
+  deleteProfileImage,
+} from "@/services/patient.service";
 import { appointmentService } from "@/services/appointment.service";
 import { getMedicalExams } from "@/services/medical-exam.service";
 import { getPatientInvoices } from "@/services/billing.service";
@@ -100,10 +103,11 @@ export default function PatientDetailPage() {
   const { data: appointmentsData, isLoading: loadingAppointments } = useQuery({
     queryKey: ["patient-appointments", patientId],
     queryFn: async () => {
-      const response = await (await import("@/config/axios")).default.get(
-        `/appointments/by-patient/${patientId}`,
-        { params: { size: 50 } }
-      );
+      const response = await (
+        await import("@/config/axios")
+      ).default.get(`/appointments/by-patient/${patientId}`, {
+        params: { size: 50 },
+      });
       return response.data.data; // Extract from ApiResponse wrapper
     },
     enabled: !!patientId,
@@ -237,8 +241,8 @@ export default function PatientDetailPage() {
   }
 
   const appointments = appointmentsData?.content || [];
-  const exams = examsData?.data?.content || [];
-  const invoices = (invoicesData?.data as any) || [];
+  const exams = examsData?.content || [];
+  const invoices = invoicesData?.data?.data || [];
   const age = calculateAge(patient.dateOfBirth);
 
   // Extract prescriptions from exams
@@ -257,7 +261,10 @@ export default function PatientDetailPage() {
       .filter(Boolean) || [];
 
   // Calculate balance from invoices
-  const totalBalance = invoices.reduce((sum: number, inv: any) => sum + (inv.balance || 0), 0);
+  const totalBalance = invoices.reduce(
+    (sum: number, inv: any) => sum + (inv.balance || 0),
+    0
+  );
 
   return (
     <div className="space-y-6">
@@ -273,11 +280,19 @@ export default function PatientDetailPage() {
           alt: patient.fullName,
         }}
         metaItems={[
-          { icon: <Phone className="h-4 w-4" />, text: patient.phoneNumber || "No phone" },
-          { icon: <Mail className="h-4 w-4" />, text: patient.email || "No email" },
+          {
+            icon: <Phone className="h-4 w-4" />,
+            text: patient.phoneNumber || "No phone",
+          },
+          {
+            icon: <Mail className="h-4 w-4" />,
+            text: patient.email || "No email",
+          },
         ]}
         statusBadge={
-          patient.bloodType && <BloodTypeBadge bloodType={patient.bloodType as any} />
+          patient.bloodType && (
+            <BloodTypeBadge bloodType={patient.bloodType as any} />
+          )
         }
         actions={
           <div className="flex items-center gap-2">
@@ -316,8 +331,8 @@ export default function PatientDetailPage() {
                     <AlertDialogTitle>Xóa bệnh nhân</AlertDialogTitle>
                     <AlertDialogDescription>
                       Bạn có chắc chắn muốn xóa{" "}
-                      <strong>{patient.fullName}</strong>? Hành động này không thể
-                      hoàn tác.
+                      <strong>{patient.fullName}</strong>? Hành động này không
+                      thể hoàn tác.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -461,7 +476,10 @@ export default function PatientDetailPage() {
                   onDelete={async () => {
                     await deleteImageMutation.mutateAsync();
                   }}
-                  disabled={uploadImageMutation.isPending || deleteImageMutation.isPending}
+                  disabled={
+                    uploadImageMutation.isPending ||
+                    deleteImageMutation.isPending
+                  }
                 />
               </div>
             </div>

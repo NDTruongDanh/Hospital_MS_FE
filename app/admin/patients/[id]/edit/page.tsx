@@ -18,7 +18,7 @@ export default function EditPatientPage() {
 
   const handleSubmit = (data: PatientFormValues) => {
     if (!patient) return;
-    
+
     const allergyString =
       data.allergies && data.allergies.length
         ? data.allergies.join(", ")
@@ -28,20 +28,22 @@ export default function EditPatientPage() {
     // For @Pattern validated optional fields, use undefined to exclude from request when empty
     const payload = {
       fullName: data.fullName,
-      email: data.email || undefined, // @Email - undefined excludes it from JSON if empty
-      phoneNumber: data.phoneNumber || undefined, // @Pattern - undefined if empty
-      dateOfBirth: data.dateOfBirth, // @NotNull - required, don't send null
-      gender: data.gender, // @NotNull - required, don't send null
-      address: data.address || undefined,
-      identificationNumber: data.identificationNumber || undefined, // @Pattern - undefined if empty
-      healthInsuranceNumber: data.healthInsuranceNumber || undefined,
-      bloodType: data.bloodType || undefined,
-      allergies: allergyString || undefined,
-      relativeFullName: data.relativeFullName || undefined,
-      relativePhoneNumber: data.relativePhoneNumber || undefined, // @Pattern - undefined if empty
-      relativeRelationship: data.relativeRelationship || undefined,
-      accountId: data.accountId || patient.accountId || undefined,
+      email: data.email?.trim() || null, // Send null to clear/skip if empty. Trim whitespace.
+      phoneNumber: data.phoneNumber,
+      dateOfBirth: data.dateOfBirth,
+      gender: data.gender,
+      address: data.address || null,
+      identificationNumber: data.identificationNumber || null,
+      healthInsuranceNumber: data.healthInsuranceNumber || null,
+      bloodType: data.bloodType || null,
+      allergies: allergyString || null,
+      relativeFullName: data.relativeFullName || null,
+      relativePhoneNumber: data.relativePhoneNumber || null,
+      relativeRelationship: data.relativeRelationship || null,
+      accountId: data.accountId || patient.accountId || null,
     };
+
+    console.log("Submitting Update Payload:", payload);
 
     updatePatient(payload, {
       onSuccess: () => {

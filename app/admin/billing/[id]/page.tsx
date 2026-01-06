@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useInvoice, useCancelInvoice, usePaymentsByInvoice } from "@/hooks/queries/useBilling";
+import {
+  useInvoice,
+  useCancelInvoice,
+  usePaymentsByInvoice,
+} from "@/hooks/queries/useBilling";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -87,6 +91,10 @@ export default function InvoiceDetailPage() {
 
   const daysOverdue = getDaysOverdue();
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="space-y-6">
       {/* Emerald Gradient Header */}
@@ -96,7 +104,7 @@ export default function InvoiceDetailPage() {
           <div className="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-white" />
           <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-white" />
         </div>
-        
+
         <div className="relative flex items-start justify-between gap-6">
           <div className="flex items-center gap-5">
             {/* Back button */}
@@ -108,29 +116,33 @@ export default function InvoiceDetailPage() {
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            
+
             {/* Icon */}
             <div className="h-16 w-16 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
               <Receipt className="h-8 w-8 text-white" />
             </div>
-            
+
             {/* Title & Meta */}
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold tracking-tight">Invoice #{invoice.invoiceNumber}</h1>
+                <h1 className="text-2xl font-bold tracking-tight">
+                  Invoice #{invoice.invoiceNumber}
+                </h1>
                 <InvoiceStatusBadge status={invoice.status} />
               </div>
               <p className="text-white/80 text-sm font-medium">
-                {new Date(invoice.invoiceDate).toLocaleDateString()} • {invoice.patientName}
+                {new Date(invoice.invoiceDate).toLocaleDateString()} •{" "}
+                {invoice.patientName}
               </p>
             </div>
           </div>
-          
+
           {/* Actions */}
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <Button
               variant="outline"
               size="sm"
+              onClick={handlePrint}
               className="bg-white/10 border-white/30 text-white hover:bg-white/20"
             >
               <Printer className="mr-2 h-4 w-4" />
@@ -162,7 +174,11 @@ export default function InvoiceDetailPage() {
                 </Button>
               )}
             {invoice.status !== "PAID" && invoice.status !== "CANCELLED" && (
-              <Button size="sm" asChild className="bg-white text-emerald-600 hover:bg-white/90">
+              <Button
+                size="sm"
+                asChild
+                className="bg-white text-emerald-600 hover:bg-white/90"
+              >
                 <Link href={`/admin/billing/${invoice.id}/payment`}>
                   <CreditCard className="mr-2 h-4 w-4" />
                   Record Payment
@@ -192,11 +208,16 @@ export default function InvoiceDetailPage() {
             label: "Balance Due",
             value: formatCurrency(invoice.balance ?? invoice.balanceDue ?? 0),
             icon: <Receipt className="h-5 w-5" />,
-            color: (invoice.balance ?? invoice.balanceDue ?? 0) > 0 ? "rose" : "emerald",
+            color:
+              (invoice.balance ?? invoice.balanceDue ?? 0) > 0
+                ? "rose"
+                : "emerald",
           },
           {
             label: "Due Date",
-            value: invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : "N/A",
+            value: invoice.dueDate
+              ? new Date(invoice.dueDate).toLocaleDateString()
+              : "N/A",
             icon: <Calendar className="h-5 w-5" />,
             color: invoice.status === "OVERDUE" ? "rose" : "sky",
           },
@@ -243,26 +264,47 @@ export default function InvoiceDetailPage() {
                   <div className="col-span-2 text-right">Unit Price</div>
                   <div className="col-span-2 text-right">Amount</div>
                 </div>
-                {invoice.items.map((item: { id: string; type: string; description: string; quantity: number; unitPrice: number; amount: number }) => (
-                  <div
-                    key={item.id}
-                    className="grid grid-cols-12 gap-4 p-3 border-b last:border-0 items-center"
-                  >
-                    <div className="col-span-2">
-                      <ItemTypeBadge type={item.type as "CONSULTATION" | "MEDICINE" | "TEST" | "PROCEDURE" | "OTHER"} showIcon={false} />
+                {invoice.items.map(
+                  (item: {
+                    id: string;
+                    type: string;
+                    description: string;
+                    quantity: number;
+                    unitPrice: number;
+                    amount: number;
+                  }) => (
+                    <div
+                      key={item.id}
+                      className="grid grid-cols-12 gap-4 p-3 border-b last:border-0 items-center"
+                    >
+                      <div className="col-span-2">
+                        <ItemTypeBadge
+                          type={
+                            item.type as
+                              | "CONSULTATION"
+                              | "MEDICINE"
+                              | "TEST"
+                              | "PROCEDURE"
+                              | "OTHER"
+                          }
+                          showIcon={false}
+                        />
+                      </div>
+                      <div className="col-span-5">
+                        <p className="font-medium">{item.description}</p>
+                      </div>
+                      <div className="col-span-1 text-right">
+                        {item.quantity}
+                      </div>
+                      <div className="col-span-2 text-right text-muted-foreground">
+                        {formatCurrency(item.unitPrice)}
+                      </div>
+                      <div className="col-span-2 text-right font-medium">
+                        {formatCurrency(item.amount)}
+                      </div>
                     </div>
-                    <div className="col-span-5">
-                      <p className="font-medium">{item.description}</p>
-                    </div>
-                    <div className="col-span-1 text-right">{item.quantity}</div>
-                    <div className="col-span-2 text-right text-muted-foreground">
-                      {formatCurrency(item.unitPrice)}
-                    </div>
-                    <div className="col-span-2 text-right font-medium">
-                      {formatCurrency(item.amount)}
-                    </div>
-                  </div>
-                ))}
+                  )
+                )}
                 <div className="p-4 bg-muted/50">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-muted-foreground">Subtotal</span>
@@ -314,7 +356,9 @@ export default function InvoiceDetailPage() {
                   <span className="font-bold text-lg">Balance Due</span>
                   <span
                     className={`font-bold text-lg ${
-                      (invoice.balance ?? invoice.balanceDue ?? 0) > 0 ? "text-red-600" : "text-green-600"
+                      (invoice.balance ?? invoice.balanceDue ?? 0) > 0
+                        ? "text-red-600"
+                        : "text-green-600"
                     }`}
                   >
                     {formatCurrency(invoice.balance ?? invoice.balanceDue ?? 0)}
@@ -327,13 +371,17 @@ export default function InvoiceDetailPage() {
           {/* Payment History */}
           <Card>
             <CardHeader>
-              <CardTitle>Payment History ({paymentsData?.payments?.length ?? 0})</CardTitle>
+              <CardTitle>
+                Payment History ({paymentsData?.payments?.length ?? 0})
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <PaymentHistoryTable
                 payments={paymentsData?.payments ?? []}
                 totalPaid={paymentsData?.totalPaid ?? invoice.paidAmount ?? 0}
-                remainingBalance={paymentsData?.remainingBalance ?? invoice.balanceDue ?? 0}
+                remainingBalance={
+                  paymentsData?.remainingBalance ?? invoice.balanceDue ?? 0
+                }
               />
             </CardContent>
           </Card>
@@ -394,8 +442,16 @@ export default function InvoiceDetailPage() {
                   icon={<Clock className="h-4 w-4" />}
                   label="Due Date"
                   value={
-                    <span className={invoice.status === "OVERDUE" ? "text-red-600 font-medium" : ""}>
-                      {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : "N/A"}
+                    <span
+                      className={
+                        invoice.status === "OVERDUE"
+                          ? "text-red-600 font-medium"
+                          : ""
+                      }
+                    >
+                      {invoice.dueDate
+                        ? new Date(invoice.dueDate).toLocaleDateString()
+                        : "N/A"}
                     </span>
                   }
                   color={invoice.status === "OVERDUE" ? "rose" : "sky"}

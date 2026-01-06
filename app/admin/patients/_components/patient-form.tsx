@@ -26,7 +26,14 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, User, Heart, Phone, Link2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  User,
+  Heart,
+  Phone,
+  Link2,
+} from "lucide-react";
 import { useState } from "react";
 import MyDatePicker from "@/app/admin/_components/MyDatePicker";
 import {
@@ -41,6 +48,7 @@ import { useEffect } from "react";
 import { AccountSearchSelect } from "@/components/ui/account-search-select";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 // Re-export for convenience
 export { patientFormSchema, type PatientFormValues };
@@ -92,26 +100,27 @@ export function PatientForm({
     resolver: zodResolver(patientFormSchema),
     defaultValues: {
       fullName: initialData?.fullName ?? "",
-      email: initialData?.email ?? "",
+      email: initialData?.email || "",
       phoneNumber: initialData?.phoneNumber ?? "",
       dateOfBirth: initialData?.dateOfBirth ?? "",
-      gender: (initialData?.gender as Gender) ?? undefined,
-      address: initialData?.address ?? "",
-      identificationNumber: initialData?.identificationNumber ?? "",
-      healthInsuranceNumber: initialData?.healthInsuranceNumber ?? "",
-      bloodType: (initialData?.bloodType as BloodType) ?? undefined,
+      gender: (initialData?.gender as Gender) || undefined,
+      address: initialData?.address || "",
+      identificationNumber: initialData?.identificationNumber || "",
+      healthInsuranceNumber: initialData?.healthInsuranceNumber || "",
+      bloodType: (initialData?.bloodType as BloodType) || undefined,
       allergies: initialData?.allergies
         ? initialData.allergies
             .split(",")
             .map((s) => s.trim())
             .filter(Boolean)
         : [],
-      relativeFullName: initialData?.relativeFullName ?? "",
-      relativePhoneNumber: initialData?.relativePhoneNumber ?? "",
+      relativeFullName: initialData?.relativeFullName || "",
+      relativePhoneNumber: initialData?.relativePhoneNumber || "",
       relativeRelationship:
-        (initialData?.relativeRelationship as RelationshipType) ?? undefined,
-      accountId: initialData?.accountId ?? "",
+        (initialData?.relativeRelationship as RelationshipType) || undefined,
+      accountId: initialData?.accountId || "",
     },
+    shouldUnregister: false, // Ensure fields are not unregistered when unmounted (e.g., hidden tabs)
   });
 
   useEffect(() => {
@@ -137,7 +146,33 @@ export function PatientForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form
+        onSubmit={form.handleSubmit(onSubmit, (errors) => {
+          // Log details to help debug empty error objects
+          console.group("Form Validation Failed");
+          console.error("Errors object:", JSON.stringify(errors, null, 2));
+          console.error(
+            "Current values:",
+            JSON.stringify(form.getValues(), null, 2)
+          );
+          console.groupEnd();
+
+          toast.error("Please check the form for errors");
+
+          // Manually focus the first error
+          const firstError = Object.keys(errors)[0];
+          if (firstError) {
+            const element = document.querySelector(`[name="${firstError}"]`);
+            if (element) {
+              (element as HTMLElement).scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              });
+            }
+          }
+        })}
+        className="space-y-6"
+      >
         {/* Basic Information */}
         <div className="form-section-card">
           <div className="form-section-card-title">
@@ -150,7 +185,9 @@ export function PatientForm({
               name="fullName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="form-label form-label-required">Full Name</FormLabel>
+                  <FormLabel className="form-label form-label-required">
+                    Full Name
+                  </FormLabel>
                   <FormControl>
                     <Input placeholder="Enter full name" {...field} />
                   </FormControl>
@@ -165,7 +202,9 @@ export function PatientForm({
                 name="dateOfBirth"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="form-label form-label-required">Date of Birth</FormLabel>
+                    <FormLabel className="form-label form-label-required">
+                      Date of Birth
+                    </FormLabel>
                     <FormControl>
                       <MyDatePicker
                         value={field.value ? new Date(field.value) : undefined}
@@ -185,7 +224,9 @@ export function PatientForm({
                 name="gender"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="form-label form-label-required">Gender</FormLabel>
+                    <FormLabel className="form-label form-label-required">
+                      Gender
+                    </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -212,7 +253,9 @@ export function PatientForm({
                 name="phoneNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="form-label form-label-required">Phone Number</FormLabel>
+                    <FormLabel className="form-label form-label-required">
+                      Phone Number
+                    </FormLabel>
                     <FormControl>
                       <Input placeholder="Enter phone number" {...field} />
                     </FormControl>
@@ -256,7 +299,9 @@ export function PatientForm({
                 name="healthInsuranceNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="form-label">Health Insurance Number</FormLabel>
+                    <FormLabel className="form-label">
+                      Health Insurance Number
+                    </FormLabel>
                     <FormControl>
                       <Input placeholder="Enter insurance number" {...field} />
                     </FormControl>
@@ -383,7 +428,9 @@ export function PatientForm({
                     name="relativeRelationship"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="form-label">Relationship</FormLabel>
+                        <FormLabel className="form-label">
+                          Relationship
+                        </FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           value={field.value}
@@ -411,7 +458,9 @@ export function PatientForm({
                     name="relativePhoneNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="form-label">Contact Phone</FormLabel>
+                        <FormLabel className="form-label">
+                          Contact Phone
+                        </FormLabel>
                         <FormControl>
                           <Input placeholder="Enter contact phone" {...field} />
                         </FormControl>
@@ -444,7 +493,9 @@ export function PatientForm({
                   name="accountId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="form-label">Link to Account</FormLabel>
+                      <FormLabel className="form-label">
+                        Link to Account
+                      </FormLabel>
                       <FormControl>
                         <AccountSearchSelect
                           value={field.value || null}
@@ -456,7 +507,9 @@ export function PatientForm({
                             }
                           }}
                           // Receptionists can only link PATIENT accounts
-                          roleFilter={user?.role !== "ADMIN" ? "PATIENT" : undefined}
+                          roleFilter={
+                            user?.role !== "ADMIN" ? "PATIENT" : undefined
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -470,11 +523,16 @@ export function PatientForm({
 
         {/* Action buttons */}
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-          <Button type="button" variant="outline" onClick={handleCancel} className="px-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            className="px-6"
+          >
             Cancel
           </Button>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={isLoading}
             className="px-6 bg-gradient-to-r from-sky-500 to-teal-500 hover:from-sky-600 hover:to-teal-600 text-white border-0"
           >

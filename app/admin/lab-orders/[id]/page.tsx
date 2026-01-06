@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import {
   ArrowLeft,
   FlaskConical,
@@ -20,7 +20,13 @@ import {
   ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
@@ -57,11 +63,30 @@ import { ResultStatus } from "@/services/lab.service";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
-const statusConfig: Record<ResultStatus, { label: string; icon: React.ElementType; color: string }> = {
-  PENDING: { label: "Chờ xử lý", icon: Clock, color: "bg-yellow-100 text-yellow-800" },
-  PROCESSING: { label: "Đang thực hiện", icon: Clock, color: "bg-blue-100 text-blue-800" },
-  COMPLETED: { label: "Hoàn thành", icon: CheckCircle, color: "bg-green-100 text-green-800" },
-  CANCELLED: { label: "Đã hủy", icon: AlertTriangle, color: "bg-red-100 text-red-800" },
+const statusConfig: Record<
+  ResultStatus,
+  { label: string; icon: React.ElementType; color: string }
+> = {
+  PENDING: {
+    label: "Pending",
+    icon: Clock,
+    color: "bg-yellow-100 text-yellow-800",
+  },
+  PROCESSING: {
+    label: "Processing",
+    icon: Clock,
+    color: "bg-blue-100 text-blue-800",
+  },
+  COMPLETED: {
+    label: "Completed",
+    icon: CheckCircle,
+    color: "bg-green-100 text-green-800",
+  },
+  CANCELLED: {
+    label: "Cancelled",
+    icon: AlertTriangle,
+    color: "bg-red-100 text-red-800",
+  },
 };
 
 export default function LabOrderDetailPage({
@@ -72,12 +97,11 @@ export default function LabOrderDetailPage({
   const { id } = use(params);
   const router = useRouter();
   const { user } = useAuth();
-
   const { data: order, isLoading } = useLabOrder(id);
   const updateResultMutation = useUpdateLabResult();
 
-  // Edit result dialog
-  const [editingResult, setEditingResult] = useState<LabTestResultInOrder | null>(null);
+  const [editingResult, setEditingResult] =
+    useState<LabTestResultInOrder | null>(null);
   const [editForm, setEditForm] = useState({
     status: "PENDING" as ResultStatus,
     resultValue: "",
@@ -88,7 +112,7 @@ export default function LabOrderDetailPage({
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "-";
-    return format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: vi });
+    return format(new Date(dateString), "MM/dd/yyyy HH:mm", { locale: enUS });
   };
 
   const handleOpenEdit = (result: LabTestResultInOrder) => {
@@ -109,10 +133,10 @@ export default function LabOrderDetailPage({
         id: editingResult.id,
         data: editForm,
       });
-      toast.success("Đã cập nhật kết quả xét nghiệm");
+      toast.success("Test result updated");
       setEditingResult(null);
     } catch {
-      toast.error("Không thể cập nhật kết quả");
+      toast.error("Cannot update result");
     }
   };
 
@@ -135,11 +159,11 @@ export default function LabOrderDetailPage({
     return (
       <div className="text-center py-12">
         <FlaskConical className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-        <h2 className="text-xl font-semibold mb-2">Không tìm thấy phiếu xét nghiệm</h2>
+        <h2 className="text-xl font-semibold mb-2">Lab order not found</h2>
         <Link href="/admin/lab-orders">
           <Button variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Quay lại danh sách
+            Back to list
           </Button>
         </Link>
       </div>
@@ -148,7 +172,6 @@ export default function LabOrderDetailPage({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
           <Link href="/admin/lab-orders">
@@ -159,10 +182,10 @@ export default function LabOrderDetailPage({
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <FlaskConical className="h-6 w-6 text-teal-500" />
-              Phiếu {order.orderNumber}
+              Order {order.orderNumber}
             </h1>
             <p className="text-muted-foreground">
-              Tạo ngày {formatDate(order.orderDate)}
+              Created on {formatDate(order.orderDate)}
             </p>
           </div>
         </div>
@@ -176,15 +199,14 @@ export default function LabOrderDetailPage({
         </div>
       </div>
 
-      {/* Progress */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <div className="flex justify-between mb-2">
-                <span className="text-sm font-medium">Tiến độ hoàn thành</span>
+                <span className="text-sm font-medium">Completion Progress</span>
                 <span className="text-sm text-muted-foreground">
-                  {order.completedTests}/{order.totalTests} xét nghiệm
+                  {order.completedTests}/{order.totalTests} tests
                 </span>
               </div>
               <Progress value={getProgressPercent()} className="h-3" />
@@ -197,21 +219,20 @@ export default function LabOrderDetailPage({
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left: Test Results */}
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Kết quả xét nghiệm</CardTitle>
+              <CardTitle>Test Results</CardTitle>
               <CardDescription>
-                {order.totalTests} xét nghiệm trong phiếu này
+                {order.totalTests} tests in this order
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {order.results?.map((result) => {
-                  const statusInfo = statusConfig[result.status as ResultStatus];
+                  const statusInfo =
+                    statusConfig[result.status as ResultStatus];
                   const StatusIcon = statusInfo?.icon || Clock;
-
                   return (
                     <div
                       key={result.id}
@@ -220,52 +241,59 @@ export default function LabOrderDetailPage({
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="font-medium">{result.labTestName}</span>
+                            <span className="font-medium">
+                              {result.labTestName}
+                            </span>
                             <Badge className={statusInfo?.color || ""}>
                               <StatusIcon className="h-3 w-3 mr-1" />
                               {statusInfo?.label || result.status}
                             </Badge>
                             {result.isAbnormal && (
-                              <Badge variant="destructive">Bất thường</Badge>
+                              <Badge variant="destructive">Abnormal</Badge>
                             )}
                           </div>
                           <p className="text-sm text-muted-foreground mb-2">
-                            Mã: {result.labTestCode}
+                            Code: {result.labTestCode}
                           </p>
-
                           {result.resultValue && (
                             <div className="bg-muted/50 p-3 rounded-lg mb-2">
-                              <p className="text-sm text-muted-foreground">Kết quả:</p>
-                              <p className="font-medium">{result.resultValue}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Result:
+                              </p>
+                              <p className="font-medium">
+                                {result.resultValue}
+                              </p>
                             </div>
                           )}
-
                           {result.interpretation && (
                             <div className="mb-2">
-                              <p className="text-sm text-muted-foreground">Nhận định:</p>
+                              <p className="text-sm text-muted-foreground">
+                                Interpretation:
+                              </p>
                               <p className="text-sm">{result.interpretation}</p>
                             </div>
                           )}
-
                           <div className="text-xs text-muted-foreground">
-                            {result.performedBy && <span>Thực hiện: {result.performedBy}</span>}
+                            {result.performedBy && (
+                              <span>Performed by: {result.performedBy}</span>
+                            )}
                             {result.completedAt && (
                               <span className="ml-4">
-                                Hoàn thành: {formatDate(result.completedAt)}
+                                Completed: {formatDate(result.completedAt)}
                               </span>
                             )}
                           </div>
                         </div>
-
-                        {/* Actions */}
-                        {(user?.role === "DOCTOR" || user?.role === "NURSE" || user?.role === "ADMIN") && (
+                        {(user?.role === "DOCTOR" ||
+                          user?.role === "NURSE" ||
+                          user?.role === "ADMIN") && (
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleOpenEdit(result)}
                           >
                             <Edit className="h-4 w-4 mr-1" />
-                            Cập nhật
+                            Update
                           </Button>
                         )}
                       </div>
@@ -277,15 +305,14 @@ export default function LabOrderDetailPage({
           </Card>
         </div>
 
-        {/* Right: Order Info */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Thông tin phiếu</CardTitle>
+              <CardTitle>Order Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label className="text-muted-foreground">Bệnh nhân</Label>
+                <Label className="text-muted-foreground">Patient</Label>
                 <div className="flex items-center gap-2 mt-1">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">{order.patientName}</span>
@@ -293,7 +320,7 @@ export default function LabOrderDetailPage({
               </div>
               <Separator />
               <div>
-                <Label className="text-muted-foreground">Bác sĩ chỉ định</Label>
+                <Label className="text-muted-foreground">Ordering Doctor</Label>
                 <div className="flex items-center gap-2 mt-1">
                   <Stethoscope className="h-4 w-4 text-muted-foreground" />
                   <span>{order.orderingDoctorName}</span>
@@ -301,27 +328,25 @@ export default function LabOrderDetailPage({
               </div>
               <Separator />
               <div>
-                <Label className="text-muted-foreground">Ngày tạo</Label>
+                <Label className="text-muted-foreground">Created Date</Label>
                 <p>{formatDate(order.createdAt)}</p>
               </div>
               {order.notes && (
                 <>
                   <Separator />
                   <div>
-                    <Label className="text-muted-foreground">Ghi chú</Label>
+                    <Label className="text-muted-foreground">Notes</Label>
                     <p className="text-sm">{order.notes}</p>
                   </div>
                 </>
               )}
             </CardContent>
           </Card>
-
-          {/* Link to Medical Exam */}
           <Card>
             <CardContent className="pt-6">
               <Link href={`/admin/exams/${order.medicalExamId}`}>
                 <Button variant="outline" className="w-full">
-                  Xem phiếu khám bệnh
+                  View Medical Exam
                   <ArrowLeft className="h-4 w-4 ml-2 rotate-180" />
                 </Button>
               </Link>
@@ -330,81 +355,90 @@ export default function LabOrderDetailPage({
         </div>
       </div>
 
-      {/* Edit Result Dialog */}
-      <Dialog open={!!editingResult} onOpenChange={() => setEditingResult(null)}>
+      <Dialog
+        open={!!editingResult}
+        onOpenChange={() => setEditingResult(null)}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cập nhật kết quả xét nghiệm</DialogTitle>
+            <DialogTitle>Update Test Result</DialogTitle>
             <DialogDescription>
               {editingResult?.labTestName} ({editingResult?.labTestCode})
             </DialogDescription>
           </DialogHeader>
-
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Trạng thái</Label>
+              <Label>Status</Label>
               <Select
                 value={editForm.status}
-                onValueChange={(v) => setEditForm({ ...editForm, status: v as ResultStatus })}
+                onValueChange={(v) =>
+                  setEditForm({ ...editForm, status: v as ResultStatus })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="PENDING">Chờ xử lý</SelectItem>
-                  <SelectItem value="PROCESSING">Đang thực hiện</SelectItem>
-                  <SelectItem value="COMPLETED">Hoàn thành</SelectItem>
-                  <SelectItem value="CANCELLED">Đã hủy</SelectItem>
+                  <SelectItem value="PENDING">Pending</SelectItem>
+                  <SelectItem value="PROCESSING">Processing</SelectItem>
+                  <SelectItem value="COMPLETED">Completed</SelectItem>
+                  <SelectItem value="CANCELLED">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
-              <Label>Giá trị kết quả</Label>
+              <Label>Result Value</Label>
               <Input
                 value={editForm.resultValue}
-                onChange={(e) => setEditForm({ ...editForm, resultValue: e.target.value })}
-                placeholder="Nhập giá trị kết quả..."
+                onChange={(e) =>
+                  setEditForm({ ...editForm, resultValue: e.target.value })
+                }
+                placeholder="Enter result value..."
               />
             </div>
-
             <div className="flex items-center space-x-2">
               <Switch
                 checked={editForm.isAbnormal}
-                onCheckedChange={(v) => setEditForm({ ...editForm, isAbnormal: v })}
+                onCheckedChange={(v) =>
+                  setEditForm({ ...editForm, isAbnormal: v })
+                }
               />
-              <Label>Kết quả bất thường</Label>
+              <Label>Abnormal Result</Label>
             </div>
-
             <div className="space-y-2">
-              <Label>Nhận định</Label>
+              <Label>Interpretation</Label>
               <Textarea
                 value={editForm.interpretation}
-                onChange={(e) => setEditForm({ ...editForm, interpretation: e.target.value })}
-                placeholder="Nhận định của bác sĩ/kỹ thuật viên..."
+                onChange={(e) =>
+                  setEditForm({ ...editForm, interpretation: e.target.value })
+                }
+                placeholder="Doctor/technician interpretation..."
                 rows={3}
               />
             </div>
-
             <div className="space-y-2">
-              <Label>Ghi chú</Label>
+              <Label>Notes</Label>
               <Textarea
                 value={editForm.notes}
-                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                placeholder="Ghi chú thêm..."
+                onChange={(e) =>
+                  setEditForm({ ...editForm, notes: e.target.value })
+                }
+                placeholder="Additional notes..."
                 rows={2}
               />
             </div>
           </div>
-
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingResult(null)}>
               <X className="h-4 w-4 mr-2" />
-              Hủy
+              Cancel
             </Button>
-            <Button onClick={handleSaveResult} disabled={updateResultMutation.isPending}>
+            <Button
+              onClick={handleSaveResult}
+              disabled={updateResultMutation.isPending}
+            >
               <Save className="h-4 w-4 mr-2" />
-              Lưu
+              Save
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -23,11 +23,11 @@ export function TimeSlotPicker({
   excludeAppointmentId,
 }: TimeSlotPickerProps) {
   // Fetch slots using the hook
-  const { data: slots, isLoading, error } = useTimeSlots(
-    doctorId,
-    date,
-    excludeAppointmentId
-  );
+  const {
+    data: slots,
+    isLoading,
+    error,
+  } = useTimeSlots(doctorId, date, excludeAppointmentId);
 
   if (isLoading) {
     return (
@@ -53,7 +53,7 @@ export function TimeSlotPicker({
   return (
     <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
       {slots.map((slot) => {
-        const datetime = `${date}T${slot.time}:00`;
+        const isSelected = selectedSlot === slot.time;
         return (
           <button
             key={slot.time}
@@ -63,10 +63,10 @@ export function TimeSlotPicker({
             className={cn(
               "px-3 py-2 text-sm font-medium rounded-md border transition-colors",
               {
-                "bg-primary text-primary-foreground border-primary":
-                  selectedSlot === slot.time,
-                "bg-white hover:bg-gray-50 border-gray-300":
-                  slot.available && selectedSlot !== datetime,
+                "bg-blue-600 text-white border-blue-600 hover:bg-blue-700":
+                  isSelected,
+                "bg-white hover:bg-gray-50 border-gray-300 text-gray-900":
+                  slot.available && !isSelected,
                 "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed":
                   !slot.available,
                 "ring-2 ring-offset-2 ring-blue-500": slot.current,
