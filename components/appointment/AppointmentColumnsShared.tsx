@@ -176,14 +176,38 @@ export function getAppointmentColumnsByRole(
       ),
       cell: ({ row }) => {
         const patient = row.original.patient;
+        const colors = [
+          "from-cyan-400 to-teal-500",
+          "from-blue-400 to-indigo-500",
+          "from-purple-400 to-pink-500",
+          "from-rose-400 to-red-500",
+          "from-orange-400 to-amber-500",
+          "from-emerald-400 to-green-500",
+        ];
+        const colorIndex = patient.fullName.charCodeAt(0) % colors.length;
         return (
-          <div>
-            <div className="font-medium">{patient.fullName}</div>
-            {patient.phoneNumber && (
-              <div className="text-sm text-muted-foreground">
-                {patient.phoneNumber}
+          <div className="flex items-center gap-3">
+            {patient.profileImageUrl ? (
+              <img
+                src={patient.profileImageUrl}
+                alt={patient.fullName}
+                className="h-9 w-9 rounded-full object-cover shadow-sm flex-shrink-0"
+              />
+            ) : (
+              <div
+                className={`h-9 w-9 rounded-full bg-gradient-to-br ${colors[colorIndex]} flex items-center justify-center text-white font-semibold text-sm shadow-sm flex-shrink-0`}
+              >
+                {patient.fullName.charAt(0).toUpperCase()}
               </div>
             )}
+            <div>
+              <div className="font-medium">{patient.fullName}</div>
+              {patient.phoneNumber && (
+                <div className="text-sm text-muted-foreground">
+                  {patient.phoneNumber}
+                </div>
+              )}
+            </div>
           </div>
         );
       },
@@ -199,14 +223,36 @@ export function getAppointmentColumnsByRole(
       ),
       cell: ({ row }) => {
         const doctor = row.original.doctor;
+        const colors = [
+          "from-violet-400 to-purple-500",
+          "from-indigo-400 to-blue-500",
+          "from-teal-400 to-cyan-500",
+          "from-emerald-400 to-green-500",
+        ];
+        const colorIndex = doctor.fullName.charCodeAt(0) % colors.length;
         return (
-          <div>
-            <div className="font-medium">{doctor.fullName}</div>
-            {doctor.department && (
-              <div className="text-sm text-muted-foreground">
-                {doctor.department}
+          <div className="flex items-center gap-3">
+            {doctor.profileImageUrl ? (
+              <img
+                src={doctor.profileImageUrl}
+                alt={doctor.fullName}
+                className="h-9 w-9 rounded-full object-cover shadow-sm flex-shrink-0"
+              />
+            ) : (
+              <div
+                className={`h-9 w-9 rounded-full bg-gradient-to-br ${colors[colorIndex]} flex items-center justify-center text-white font-semibold text-sm shadow-sm flex-shrink-0`}
+              >
+                {doctor.fullName.charAt(0).toUpperCase()}
               </div>
             )}
+            <div>
+              <div className="font-medium">{doctor.fullName}</div>
+              {doctor.department && (
+                <div className="text-sm text-muted-foreground">
+                  {doctor.department}
+                </div>
+              )}
+            </div>
           </div>
         );
       },

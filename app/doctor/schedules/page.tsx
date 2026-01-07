@@ -268,18 +268,11 @@ export default function MySchedulesPage() {
   const appointmentStats = useMemo(() => {
     const appointments = appointmentsData?.content || [];
     
-    // Helper to check if appointment is within working hours (6AM-9PM)
-    const isInWorkingHours = (aptTime: string) => {
-      const date = new Date(aptTime);
-      const hours = date.getHours();
-      return hours >= 6 && hours < 21;
-    };
-    
     const today = appointments.filter((apt: { appointmentTime: string }) => 
-      isToday(new Date(apt.appointmentTime)) && isInWorkingHours(apt.appointmentTime)
+      isToday(new Date(apt.appointmentTime))
     ).length;
     const thisWeek = appointments.filter((apt: { appointmentTime: string }) => 
-      isThisWeek(new Date(apt.appointmentTime), { weekStartsOn: 1 }) && isInWorkingHours(apt.appointmentTime)
+      isThisWeek(new Date(apt.appointmentTime), { weekStartsOn: 1 })
     ).length;
     const pending = appointments.filter((apt: { status: string }) => 
       apt.status === "SCHEDULED"

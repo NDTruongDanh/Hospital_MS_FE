@@ -64,7 +64,7 @@ const navigationGroups = [
   {
     label: "Clinical Data",
     items: [
-      { title: "Lab Results", href: "/doctor/lab-results", icon: FlaskConical },
+      { title: "Lab Orders", href: "/doctor/lab-orders", icon: FlaskConical },
       { title: "Patients", href: "/doctor/patients", icon: Users },
     ],
   },

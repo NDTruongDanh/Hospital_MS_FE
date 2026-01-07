@@ -12,6 +12,7 @@ export interface PatientSummary {
   id: string;
   fullName: string;
   phoneNumber?: string;
+  profileImageUrl?: string;
 }
 
 export interface DoctorSummary {
@@ -20,6 +21,7 @@ export interface DoctorSummary {
   department?: string;
   specialization?: string;
   phoneNumber?: string;
+  profileImageUrl?: string;
 }
 
 export interface Appointment {

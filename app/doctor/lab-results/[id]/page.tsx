@@ -473,13 +473,16 @@ function LabResultDetailPage({ backPath }: LabResultDetailPageProps) {
             {selectedFiles.length > 0 && (
               <div className="space-y-2">
                 <Label>File đã chọn ({selectedFiles.length})</Label>
-                <div className="space-y-1">
+                <div className="space-y-1 max-h-32 overflow-y-auto">
                   {selectedFiles.map((file, i) => (
-                    <div key={i} className="flex items-center justify-between text-sm bg-muted p-2 rounded">
-                      <span className="truncate">{file.name}</span>
+                    <div key={i} className="flex items-center gap-2 text-sm bg-muted p-2 rounded">
+                      <span className="truncate flex-1 min-w-0" title={file.name}>
+                        {file.name}
+                      </span>
                       <Button
                         variant="ghost"
                         size="icon"
+                        className="h-6 w-6 flex-shrink-0"
                         onClick={() =>
                           setSelectedFiles((prev) => prev.filter((_, idx) => idx !== i))
                         }

@@ -28,9 +28,9 @@ interface AppointmentScheduleViewProps {
   showQuickActions?: boolean;
 }
 
-// Time slots from 6 AM to 9 PM (30-minute intervals)
-const TIME_SLOTS = Array.from({ length: 31 }, (_, i) => {
-  const hour = Math.floor(i / 2) + 6;
+// Time slots for 24 hours (30-minute intervals from 00:00 to 23:30)
+const TIME_SLOTS = Array.from({ length: 48 }, (_, i) => {
+  const hour = Math.floor(i / 2);
   const minute = i % 2 === 0 ? "00" : "30";
   return `${hour.toString().padStart(2, "0")}:${minute}`;
 });
@@ -85,25 +85,15 @@ export function AppointmentScheduleView({
     return map;
   }, [appointments]);
 
-  // Count appointments within the displayed week AND visible time range (6AM-9PM)
+  // Count appointments within the displayed week
   const weekAppointmentsCount = useMemo(() => {
     const weekEnd = addDays(weekStart, 6);
     return appointments.filter((apt) => {
       const aptDate = new Date(apt.appointmentTime);
-      const hours = aptDate.getHours();
-      const minutes = aptDate.getMinutes();
-      const timeInMinutes = hours * 60 + minutes;
-      
-      // Check if within visible time range (6:00 = 360 min, 21:00 = 1260 min)
-      const isInTimeRange = timeInMinutes >= 360 && timeInMinutes < 1260;
-      
-      // Check if within week range
-      const isInWeekRange = isWithinInterval(aptDate, { 
+      return isWithinInterval(aptDate, { 
         start: startOfDay(weekStart), 
         end: endOfDay(weekEnd) 
       });
-      
-      return isInTimeRange && isInWeekRange;
     }).length;
   }, [appointments, weekStart]);
 

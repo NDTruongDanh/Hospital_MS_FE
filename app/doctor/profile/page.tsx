@@ -84,6 +84,8 @@ export default function MyProfilePage() {
         theme="violet"
         avatar={{
           initials: employee.fullName.charAt(0).toUpperCase(),
+          src: employee.profileImageUrl || undefined,
+          alt: employee.fullName,
         }}
         metaItems={[
           { icon: <Phone className="h-4 w-4" />, text: employee.phoneNumber || "No phone" },
