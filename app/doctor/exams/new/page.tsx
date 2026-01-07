@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { MedicalExamForm } from "@/app/admin/exams/_components/medical-exam-form";
 import { MedicalExamFormValues } from "@/lib/schemas/medical-exam";
 import { useCreateMedicalExam } from "@/hooks/queries/useMedicalExam";
@@ -9,6 +10,8 @@ import { useCompleteAppointment } from "@/hooks/queries/useQueue";
 import { useAuth } from "@/contexts/AuthContext";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +22,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  ArrowLeft,
+  Stethoscope,
+  Pill,
+  FileText,
+  Loader2,
+} from "lucide-react";
 
 function CreateMedicalExamPageClient() {
   const { user } = useAuth();
@@ -43,7 +53,7 @@ function CreateMedicalExamPageClient() {
   // Check if appointment already has a medical exam - redirect to it
   useEffect(() => {
     if (appointment && appointment.medicalExamId) {
-      toast.info("Appointment đã có phiếu khám. Đang chuyển đến trang chi tiết...");
+      toast.info("Cuộc hẹn đã có phiếu khám. Đang chuyển đến trang chi tiết...");
       router.push(`/doctor/exams/${appointment.medicalExamId}`);
     }
   }, [appointment, router]);
@@ -55,8 +65,15 @@ function CreateMedicalExamPageClient() {
   // Show loading while checking if appointment has exam
   if (isLoadingAppointment && appointmentId) {
     return (
-      <div className="container mx-auto py-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-muted-foreground">Đang kiểm tra...</div>
+      <div className="space-y-6">
+        {/* Header skeleton */}
+        <Skeleton className="h-32 w-full rounded-2xl" />
+        {/* Content skeleton */}
+        <div className="space-y-4">
+          <Skeleton className="h-40 w-full rounded-xl" />
+          <Skeleton className="h-64 w-full rounded-xl" />
+          <Skeleton className="h-48 w-full rounded-xl" />
+        </div>
       </div>
     );
   }
@@ -64,10 +81,11 @@ function CreateMedicalExamPageClient() {
   // If appointment already has exam, show redirect message while useEffect handles redirect
   if (appointment?.medicalExamId) {
     return (
-      <div className="container mx-auto py-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-muted-foreground">
-          Appointment đã có phiếu khám. Đang chuyển hướng...
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+        <Loader2 className="h-8 w-8 animate-spin text-violet-500 mb-4" />
+        <p className="text-muted-foreground">
+          Cuộc hẹn đã có phiếu khám. Đang chuyển hướng...
+        </p>
       </div>
     );
   }
@@ -91,7 +109,7 @@ function CreateMedicalExamPageClient() {
       });
 
       const examId = result.id;
-      toast.success("Medical exam created successfully");
+      toast.success("Đã tạo phiếu khám thành công!");
 
       // Auto-complete the appointment if it exists
       if (appointmentId) {
@@ -126,7 +144,53 @@ function CreateMedicalExamPageClient() {
 
   return (
     <>
-      <div className="container mx-auto py-6">
+      <div className="space-y-6">
+        {/* Gradient Header */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-600 via-purple-500 to-fuchsia-500 p-6 text-white shadow-lg">
+          {/* Background pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -translate-y-32 translate-x-32" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full translate-y-24 -translate-x-24" />
+          </div>
+
+          <div className="relative z-10">
+            <div className="flex items-center gap-4 mb-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                asChild
+                className="bg-white/10 hover:bg-white/20 text-white"
+              >
+                <Link href="/doctor/appointments">
+                  <ArrowLeft className="h-5 w-5" />
+                </Link>
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold flex items-center gap-2">
+                  <Stethoscope className="h-7 w-7" />
+                  Tạo Phiếu Khám Bệnh
+                </h1>
+                <p className="text-white/80 text-sm mt-1">
+                  {appointment
+                    ? `Cho bệnh nhân: ${appointment.patient.fullName}`
+                    : "Chọn cuộc hẹn để bắt đầu"}
+                </p>
+              </div>
+            </div>
+
+            {/* Quick info badges */}
+            {appointment && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-sm">
+                  <FileText className="h-4 w-4" />
+                  ID: {appointmentId?.slice(0, 8)}...
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Form */}
         <MedicalExamForm
           onSubmit={(data) => handleSubmit(data, "PENDING")}
           onSubmitWithStatus={handleSubmit}
@@ -137,24 +201,32 @@ function CreateMedicalExamPageClient() {
         />
       </div>
 
+      {/* Prescription Prompt Dialog */}
       <AlertDialog
         open={showPrescriptionPrompt}
         onOpenChange={setShowPrescriptionPrompt}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Add Prescription?</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Pill className="h-5 w-5 text-violet-500" />
+              Thêm đơn thuốc?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Medical exam created successfully. Would you like to add a
-              prescription for this exam now?
+              Phiếu khám đã được tạo thành công. Bạn có muốn kê đơn thuốc cho
+              bệnh nhân ngay bây giờ không?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleViewExam}>
-              Later
+              Để sau
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleAddPrescription}>
-              Add Prescription
+            <AlertDialogAction
+              onClick={handleAddPrescription}
+              className="bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600"
+            >
+              <Pill className="h-4 w-4 mr-2" />
+              Thêm đơn thuốc
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

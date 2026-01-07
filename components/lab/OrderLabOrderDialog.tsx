@@ -119,7 +119,10 @@ export function OrderLabOrderDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
+        <Button 
+          variant="outline" 
+          className="gap-2 border-2 border-teal-300 bg-teal-50 text-teal-700 hover:bg-teal-100 hover:border-teal-400 font-medium shadow-sm"
+        >
           <FileText className="h-4 w-4" />
           Tạo Phiếu Xét nghiệm
         </Button>

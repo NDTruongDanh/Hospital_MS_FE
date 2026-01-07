@@ -55,6 +55,14 @@ export interface LabTestResultInOrder {
   performedBy?: string;
   performedAt?: string;
   completedAt?: string;
+  images?: Array<{
+    id: string;
+    fileName: string;
+    downloadUrl?: string;
+    thumbnailUrl?: string;
+    imageType?: string;
+    description?: string;
+  }>;
 }
 
 // ============ Lab Order Service ============
