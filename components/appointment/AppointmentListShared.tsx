@@ -217,25 +217,25 @@ export function AppointmentListShared({ role }: AppointmentListSharedProps) {
     <div className="w-full space-y-6">
       {/* Enhanced Header */}
       <ListPageHeader
-        title={role === "PATIENT" ? "My Appointments" : "Appointments"}
+        title={role === "PATIENT" ? "Lịch hẹn của tôi" : "Appointments"}
         description={
           role === "DOCTOR"
             ? "Manage your scheduled appointments"
             : role === "PATIENT"
-            ? "View and manage your appointments"
+            ? "Xem và quản lý các lịch hẹn khám bệnh"
             : "Manage all patient appointments"
         }
         theme="violet"
         icon={<Calendar className="h-6 w-6 text-white" />}
         stats={[
-          { label: "Total", value: globalTotalElements },
-          { label: "Scheduled", value: scheduledCount },
-          { label: "Completed", value: completedCount },
+          { label: role === "PATIENT" ? "Tổng" : "Total", value: globalTotalElements },
+          { label: role === "PATIENT" ? "Đã lên lịch" : "Scheduled", value: scheduledCount },
+          { label: role === "PATIENT" ? "Hoàn thành" : "Completed", value: completedCount },
         ]}
         primaryAction={
           canCreate
             ? {
-                label: "Book Appointment",
+                label: role === "PATIENT" ? "Đặt lịch hẹn" : "Book Appointment",
                 href: `/${role.toLowerCase()}/appointments/new`,
               }
             : undefined
@@ -245,11 +245,11 @@ export function AppointmentListShared({ role }: AppointmentListSharedProps) {
       {/* Quick Filter Pills */}
       <FilterPills
         filters={[
-          { id: "ALL", label: "All", count: totalElements },
-          { id: "SCHEDULED", label: "Scheduled", count: scheduledCount, countColor: "success" },
-          { id: "COMPLETED", label: "Completed", count: completedCount },
-          { id: "CANCELLED", label: "Cancelled", count: cancelledCount, countColor: cancelledCount > 0 ? "danger" : "default" },
-          { id: "NO_SHOW", label: "No Show" },
+          { id: "ALL", label: role === "PATIENT" ? "Tất cả" : "All", count: totalElements },
+          { id: "SCHEDULED", label: role === "PATIENT" ? "Đã lên lịch" : "Scheduled", count: scheduledCount, countColor: "success" },
+          { id: "COMPLETED", label: role === "PATIENT" ? "Hoàn thành" : "Completed", count: completedCount },
+          { id: "CANCELLED", label: role === "PATIENT" ? "Đã hủy" : "Cancelled", count: cancelledCount, countColor: cancelledCount > 0 ? "danger" : "default" },
+          { id: "NO_SHOW", label: role === "PATIENT" ? "Vắng mặt" : "No Show" },
         ]}
         activeFilter={status}
         onFilterChange={(id) => {
@@ -269,7 +269,7 @@ export function AppointmentListShared({ role }: AppointmentListSharedProps) {
             className="h-8 px-3"
           >
             <List className="h-4 w-4 mr-1" />
-            List
+            {role === "PATIENT" ? "Danh sách" : "List"}
           </Button>
           <Button
             variant={viewMode === "schedule" ? "default" : "ghost"}
@@ -278,7 +278,7 @@ export function AppointmentListShared({ role }: AppointmentListSharedProps) {
             className="h-8 px-3"
           >
             <LayoutGrid className="h-4 w-4 mr-1" />
-            Schedule
+            {role === "PATIENT" ? "Lịch" : "Schedule"}
           </Button>
         </div>
 
@@ -290,7 +290,7 @@ export function AppointmentListShared({ role }: AppointmentListSharedProps) {
           <Input
             placeholder={
               role === "PATIENT"
-                ? "Search by doctor name..."
+                ? "Tìm theo tên bác sĩ..."
                 : "Search by patient name..."
             }
             value={search}

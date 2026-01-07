@@ -72,17 +72,17 @@ const bloodTypes: BloodType[] = [
   "O-",
 ];
 const genders: { value: Gender; label: string }[] = [
-  { value: "MALE", label: "Male" },
-  { value: "FEMALE", label: "Female" },
-  { value: "OTHER", label: "Other" },
+  { value: "MALE", label: "Nam" },
+  { value: "FEMALE", label: "Nữ" },
+  { value: "OTHER", label: "Khác" },
 ];
 const relationships: { value: RelationshipType; label: string }[] = [
-  { value: "SPOUSE", label: "Spouse" },
-  { value: "PARENT", label: "Parent" },
-  { value: "CHILD", label: "Child" },
-  { value: "SIBLING", label: "Sibling" },
-  { value: "FRIEND", label: "Friend" },
-  { value: "OTHER", label: "Other" },
+  { value: "SPOUSE", label: "Vợ/Chồng" },
+  { value: "PARENT", label: "Cha/Mẹ" },
+  { value: "CHILD", label: "Con" },
+  { value: "SIBLING", label: "Anh/Chị/Em" },
+  { value: "FRIEND", label: "Bạn bè" },
+  { value: "OTHER", label: "Khác" },
 ];
 
 export function PatientForm({
@@ -179,7 +179,7 @@ export function PatientForm({
         <div className="form-section-card">
           <div className="form-section-card-title">
             <User className="h-5 w-5 text-sky-500" />
-            Personal Information
+            Thông tin cá nhân
           </div>
           <div className="space-y-4">
             <FormField
@@ -188,10 +188,10 @@ export function PatientForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="form-label form-label-required">
-                    Full Name
+                    Họ và tên
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter full name" {...field} />
+                    <Input placeholder="Nhập họ và tên" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -205,7 +205,7 @@ export function PatientForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="form-label form-label-required">
-                      Date of Birth
+                      Ngày sinh
                     </FormLabel>
                     <FormControl>
                       <MyDatePicker
@@ -227,12 +227,12 @@ export function PatientForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="form-label form-label-required">
-                      Gender
+                      Giới tính
                     </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select gender" />
+                          <SelectValue placeholder="Chọn giới tính" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -256,10 +256,10 @@ export function PatientForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="form-label form-label-required">
-                      Phone Number
+                      Số điện thoại
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter phone number" {...field} />
+                      <Input placeholder="Nhập số điện thoại" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -272,9 +272,9 @@ export function PatientForm({
               name="address"
               render={({ field }) => (
                 <FormItem className="form-full-width">
-                  <FormLabel className="form-label">Address</FormLabel>
+                  <FormLabel className="form-label">Địa chỉ</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Enter address" {...field} />
+                    <Textarea placeholder="Nhập địa chỉ" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -287,9 +287,9 @@ export function PatientForm({
                 name="identificationNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="form-label">ID Number</FormLabel>
+                    <FormLabel className="form-label">Số CMND/CCCD</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter ID number" {...field} />
+                      <Input placeholder="Nhập số CMND/CCCD" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -302,10 +302,10 @@ export function PatientForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="form-label">
-                      Health Insurance Number
+                      Số BHYT
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter insurance number" {...field} />
+                      <Input placeholder="Nhập số bảo hiểm y tế" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -321,7 +321,7 @@ export function PatientForm({
             <CollapsibleTrigger asChild>
               <div className="form-section-card-title cursor-pointer hover:text-sky-600 transition-colors">
                 <Heart className="h-5 w-5 text-rose-500" />
-                Health Information
+                Thông tin sức khỏe
                 <div className="ml-auto">
                   {healthInfoOpen ? (
                     <ChevronUp className="h-5 w-5 text-slate-400" />
@@ -339,14 +339,14 @@ export function PatientForm({
                     name="bloodType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="form-label">Blood Type</FormLabel>
+                        <FormLabel className="form-label">Nhóm máu</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select blood type" />
+                              <SelectValue placeholder="Chọn nhóm máu" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -367,12 +367,12 @@ export function PatientForm({
                     name="allergies"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="form-label">Allergies</FormLabel>
+                        <FormLabel className="form-label">Dị ứng</FormLabel>
                         <FormControl>
                           <TagInput
                             value={field.value || []}
                             onChange={field.onChange}
-                            placeholder="Add allergy and press Enter"
+                            placeholder="Thêm dị ứng và nhấn Enter"
                             suggestions={[
                               "Penicillin",
                               "Peanut",
@@ -398,7 +398,7 @@ export function PatientForm({
             <CollapsibleTrigger asChild>
               <div className="form-section-card-title cursor-pointer hover:text-sky-600 transition-colors">
                 <Phone className="h-5 w-5 text-emerald-500" />
-                Emergency Contact
+                Liên hệ khẩn cấp
                 <div className="ml-auto">
                   {emergencyOpen ? (
                     <ChevronUp className="h-5 w-5 text-slate-400" />
@@ -415,9 +415,9 @@ export function PatientForm({
                   name="relativeFullName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="form-label">Contact Name</FormLabel>
+                      <FormLabel className="form-label">Họ tên người thân</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter contact name" {...field} />
+                        <Input placeholder="Nhập họ tên" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -431,7 +431,7 @@ export function PatientForm({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="form-label">
-                          Relationship
+                          Mối quan hệ
                         </FormLabel>
                         <Select
                           onValueChange={field.onChange}
@@ -439,7 +439,7 @@ export function PatientForm({
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select relationship" />
+                              <SelectValue placeholder="Chọn mối quan hệ" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -461,10 +461,10 @@ export function PatientForm({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="form-label">
-                          Contact Phone
+                          Số điện thoại
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter contact phone" {...field} />
+                          <Input placeholder="Nhập số điện thoại" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -482,7 +482,7 @@ export function PatientForm({
             <CollapsibleTrigger asChild>
               <div className="form-section-card-title cursor-pointer hover:text-sky-600 transition-colors">
                 <Link2 className="h-5 w-5 text-violet-500" />
-                Account Linking (Optional)
+                Liên kết tài khoản (Tùy chọn)
                 <div className="ml-auto">
                   <ChevronDown className="h-5 w-5 text-slate-400" />
                 </div>
@@ -496,7 +496,7 @@ export function PatientForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="form-label">
-                        Link to Account
+                        Liên kết với tài khoản
                       </FormLabel>
                       <FormControl>
                         <AccountSearchSelect
@@ -531,7 +531,7 @@ export function PatientForm({
             onClick={handleCancel}
             className="px-6"
           >
-            Cancel
+            Hủy
           </Button>
           <Button
             type="submit"
@@ -539,7 +539,7 @@ export function PatientForm({
             className="px-6 bg-gradient-to-r from-sky-500 to-teal-500 hover:from-sky-600 hover:to-teal-600 text-white border-0"
           >
             {isLoading && <Spinner size="sm" className="mr-2" />}
-            {initialData ? "Update Patient" : "Create Patient"}
+            {initialData ? "Cập nhật" : "Tạo hồ sơ"}
           </Button>
         </div>
       </form>
