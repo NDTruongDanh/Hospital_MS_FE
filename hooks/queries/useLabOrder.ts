@@ -4,6 +4,7 @@ import {
   getLabOrder,
   getLabOrdersByExam,
   getLabOrdersByPatient,
+  getLabOrdersByDoctor,
   createLabOrder,
   updateLabOrder,
   cancelLabOrder,
@@ -22,6 +23,7 @@ export const labOrderKeys = {
   detail: (id: string) => [...labOrderKeys.details(), id] as const,
   byExam: (examId: string) => [...labOrderKeys.all, "exam", examId] as const,
   byPatient: (patientId: string) => [...labOrderKeys.all, "patient", patientId] as const,
+  byDoctor: (doctorId: string) => [...labOrderKeys.all, "doctor", doctorId] as const,
 };
 
 // ============ Queries ============
@@ -66,6 +68,17 @@ export function useLabOrdersByPatient(patientId: string) {
     queryKey: labOrderKeys.byPatient(patientId),
     queryFn: () => getLabOrdersByPatient(patientId),
     enabled: !!patientId,
+  });
+}
+
+/**
+ * Get lab orders created by a specific doctor
+ */
+export function useLabOrdersByDoctor(doctorId: string) {
+  return useQuery({
+    queryKey: labOrderKeys.byDoctor(doctorId),
+    queryFn: () => getLabOrdersByDoctor(doctorId),
+    enabled: !!doctorId,
   });
 }
 

@@ -26,10 +26,11 @@ import {
   FileText,
   Calendar,
   LayoutGrid,
-  Beaker,
+  Users,
+  UserCheck,
 } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
-import { useLabOrders } from "@/hooks/queries/useLabOrder";
+import { useLabOrders, useLabOrdersByDoctor } from "@/hooks/queries/useLabOrder";
 import { useMyEmployeeProfile } from "@/hooks/queries/useHr";
 import {
   LabOrderResponse,
@@ -69,6 +70,9 @@ const STATUS_OPTIONS = [
   { value: "IN_PROGRESS", label: "Đang thực hiện" },
   { value: "COMPLETED", label: "Hoàn thành" },
 ];
+
+// Scope filter types
+type ScopeFilter = "my-orders" | "all-patients";
 
 // Group orders by date
 function groupOrdersByDate(orders: LabOrderResponse[]) {
@@ -116,6 +120,80 @@ function ViewToggle({
       >
         <Calendar className="h-4 w-4" />
         Timeline
+      </button>
+    </div>
+  );
+}
+
+// Scope Toggle - Beautiful UI
+function ScopeToggle({
+  scope,
+  onChange,
+  myOrdersCount,
+  allPatientsCount,
+}: {
+  scope: ScopeFilter;
+  onChange: (s: ScopeFilter) => void;
+  myOrdersCount: number;
+  allPatientsCount: number;
+}) {
+  return (
+    <div className="relative flex rounded-xl p-1 bg-gradient-to-r from-indigo-100 via-purple-100 to-pink-100 shadow-inner">
+      {/* Sliding background */}
+      <div
+        className={`absolute top-1 bottom-1 rounded-lg bg-white shadow-md transition-all duration-300 ease-out ${
+          scope === "my-orders"
+            ? "left-1 w-[calc(50%-4px)]"
+            : "left-[calc(50%+2px)] w-[calc(50%-4px)]"
+        }`}
+      />
+      
+      <button
+        onClick={() => onChange("my-orders")}
+        className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all z-10 ${
+          scope === "my-orders"
+            ? "text-indigo-700"
+            : "text-slate-500 hover:text-slate-700"
+        }`}
+      >
+        <div className={`p-1 rounded-md transition-all ${scope === "my-orders" ? "bg-indigo-100" : ""}`}>
+          <UserCheck className="h-4 w-4" />
+        </div>
+        <span>Phiếu tôi chỉ định</span>
+        <Badge 
+          variant="secondary" 
+          className={`ml-1 transition-all ${
+            scope === "my-orders" 
+              ? "bg-indigo-200 text-indigo-800" 
+              : "bg-slate-200 text-slate-600"
+          }`}
+        >
+          {myOrdersCount}
+        </Badge>
+      </button>
+      
+      <button
+        onClick={() => onChange("all-patients")}
+        className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all z-10 ${
+          scope === "all-patients"
+            ? "text-purple-700"
+            : "text-slate-500 hover:text-slate-700"
+        }`}
+      >
+        <div className={`p-1 rounded-md transition-all ${scope === "all-patients" ? "bg-purple-100" : ""}`}>
+          <Users className="h-4 w-4" />
+        </div>
+        <span>Tất cả BN của tôi</span>
+        <Badge 
+          variant="secondary" 
+          className={`ml-1 transition-all ${
+            scope === "all-patients" 
+              ? "bg-purple-200 text-purple-800" 
+              : "bg-slate-200 text-slate-600"
+          }`}
+        >
+          {allPatientsCount}
+        </Badge>
       </button>
     </div>
   );
@@ -521,13 +599,28 @@ export default function DoctorLabOrdersPage() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"table" | "timeline">("table");
+  const [scopeFilter, setScopeFilter] = useState<ScopeFilter>("my-orders");
 
   const debouncedSearch = useDebounce(search, 300);
-  const { data, isLoading } = useLabOrders({ page, size });
+  
+  // Fetch all orders (for "all patients" view, currently no specific filter available)
+  const { data: allData, isLoading: isLoadingAll } = useLabOrders({ page, size });
+  
+  // Fetch orders by this doctor
+  const { data: myOrdersData, isLoading: isLoadingMyOrders } = useLabOrdersByDoctor(
+    myProfile?.id || ""
+  );
 
-  const orders = data?.content || [];
-  const totalPages = data?.totalPages || 1;
-  const totalElements = data?.totalElements || 0;
+  // Choose data source based on scope
+  const orders = scopeFilter === "my-orders" 
+    ? (myOrdersData || [])
+    : (allData?.content || []);
+  
+  const isLoading = scopeFilter === "my-orders" ? isLoadingMyOrders : isLoadingAll;
+  const totalPages = scopeFilter === "my-orders" ? 1 : (allData?.totalPages || 1);
+  const totalElements = scopeFilter === "my-orders" 
+    ? (myOrdersData?.length || 0) 
+    : (allData?.totalElements || 0);
 
   // Filter orders client-side
   const filteredOrders = useMemo(() => {
@@ -550,17 +643,17 @@ export default function DoctorLabOrdersPage() {
 
   // Calculate stats
   const stats = useMemo(() => {
-    const ordered = orders.filter(
+    const ordered = filteredOrders.filter(
       (o: LabOrderResponse) => o.status === "ORDERED"
     ).length;
-    const inProgress = orders.filter(
+    const inProgress = filteredOrders.filter(
       (o: LabOrderResponse) => o.status === "IN_PROGRESS"
     ).length;
-    const completed = orders.filter(
+    const completed = filteredOrders.filter(
       (o: LabOrderResponse) => o.status === "COMPLETED"
     ).length;
-    return { total: orders.length, ordered, inProgress, completed };
-  }, [orders]);
+    return { total: filteredOrders.length, ordered, inProgress, completed };
+  }, [filteredOrders]);
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev) => {
@@ -638,6 +731,29 @@ export default function DoctorLabOrdersPage() {
           </div>
         </div>
       </div>
+
+      {/* Scope Toggle - Beautiful Card */}
+      <Card className="p-4 border-2 border-indigo-100 shadow-sm bg-gradient-to-r from-white to-indigo-50/30">
+        <div className="flex items-center gap-4">
+          <span className="font-semibold text-sm text-indigo-600">Phạm vi hiển thị:</span>
+          <div className="flex-1">
+            <ScopeToggle
+              scope={scopeFilter}
+              onChange={(s) => {
+                setScopeFilter(s);
+                setPage(0);
+              }}
+              myOrdersCount={myOrdersData?.length || 0}
+              allPatientsCount={allData?.totalElements || 0}
+            />
+          </div>
+        </div>
+        <p className="text-xs text-slate-500 mt-2">
+          {scopeFilter === "my-orders" 
+            ? "Chỉ hiển thị các phiếu xét nghiệm bạn đã chỉ định"
+            : "Hiển thị tất cả phiếu XN để xem lịch sử của bệnh nhân từ các bác sĩ khác"}
+        </p>
+      </Card>
 
       {/* Filter Toolbar with View Toggle */}
       <div className="flex flex-wrap items-center gap-3 rounded-lg bg-slate-50 p-3 border">
@@ -732,7 +848,7 @@ export default function DoctorLabOrdersPage() {
             <TimelineView orders={filteredOrders} isLoading={isLoading} />
           )}
 
-          {!isLoading && totalElements > 0 && (
+          {!isLoading && totalElements > 0 && scopeFilter === "all-patients" && (
             <div className="px-6 py-4 border-t">
               <DataTablePagination
                 currentPage={page}

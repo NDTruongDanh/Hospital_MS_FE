@@ -103,6 +103,14 @@ export async function getLabOrdersByPatient(patientId: string): Promise<LabOrder
 }
 
 /**
+ * Get lab orders created by a specific doctor
+ */
+export async function getLabOrdersByDoctor(doctorId: string): Promise<LabOrderResponse[]> {
+  const response = await api.get(`/exams/lab-orders/doctor/${doctorId}`);
+  return response.data.data || [];
+}
+
+/**
  * Create a new lab order with multiple tests
  */
 export async function createLabOrder(request: LabOrderRequest): Promise<LabOrderResponse> {

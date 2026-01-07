@@ -482,10 +482,20 @@ export function MedicalExamDetailView({
                 <Calendar className="h-4 w-4 text-violet-500" />
                 <span className="text-slate-600">Thời gian:</span>
                 <span className="font-medium">
-                  {format(
-                    new Date(medicalExam.appointment.appointmentTime),
-                    "dd/MM/yyyy HH:mm",
-                    { locale: vi }
+                  {appointmentData?.appointmentTime ? (
+                    format(
+                      new Date(appointmentData.appointmentTime),
+                      "dd/MM/yyyy HH:mm",
+                      { locale: vi }
+                    )
+                  ) : medicalExam.appointment.appointmentTime ? (
+                    format(
+                      new Date(medicalExam.appointment.appointmentTime),
+                      "dd/MM/yyyy HH:mm",
+                      { locale: vi }
+                    )
+                  ) : (
+                    <span className="text-slate-400 italic">Không có dữ liệu</span>
                   )}
                 </span>
               </div>

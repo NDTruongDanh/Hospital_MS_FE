@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { MedicalExamForm } from "@/app/admin/exams/_components/medical-exam-form";
 import { MedicalExamFormValues } from "@/lib/schemas/medical-exam";
-import { useCreateMedicalExam } from "@/hooks/queries/useMedicalExam";
+import { useCreateMedicalExam, useUpdateMedicalExam, useMedicalExamByAppointment } from "@/hooks/queries/useMedicalExam";
 import { useAppointment } from "@/hooks/queries/useAppointment";
 import { useCompleteAppointment } from "@/hooks/queries/useQueue";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,6 +28,7 @@ import {
   Pill,
   FileText,
   Loader2,
+  Activity,
 } from "lucide-react";
 
 function CreateMedicalExamPageClient() {
@@ -36,12 +37,22 @@ function CreateMedicalExamPageClient() {
   const searchParams = useSearchParams();
   const appointmentId = searchParams.get("appointmentId");
   const createExamMutation = useCreateMedicalExam();
+  const updateExamMutation = useUpdateMedicalExam();
   const completeAppointmentMutation = useCompleteAppointment();
   const [showPrescriptionPrompt, setShowPrescriptionPrompt] = useState(false);
   const [createdExamId, setCreatedExamId] = useState<string | null>(null);
 
   // Fetch appointment details if appointmentId exists
   const { data: appointment, isLoading: isLoadingAppointment } = useAppointment(appointmentId || "");
+
+  // Fetch existing medical exam for this appointment (nurse may have created one with vital signs)
+  const { data: existingExam, isLoading: isLoadingExistingExam } = useMedicalExamByAppointment(
+    appointmentId || "",
+    !!appointmentId
+  );
+
+  // Determine if we're editing an existing exam (created by nurse with vital signs)
+  const isEditing = !!existingExam;
 
   useEffect(() => {
     // Only doctors can create exams
@@ -50,20 +61,20 @@ function CreateMedicalExamPageClient() {
     }
   }, [user, router]);
 
-  // Check if appointment already has a medical exam - redirect to it
+  // If exam exists and is already FINALIZED, redirect to view
   useEffect(() => {
-    if (appointment && appointment.medicalExamId) {
-      toast.info("Cuộc hẹn đã có phiếu khám. Đang chuyển đến trang chi tiết...");
-      router.push(`/doctor/exams/${appointment.medicalExamId}`);
+    if (existingExam && existingExam.status === "FINALIZED") {
+      toast.info("Phiếu khám đã hoàn thành. Đang chuyển đến trang chi tiết...");
+      router.push(`/doctor/exams/${existingExam.id}`);
     }
-  }, [appointment, router]);
+  }, [existingExam, router]);
 
   if (!user || user.role !== "DOCTOR") {
     return null;
   }
 
-  // Show loading while checking if appointment has exam
-  if (isLoadingAppointment && appointmentId) {
+  // Show loading while checking for existing exam
+  if ((isLoadingAppointment || isLoadingExistingExam) && appointmentId) {
     return (
       <div className="space-y-6">
         {/* Header skeleton */}
@@ -78,13 +89,13 @@ function CreateMedicalExamPageClient() {
     );
   }
 
-  // If appointment already has exam, show redirect message while useEffect handles redirect
-  if (appointment?.medicalExamId) {
+  // If exam is finalized, show redirect message
+  if (existingExam?.status === "FINALIZED") {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
         <Loader2 className="h-8 w-8 animate-spin text-violet-500 mb-4" />
         <p className="text-muted-foreground">
-          Cuộc hẹn đã có phiếu khám. Đang chuyển hướng...
+          Phiếu khám đã hoàn thành. Đang chuyển hướng...
         </p>
       </div>
     );
@@ -95,21 +106,36 @@ function CreateMedicalExamPageClient() {
     status: "PENDING" | "FINALIZED"
   ) => {
     try {
-      const result = await createExamMutation.mutateAsync({
-        data: {
-          ...data,
-          status,
-        },
-        doctorInfo: user?.employeeId
-          ? { id: user.employeeId, fullName: user.fullName || "Doctor" }
-          : undefined,
-        patientInfo: appointment?.patient
-          ? { id: appointment.patient.id, fullName: appointment.patient.fullName }
-          : undefined,
-      });
+      let examId: string;
 
-      const examId = result.id;
-      toast.success("Đã tạo phiếu khám thành công!");
+      if (isEditing && existingExam) {
+        // Update existing exam (nurse created with vital signs, doctor adds diagnosis/treatment)
+        await updateExamMutation.mutateAsync({
+          id: existingExam.id,
+          data: {
+            ...data,
+            status,
+          },
+        });
+        examId = existingExam.id;
+        toast.success("Đã cập nhật phiếu khám thành công!");
+      } else {
+        // Create new exam
+        const result = await createExamMutation.mutateAsync({
+          data: {
+            ...data,
+            status,
+          },
+          doctorInfo: user?.employeeId
+            ? { id: user.employeeId, fullName: user.fullName || "Doctor" }
+            : undefined,
+          patientInfo: appointment?.patient
+            ? { id: appointment.patient.id, fullName: appointment.patient.fullName }
+            : undefined,
+        });
+        examId = result.id;
+        toast.success("Đã tạo phiếu khám thành công!");
+      }
 
       // Auto-complete the appointment if it exists
       if (appointmentId) {
@@ -142,6 +168,23 @@ function CreateMedicalExamPageClient() {
     }
   };
 
+  // Prepare default values from existing exam (nurse's vital signs)
+  const defaultValuesFromExam = existingExam
+    ? {
+        appointmentId: existingExam.appointment?.id || appointmentId || "",
+        temperature: existingExam.vitals?.temperature,
+        bloodPressureSystolic: existingExam.vitals?.bloodPressureSystolic,
+        bloodPressureDiastolic: existingExam.vitals?.bloodPressureDiastolic,
+        heartRate: existingExam.vitals?.heartRate,
+        weight: existingExam.vitals?.weight,
+        height: existingExam.vitals?.height,
+        diagnosis: existingExam.diagnosis || "",
+        symptoms: existingExam.symptoms || "",
+        treatment: existingExam.treatment || "",
+        notes: existingExam.notes || "",
+      }
+    : undefined;
+
   return (
     <>
       <div className="space-y-6">
@@ -168,7 +211,7 @@ function CreateMedicalExamPageClient() {
               <div>
                 <h1 className="text-2xl font-bold flex items-center gap-2">
                   <Stethoscope className="h-7 w-7" />
-                  Tạo Phiếu Khám Bệnh
+                  {isEditing ? "Tiếp tục Khám Bệnh" : "Tạo Phiếu Khám Bệnh"}
                 </h1>
                 <p className="text-white/80 text-sm mt-1">
                   {appointment
@@ -179,12 +222,18 @@ function CreateMedicalExamPageClient() {
             </div>
 
             {/* Quick info badges */}
-            {appointment && (
+            {(appointment || existingExam) && (
               <div className="flex flex-wrap gap-2 mt-4">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-sm">
                   <FileText className="h-4 w-4" />
                   ID: {appointmentId?.slice(0, 8)}...
                 </span>
+                {existingExam && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/80 text-sm">
+                    <Activity className="h-4 w-4" />
+                    Đã có Vital Signs từ Y tá
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -194,10 +243,13 @@ function CreateMedicalExamPageClient() {
         <MedicalExamForm
           onSubmit={(data) => handleSubmit(data, "PENDING")}
           onSubmitWithStatus={handleSubmit}
-          isSubmitting={createExamMutation.isPending}
+          isSubmitting={createExamMutation.isPending || updateExamMutation.isPending}
           userRole="DOCTOR"
           defaultAppointmentId={appointmentId || undefined}
           appointment={appointment}
+          defaultValues={defaultValuesFromExam}
+          isEditMode={isEditing}
+          currentExamStatus={existingExam?.status}
         />
       </div>
 
@@ -213,7 +265,7 @@ function CreateMedicalExamPageClient() {
               Thêm đơn thuốc?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Phiếu khám đã được tạo thành công. Bạn có muốn kê đơn thuốc cho
+              Phiếu khám đã được {isEditing ? "cập nhật" : "tạo"} thành công. Bạn có muốn kê đơn thuốc cho
               bệnh nhân ngay bây giờ không?
             </AlertDialogDescription>
           </AlertDialogHeader>

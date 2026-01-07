@@ -111,6 +111,13 @@ export function MedicalExamForm({
     }
   }, [appointment, form]);
 
+  // Reset form when defaultValues change (for loading nurse's vital signs when editing)
+  useEffect(() => {
+    if (defaultValues) {
+      form.reset(defaultValues);
+    }
+  }, [defaultValues, form]);
+
   const handleAppointmentSelect = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
     form.setValue("appointmentId", appointment.id, { shouldValidate: true });

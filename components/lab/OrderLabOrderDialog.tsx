@@ -24,6 +24,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { FlaskConical, Loader2, X, FileText } from "lucide-react";
 import { useActiveLabTests } from "@/hooks/queries/useLab";
 import { useCreateLabOrder } from "@/hooks/queries/useLabOrder";
+import { useMyEmployeeProfile } from "@/hooks/queries/useHr";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { LabTestCategory } from "@/services/lab.service";
@@ -67,6 +68,7 @@ export function OrderLabOrderDialog({
 
   const { data: labTests, isLoading: isLoadingTests } = useActiveLabTests();
   const createLabOrder = useCreateLabOrder();
+  const { data: myProfile } = useMyEmployeeProfile();
 
   const selectedTests = labTests?.filter((t) => selectedTestIds.includes(t.id)) || [];
   const totalPrice = selectedTests.reduce((sum, t) => sum + (t.price || 0), 0);
@@ -97,6 +99,8 @@ export function OrderLabOrderDialog({
         notes: notes || undefined,
         patientId,
         patientName,
+        orderingDoctorId: myProfile?.id,
+        orderingDoctorName: myProfile?.fullName,
       });
 
       toast.success(`Đã tạo phiếu xét nghiệm với ${selectedTestIds.length} mục!`);
