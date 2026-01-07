@@ -19,38 +19,17 @@ const mockRevenueReport: RevenueReport = {
   totalRevenue: 125000,
   paidRevenue: 100000,
   unpaidRevenue: 25000,
-  invoiceCount: 450,
+  invoiceCount: {
+    total: 450,
+    paid: 380,
+    unpaid: 50,
+    overdue: 20,
+  },
   collectionRate: 80,
-  revenueByDepartment: [
-    {
-      departmentId: "dept001",
-      departmentName: "Cardiology",
-      revenue: 45000,
-      percentage: 36,
-    },
-    {
-      departmentId: "dept002",
-      departmentName: "Neurology",
-      revenue: 38000,
-      percentage: 30.4,
-    },
-    {
-      departmentId: "dept003",
-      departmentName: "Radiology",
-      revenue: 25000,
-      percentage: 20,
-    },
-    {
-      departmentId: "dept004",
-      departmentName: "General Medicine",
-      revenue: 17000,
-      percentage: 13.6,
-    },
-  ],
   revenueByPaymentMethod: [
-    { method: "CASH", amount: 30000, count: 150, percentage: 24 },
-    { method: "CARD", amount: 50000, count: 200, percentage: 40 },
-    { method: "INSURANCE", amount: 45000, count: 100, percentage: 36 },
+    { method: "CASH", amount: 30000, percentage: 24 },
+    { method: "CARD", amount: 50000, percentage: 40 },
+    { method: "INSURANCE", amount: 45000, percentage: 36 },
   ],
   generatedAt: new Date().toISOString(),
   cached: true,
@@ -287,52 +266,44 @@ const mapToBloodTypeArray = (map: Record<string, number>, total: number) => {
 };
 
 export const reportsService = {
-  // Revenue Report
+  // Revenue Report - always uses real API (no mock)
   getRevenueReport: async (
     params: RevenueReportParams,
   ): Promise<RevenueReport> => {
-    if (!USE_MOCK) {
-      try {
-        const response = await axiosInstance.get(`${BASE_URL}/revenue`, {
-          params,
-        });
-        const data = response.data.data || response.data;
-        
-        // Transform backend response to frontend format
-        const invoiceCountObj = data.invoiceCount || {};
-        const totalRevenue = Number(data.totalRevenue) || 0;
-        const paidRevenue = Number(data.paidRevenue) || 0;
-        
-        return {
-          totalRevenue,
-          paidRevenue,
-          unpaidRevenue: Number(data.unpaidRevenue) || 0,
-          invoiceCount: invoiceCountObj.total || 0,
-          collectionRate: totalRevenue > 0 ? Math.round((paidRevenue / totalRevenue) * 100) : 0,
-          revenueByDepartment: (data.revenueByDepartment || []).map((d: {departmentId?: string; departmentName: string; revenue: number; percentage: number}) => ({
-            departmentId: d.departmentId || d.departmentName,
-            departmentName: d.departmentName,
-            revenue: Number(d.revenue) || 0,
-            percentage: d.percentage || 0,
-          })),
-          revenueByPaymentMethod: (data.revenueByPaymentMethod || []).map((p: {method: string; amount: number; percentage: number}) => ({
-            method: p.method,
-            amount: Number(p.amount) || 0,
-            count: 0, // Backend doesn't provide count
-            percentage: p.percentage || 0,
-          })),
-          generatedAt: data.generatedAt || new Date().toISOString(),
-          cached: true,
-        };
-      } catch (error) {
-        console.error("Error fetching revenue report:", error);
-        // Fallback to mock on error
-        return { ...mockRevenueReport, generatedAt: new Date().toISOString() };
-      }
+    try {
+      const response = await axiosInstance.get(`${BASE_URL}/revenue`, {
+        params,
+      });
+      const data = response.data.data || response.data;
+      
+      // Transform backend response to frontend format
+      const invoiceCountObj = data.invoiceCount || {};
+      const totalRevenue = Number(data.totalRevenue) || 0;
+      const paidRevenue = Number(data.paidRevenue) || 0;
+      
+      return {
+        totalRevenue,
+        paidRevenue,
+        unpaidRevenue: Number(data.unpaidRevenue) || 0,
+        invoiceCount: {
+          total: invoiceCountObj.total || 0,
+          paid: invoiceCountObj.paid || 0,
+          unpaid: invoiceCountObj.unpaid || 0,
+          overdue: invoiceCountObj.overdue || 0,
+        },
+        collectionRate: totalRevenue > 0 ? Math.round((paidRevenue / totalRevenue) * 100) : 0,
+        revenueByPaymentMethod: (data.revenueByPaymentMethod || []).map((p: {method: string; amount: number; percentage: number}) => ({
+          method: p.method,
+          amount: Number(p.amount) || 0,
+          percentage: p.percentage || 0,
+        })),
+        generatedAt: data.generatedAt || new Date().toISOString(),
+        cached: true,
+      };
+    } catch (error) {
+      console.error("Error fetching revenue report:", error);
+      throw error; // Let UI handle error state
     }
-
-    await delay(800);
-    return { ...mockRevenueReport, generatedAt: new Date().toISOString() };
   },
 
   // Appointment Statistics
@@ -373,7 +344,7 @@ export const reportsService = {
         };
       } catch (error) {
         console.error("Error fetching appointment stats:", error);
-        return { ...mockAppointmentStats, generatedAt: new Date().toISOString() };
+        throw error; // Don't use mock - let UI handle error state
       }
     }
 
@@ -426,6 +397,8 @@ export const reportsService = {
         const response = await axiosInstance.get(`${BASE_URL}/patients`);
         const data = response.data.data || response.data;
         
+        console.log("Patient Activity API Response:", JSON.stringify(data, null, 2));
+        
         const total = data.totalPatients || 0;
         const byGender = data.patientsByGender || {};
         const byBloodType = data.patientsByBloodType || {};
@@ -453,7 +426,7 @@ export const reportsService = {
         };
       } catch (error) {
         console.error("Error fetching patient activity:", error);
-        return { ...mockPatientActivity, generatedAt: new Date().toISOString() };
+        throw error; // Don't use mock - let UI handle error state
       }
     }
 

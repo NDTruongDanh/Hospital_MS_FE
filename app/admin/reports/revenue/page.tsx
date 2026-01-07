@@ -2,18 +2,28 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { format, startOfMonth } from "date-fns";
+import { vi } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Download,
-  Loader2,
   DollarSign,
   FileText,
   CreditCard,
   Percent,
+  ArrowLeft,
+  Building2,
+  Wallet,
+  Receipt,
+  TrendingUp,
+  Sparkles,
+  Loader2,
+  Banknote,
+  ShieldCheck,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -28,125 +38,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { ReportPageHeader } from "../_components/report-page-header";
-import {
-  DateRangePicker,
-  useDateRangePresets,
-} from "../_components/date-range-picker";
-import { MetricCard } from "../_components/metric-card";
-import { ChartCard } from "../_components/chart-card";
 import { useRevenueReport } from "@/hooks/queries/useReports";
 import { useDepartments } from "@/hooks/queries/useHr";
 import { Department } from "@/interfaces/hr";
 import { exportToCSV } from "@/lib/utils/export";
 import { useRouter } from "next/navigation";
-import { EmptyReportState } from "@/components/reports/EmptyReportState";
-import { CacheInfoBanner } from "@/components/reports/CacheInfoBanner";
-import { RetryButton } from "@/components/reports/RetryButton";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
+import { DateRangeFilter, DateRange } from "@/components/ui/date-range-filter";
+import { cn } from "@/lib/utils";
 
-// Simple Bar Chart
-function SimpleBarChart({
-  data,
-}: {
-  data: { name: string; value: number; percentage?: number }[];
-}) {
-  const maxValue = Math.max(...data.map((d) => d.value));
-
-  return (
-    <div className="space-y-3">
-      {data.map((item, i) => (
-        <div key={i} className="space-y-1">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">{item.name}</span>
-            <span className="text-muted-foreground">
-              {new Intl.NumberFormat("vi-VN", {
-                style: "currency",
-                currency: "VND",
-                maximumFractionDigits: 0,
-              }).format(item.value)}
-              {item.percentage && ` (${item.percentage.toFixed(1)}%)`}
-            </span>
-          </div>
-          <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-500"
-              style={{ width: `${(item.value / maxValue) * 100}%` }}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// Simple Pie Chart with Legend
-function SimplePieChart({
-  data,
-}: {
-  data: { name: string; value: number; color: string; percentage?: number }[];
-}) {
-  const total = data.reduce((sum, item) => sum + item.value, 0);
-
-  // Pre-calculate segments to avoid direct reassignment in render
-  const segments = useMemo(() => {
-    let cumulativePercent = 0;
-    return data.map((item) => {
-      const percent = (item.value / total) * 100;
-      const dashArray = `${percent} ${100 - percent}`;
-      const dashOffset = -cumulativePercent;
-      cumulativePercent += percent;
-      return { ...item, dashArray, dashOffset };
-    });
-  }, [data, total]);
-
-  return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-8">
-      <div className="flex justify-center">
-        <div className="relative h-48 w-48">
-          <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
-            {segments.map((segment, i) => (
-              <circle
-                key={i}
-                cx="50"
-                cy="50"
-                r="40"
-                fill="transparent"
-                stroke={segment.color}
-                strokeWidth="20"
-                strokeDasharray={segment.dashArray}
-                strokeDashoffset={segment.dashOffset}
-                className="transition-all duration-500"
-              />
-            ))}
-          </svg>
-        </div>
-      </div>
-      <div className="flex flex-col gap-2">
-        {data.map((item, i) => (
-          <div key={i} className="flex items-center gap-3">
-            <div
-              className="h-4 w-4 rounded-full"
-              style={{ backgroundColor: item.color }}
-            />
-            <span className="flex-1 font-medium">{item.name}</span>
-            <span className="text-muted-foreground">
-              {new Intl.NumberFormat("vi-VN", {
-                style: "currency",
-                currency: "VND",
-                maximumFractionDigits: 0,
-              }).format(item.value)}
-            </span>
-            <span className="w-12 text-right text-sm text-muted-foreground">
-              {((item.value / total) * 100).toFixed(1)}%
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+// Payment method labels (Vietnamese)
+const paymentMethodLabels: Record<string, string> = {
+  CASH: "Tiền mặt",
+  CARD: "Thẻ",
+  INSURANCE: "Bảo hiểm",
+  BANK_TRANSFER: "Chuyển khoản",
+};
 
 const paymentMethodColors: Record<string, string> = {
   CASH: "#22c55e",
@@ -155,24 +63,27 @@ const paymentMethodColors: Record<string, string> = {
   BANK_TRANSFER: "#f59e0b",
 };
 
+const paymentMethodIcons: Record<string, React.ReactNode> = {
+  CASH: <Banknote className="h-4 w-4" />,
+  CARD: <CreditCard className="h-4 w-4" />,
+  INSURANCE: <ShieldCheck className="h-4 w-4" />,
+  BANK_TRANSFER: <Wallet className="h-4 w-4" />,
+};
+
 export default function RevenueReportPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [role, setRole] = useState<string>("ADMIN");
-  const presets = useDateRangePresets();
-  const [startDate, setStartDate] = useState<Date | undefined>(
-    presets.thisMonth.startDate
-  );
-  const [endDate, setEndDate] = useState<Date | undefined>(
-    presets.thisMonth.endDate
-  );
+  const role = user?.role || "ADMIN";
+
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
+    const today = new Date();
+    return {
+      from: startOfMonth(today),
+      to: today,
+    };
+  });
   const [departmentId, setDepartmentId] = useState<string>("ALL");
   const [paymentMethod, setPaymentMethod] = useState<string>("ALL");
-
-  useEffect(() => {
-    const r = user?.role || null;
-    setRole(r || "ADMIN");
-  }, [user]);
 
   useEffect(() => {
     if (role && role !== "ADMIN") {
@@ -184,10 +95,14 @@ export default function RevenueReportPage() {
   const { data: departmentsData } = useDepartments({ size: 100 });
   const departments = departmentsData?.content ?? [];
 
+  // Calculate date strings
+  const startDate = dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : "";
+  const endDate = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : "";
+
   // Fetch revenue report
   const { data, isLoading, error, refetch } = useRevenueReport({
-    startDate: startDate ? format(startDate, "yyyy-MM-dd") : "",
-    endDate: endDate ? format(endDate, "yyyy-MM-dd") : "",
+    startDate,
+    endDate,
     departmentId: departmentId !== "ALL" ? departmentId : undefined,
     paymentMethod: paymentMethod !== "ALL" ? paymentMethod : undefined,
   });
@@ -201,34 +116,23 @@ export default function RevenueReportPage() {
     }).format(value);
   };
 
-  // Chart data
-  const departmentChartData = useMemo(() => {
-    if (!data?.revenueByDepartment) return [];
-    return data.revenueByDepartment.map((item) => ({
-      name: item.departmentName,
-      value: item.revenue,
-      percentage: item.percentage,
-    }));
-  }, [data]);
+  const formatCompact = (value: number) => {
+    return new Intl.NumberFormat("vi-VN", {
+      notation: "compact",
+      compactDisplay: "short",
+    }).format(value);
+  };
 
+  // Chart data
   const paymentMethodChartData = useMemo(() => {
     if (!data?.revenueByPaymentMethod) return [];
-    return data.revenueByPaymentMethod.map((item) => ({
-      name: item.method.replace("_", " "),
-      value: item.amount,
-      color: paymentMethodColors[item.method] || "#94a3b8",
-      percentage: item.percentage,
-    }));
+    return data.revenueByPaymentMethod;
   }, [data]);
+
+  const totalPaymentAmount = paymentMethodChartData.reduce((sum, p) => sum + p.amount, 0);
 
   const handleExportCSV = () => {
     const rows = [
-      ...(data?.revenueByDepartment?.map((d) => ({
-        type: "DEPARTMENT",
-        name: d.departmentName,
-        revenue: d.revenue,
-        percentage: d.percentage,
-      })) || []),
       ...(data?.revenueByPaymentMethod?.map((d) => ({
         type: "PAYMENT_METHOD",
         name: d.method,
@@ -236,160 +140,309 @@ export default function RevenueReportPage() {
         percentage: d.percentage,
       })) || []),
     ];
-    exportToCSV(rows, "revenue-report.csv");
-  };
-
-  const validateRange = () => {
-    if (!startDate || !endDate) return true;
-    const diff = endDate.getTime() - startDate.getTime();
-    const max = 365 * 24 * 60 * 60 * 1000;
-    if (diff > max) {
-      toast.error("Khoảng ngày tối đa 1 năm");
-      return false;
-    }
-    return true;
+    exportToCSV(rows, `revenue-report-${startDate}-${endDate}.csv`);
+    toast.success("Đã xuất báo cáo CSV!");
   };
 
   return (
-    <div className="w-full space-y-6">
-      <ReportPageHeader
-        title="Revenue Report"
-        description="Detailed revenue analysis by department and payment method"
-        actions={
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleExportCSV}>
-                Export CSV
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        }
-      />
+    <div className="space-y-6">
+      {/* Gradient Header */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 p-6 text-white shadow-xl">
+        <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
+        <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-white/5" />
+        <div className="absolute right-20 top-10 h-20 w-20 rounded-full bg-white/5" />
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Filter Options</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap items-end gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Date Range</label>
-              <DateRangePicker
-                startDate={startDate}
-                endDate={endDate}
-                onStartDateChange={setStartDate}
-                onEndDateChange={setEndDate}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Department</label>
-              <Select value={departmentId} onValueChange={setDepartmentId}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="All Departments" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Departments</SelectItem>
-                  {departments.map((dept: Department) => (
-                    <SelectItem key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Payment Method</label>
-              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="All Methods" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Methods</SelectItem>
-                  <SelectItem value="CASH">Cash</SelectItem>
-                  <SelectItem value="CARD">Card</SelectItem>
-                  <SelectItem value="INSURANCE">Insurance</SelectItem>
-                  <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <div className="relative flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-center gap-4">
             <Button
-              onClick={() => {
-                if (!validateRange()) return;
-                refetch();
-              }}
-              disabled={isLoading}
+              variant="outline"
+              size="icon"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              onClick={() => router.back()}
             >
-              {isLoading && <Spinner size="sm" className="mr-2" />}
-              Generate Report
+              <ArrowLeft className="h-4 w-4" />
             </Button>
+            <div className="rounded-xl bg-white/20 p-3 backdrop-blur-sm">
+              <DollarSign className="h-7 w-7" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                Báo cáo doanh thu
+                <Badge className="bg-white/20 text-white border-0 text-xs">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Chi tiết
+                </Badge>
+              </h1>
+              <p className="mt-1 text-emerald-100">
+                Phân tích doanh thu theo khoa và phương thức thanh toán
+              </p>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="flex items-center gap-3">
+            <DateRangeFilter
+              value={dateRange}
+              onChange={setDateRange}
+              theme="teal"
+              presetKeys={["thisMonth", "thisWeek", "7days", "30days"]}
+              showQuickPresets={false}
+            />
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-white text-emerald-700 hover:bg-white/90">
+                  <Download className="mr-2 h-4 w-4" />
+                  Xuất báo cáo
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportCSV}>
+                  Xuất CSV
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </div>
+
+      {/* Note: Department and payment method filters removed - backend doesn't support filtering by these */}
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          title="Total Revenue"
-          value={data ? formatCurrency(data.totalRevenue) : "---"}
-          icon={DollarSign}
-          loading={isLoading}
-        />
-        <MetricCard
-          title="Paid Revenue"
-          value={data ? formatCurrency(data.paidRevenue) : "---"}
-          icon={CreditCard}
-          loading={isLoading}
-        />
-        <MetricCard
-          title="Unpaid Revenue"
-          value={data ? formatCurrency(data.unpaidRevenue) : "---"}
-          icon={FileText}
-          loading={isLoading}
-        />
-        <MetricCard
-          title="Collection Rate"
-          value={data ? `${data.collectionRate?.toFixed(1) ?? "--"}%` : "---"}
-          icon={Percent}
-          loading={isLoading}
-        />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <Card className="border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-white">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-100">
+                <DollarSign className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Tổng doanh thu</p>
+                {isLoading ? (
+                  <Spinner size="sm" className="mt-1" />
+                ) : (
+                  <p className="text-xl font-bold text-emerald-700">
+                    {formatCurrency(data?.totalRevenue || 0)}
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-2 border-teal-200 bg-gradient-to-br from-teal-50 to-white">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-teal-100">
+                <CreditCard className="h-5 w-5 text-teal-600" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Đã thu</p>
+                {isLoading ? (
+                  <Spinner size="sm" className="mt-1" />
+                ) : (
+                  <p className="text-xl font-bold text-teal-700">
+                    {formatCurrency(data?.paidRevenue || 0)}
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-white">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-100">
+                <FileText className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Chưa thu</p>
+                {isLoading ? (
+                  <Spinner size="sm" className="mt-1" />
+                ) : (
+                  <p className="text-xl font-bold text-amber-700">
+                    {formatCurrency(data?.unpaidRevenue || 0)}
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-100">
+                <Receipt className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Số hóa đơn</p>
+                {isLoading ? (
+                  <Spinner size="sm" className="mt-1" />
+                ) : (
+                  <p className="text-xl font-bold text-blue-700">
+                    {(data?.invoiceCount?.total || 0).toLocaleString()}
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-2 border-violet-200 bg-gradient-to-br from-violet-50 to-white">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-violet-100">
+                <TrendingUp className="h-5 w-5 text-violet-600" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Tỷ lệ thu</p>
+                {isLoading ? (
+                  <Spinner size="sm" className="mt-1" />
+                ) : (
+                  <p className="text-xl font-bold text-violet-700">
+                    {data?.collectionRate?.toFixed(1) ?? "0"}%
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Charts */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ChartCard
-          title="Revenue by Department"
-          description="Breakdown of revenue across departments"
-          loading={isLoading}
-        >
-          {departmentChartData.length > 0 ? (
-            <SimpleBarChart data={departmentChartData} />
-          ) : (
-            <EmptyReportState description="No data available" />
-          )}
-        </ChartCard>
+      <div className="grid gap-4">
 
-        <ChartCard
-          title="Revenue by Payment Method"
-          description="Distribution across payment methods"
-          loading={isLoading}
-        >
-          {paymentMethodChartData.length > 0 ? (
-            <SimplePieChart data={paymentMethodChartData} />
-          ) : (
-            <EmptyReportState description="No data available" />
-          )}
-        </ChartCard>
+        {/* Revenue by Payment Method - Donut Chart */}
+        <Card className="border-2 border-slate-200 shadow-sm overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-violet-500 to-purple-500" />
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Wallet className="h-5 w-5 text-violet-600" />
+              Phương thức thanh toán
+            </CardTitle>
+            <CardDescription>Phân bố doanh thu theo hình thức</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex h-[300px] items-center justify-center">
+                <Spinner />
+              </div>
+            ) : paymentMethodChartData.length > 0 ? (
+              <div className="flex flex-col lg:flex-row items-center gap-6">
+                {/* Donut Chart */}
+                <div className="relative">
+                  <svg viewBox="0 0 120 120" className="h-52 w-52">
+                    {/* Background circle */}
+                    <circle
+                      cx="60"
+                      cy="60"
+                      r="45"
+                      fill="transparent"
+                      stroke="#f1f5f9"
+                      strokeWidth="20"
+                    />
+                    {/* Segments */}
+                    {(() => {
+                      let cumulativePercent = 0;
+                      return paymentMethodChartData.map((payment, i) => {
+                        const percentage = totalPaymentAmount > 0 
+                          ? (payment.amount / totalPaymentAmount) * 100 
+                          : 0;
+                        const circumference = 2 * Math.PI * 45;
+                        const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
+                        const strokeDashoffset = -(cumulativePercent / 100) * circumference;
+                        cumulativePercent += percentage;
+                        const color = paymentMethodColors[payment.method] || "#94a3b8";
+                        
+                        return (
+                          <circle
+                            key={i}
+                            cx="60"
+                            cy="60"
+                            r="45"
+                            fill="transparent"
+                            stroke={color}
+                            strokeWidth="20"
+                            strokeDasharray={strokeDasharray}
+                            strokeDashoffset={strokeDashoffset}
+                            strokeLinecap="round"
+                            className="transition-all duration-700 -rotate-90 origin-center"
+                            style={{ transform: 'rotate(-90deg)', transformOrigin: '60px 60px' }}
+                          />
+                        );
+                      });
+                    })()}
+                  </svg>
+                  {/* Center text */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-bold text-slate-800">
+                      {formatCompact(totalPaymentAmount)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">Tổng cộng</span>
+                  </div>
+                </div>
+
+                {/* Legend */}
+                <div className="flex-1 space-y-3">
+                  {paymentMethodChartData.map((payment, i) => {
+                    const percentage = totalPaymentAmount > 0 
+                      ? (payment.amount / totalPaymentAmount) * 100 
+                      : 0;
+                    const color = paymentMethodColors[payment.method] || "#94a3b8";
+                    return (
+                      <div 
+                        key={i} 
+                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors"
+                        style={{ borderLeft: `4px solid ${color}` }}
+                      >
+                        <div 
+                          className="p-2 rounded-lg"
+                          style={{ backgroundColor: color + "15" }}
+                        >
+                          {paymentMethodIcons[payment.method] || <Wallet className="h-4 w-4" />}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-sm">
+                              {paymentMethodLabels[payment.method] || payment.method}
+                            </span>
+                            <Badge 
+                              className="font-bold text-xs"
+                              style={{ backgroundColor: color + "20", color: color }}
+                            >
+                              {percentage.toFixed(1)}%
+                            </Badge>
+                          </div>
+                          <p className="text-lg font-bold text-slate-800">
+                            {formatCurrency(payment.amount)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="flex h-[200px] items-center justify-center text-muted-foreground">
+                Chưa có dữ liệu phương thức thanh toán
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Cache Info */}
-      {data?.cached && <CacheInfoBanner generatedAt={data.generatedAt} />}
+      {data?.cached && (
+        <Card className="border border-slate-200 bg-slate-50">
+          <CardContent className="py-3">
+            <p className="text-sm text-muted-foreground text-center">
+              📊 Dữ liệu được tạo vào: {format(new Date(data.generatedAt), "HH:mm dd/MM/yyyy", { locale: vi })}
+              {data.cacheExpiresAt && ` • Hết hạn: ${format(new Date(data.cacheExpiresAt), "HH:mm dd/MM/yyyy", { locale: vi })}`}
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

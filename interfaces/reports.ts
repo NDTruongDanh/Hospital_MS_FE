@@ -6,17 +6,16 @@ export interface RevenueReportParams {
   paymentMethod?: string;
 }
 
-export interface RevenueByDepartment {
-  departmentId: string;
-  departmentName: string;
-  revenue: number;
-  percentage?: number;
+export interface InvoiceCount {
+  total: number;
+  paid: number;
+  unpaid: number;
+  overdue: number;
 }
 
 export interface RevenueByPaymentMethod {
   method: string;
   amount: number;
-  count: number;
   percentage?: number;
 }
 
@@ -24,9 +23,8 @@ export interface RevenueReport {
   totalRevenue: number;
   paidRevenue: number;
   unpaidRevenue: number;
-  invoiceCount: number;
-  collectionRate?: number;
-  revenueByDepartment: RevenueByDepartment[];
+  invoiceCount: InvoiceCount;
+  collectionRate: number;
   revenueByPaymentMethod: RevenueByPaymentMethod[];
   generatedAt: string;
   cached: boolean;

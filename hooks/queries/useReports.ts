@@ -62,7 +62,8 @@ export function usePatientActivity(params: PatientActivityParams) {
   return useQuery<PatientActivity>({
     queryKey: reportKeys.patientActivity(params),
     queryFn: () => reportsService.getPatientActivity(params),
-    enabled: !!params.startDate && !!params.endDate,
+    // Backend /reports/patients doesn't require date params, always enabled
+    enabled: true,
     staleTime: STALE_TIME,
   });
 }
